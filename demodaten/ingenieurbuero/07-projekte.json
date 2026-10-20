@@ -1,0 +1,281 @@
+[
+  {
+    "_kommentar": "DAS VORHABEN, DAS TRÄGT - mit einer bereits gestellten Rechnung. Es zeigt den vollständigen Kreislauf: Angebot, Auftrag, Arbeit, Zukauf, zwei festgeschriebene Abschläge und ein Rest, der noch offen ist.",
+    "nummer": "{jahr}-042",
+    "bezeichnung": "Schadstofferkundung Turnhalle",
+    "kunde": "Stadt Musterstadt",
+    "beschreibung": "Erkundung vor Abbruch, LAGA-Untersuchung Boden und Bausubstanz.",
+
+    "auftrag": {
+      "beauftragt": true,
+      "positionen": [
+        { "leistung": "Projektleitung", "menge": "40", "preis": "110.00" },
+        { "leistung": "Ingenieurstunde", "menge": "150", "preis": "95.00" },
+        { "leistung": "Probenahme vor Ort", "menge": "40", "preis": "85.00" },
+        { "leistung": "Bodenprobe LAGA-Paket", "menge": "40", "preis": "145.00" },
+        { "leistung": "Gutachten und Bericht", "menge": "1", "preis": "1450.00" }
+      ]
+    },
+
+    "stunden": [
+      {
+        "_kommentar": "Gebucht wird auf die Auftragspositionen - der Preis kommt dann aus dem Vertrag. Die Tage von k.reiter sind mit {jahr}-051 und {jahr}-070 abgestimmt: eine Person, ein Vorhaben am Tag.",
+        "leistung": "Ingenieurstunde", "person": "k.reiter",
+        "vor_tagen": [6, 9, 12, 18, 21, 24, 30, 33, 36, 39, 42, 45],
+        "von": "08:00", "bis": "15:30"
+      },
+      {
+        "_kommentar": "Absichtlich KEIN fester Wochenabstand: Bei 5, 12, 19 ... fielen alle Tage auf denselben Wochentag - wurde an einem Freitag eingespielt, war das ein Sonntag, und die Projektleitung verschwand ganz, während der 2. Abschlag sie berechnet.",
+        "leistung": "Projektleitung", "person": "m.bach",
+        "vor_tagen": [5, 9, 16, 20, 26, 30, 37, 41, 47, 51, 58, 62],
+        "von": "09:00", "bis": "11:30"
+      },
+      {
+        "leistung": "Probenahme vor Ort", "person": "t.huber",
+        "vor_tagen": [33, 29, 26, 22],
+        "von": "07:30", "bis": "16:00"
+      }
+    ],
+
+    "mengen": [
+      {
+        "_kommentar": "Fahrtkosten stehen nicht im Auftrag - sie buchen über den Katalog. Genau dafür gibt es in der Erfassungsmaske die Gruppe 'Ohne Auftrag'. Dieselben Tage wie die Probenahme.",
+        "leistung": "Fahrtkosten", "person": "t.huber",
+        "vor_tagen": [33, 29, 26, 22], "menge": "86",
+        "ohne_auftrag": true
+      }
+    ],
+
+    "abschlaege": [
+      {
+        "_kommentar": "Nach der Probenahme, nicht davor: Er berechnet Bodenproben. Der Zeitraum endet vor dem Belegdatum - ein Abschlag nennt den Leistungsstand, und der liegt nicht in der Zukunft. Die Stunden bleiben unter dem, was bis dahin erfasst ist.",
+        "vor_tagen": 21,
+        "betreff": "1. Abschlag {nummer}",
+        "leistung_von_tagen": 24,
+        "leistung_bis_tagen": 1,
+        "positionen": [
+          { "leistung": "Ingenieurstunde", "menge": "32" },
+          { "leistung": "Bodenprobe LAGA-Paket", "menge": "20" }
+        ]
+      },
+      {
+        "vor_tagen": 8,
+        "betreff": "2. Abschlag {nummer}",
+        "leistung_von_tagen": 12,
+        "leistung_bis_tagen": 1,
+        "positionen": [
+          { "leistung": "Projektleitung", "menge": "8" }
+        ]
+      }
+    ]
+  },
+
+  {
+    "_kommentar": "DAS VORHABEN, DAS KIPPT. Viel Arbeit, hohe Laborkosten, und eine Nachanalyse, die der Betrieb selbst trägt. Auf der Startseite steht es rot, und genau darüber soll im Termin gesprochen werden: Man sieht es, BEVOR die Schlussrechnung geschrieben ist.\n\nDie beiden Nachträge sind die Antwort darauf - man sieht die Überschreitung, verhandelt nach, bestätigt.",
+    "nummer": "{jahr}-051",
+    "bezeichnung": "Baugrunduntersuchung Gewerbegebiet Ost",
+    "kunde": "Kreisbau Entwicklungs GmbH",
+    "beschreibung": "Baugrund und Altlastenverdacht, 14 Bohrungen.",
+
+    "auftrag": {
+      "beauftragt": true,
+      "positionen": [
+        { "leistung": "Ingenieurstunde", "menge": "40", "preis": "95.00" },
+        { "leistung": "Probenahme vor Ort", "menge": "32", "preis": "85.00" },
+        { "leistung": "Eluatuntersuchung", "menge": "18", "preis": "210.00" }
+      ]
+    },
+
+    "stunden": [
+      {
+        "_kommentar": "Hier wird bewusst NICHT auf den Auftrag gebucht, sondern über den Katalog - deshalb 'ohne_auftrag'. Ein Bestand, in dem jede Stunde sauber kontiert ist, zeigt die Gruppe 'Ohne Auftrag' nie.",
+        "leistung": "Ingenieurstunde", "person": "k.reiter",
+        "vor_tagen": [8, 10, 14, 20, 22, 32, 34, 38, 40, 44, 46, 48],
+        "von": "08:00", "bis": "16:30",
+        "ohne_auftrag": true
+      },
+      {
+        "_kommentar": "Die Tage beider Personen weichen denen in {jahr}-042, -058 und -070 aus. Es bleibt trotzdem weit mehr als beauftragt - das Kippen ist gewollt, die Doppelbuchung war es nicht.",
+        "leistung": "Probenahme vor Ort", "person": "t.huber",
+        "vor_tagen": [12, 16, 20, 28, 32, 36, 40, 44],
+        "von": "07:00", "bis": "17:00",
+        "ohne_auftrag": true
+      }
+    ],
+
+    "nachtraege": [
+      {
+        "vor_tagen": 18,
+        "betreff": "1. Nachtrag - Erweiterung Untersuchungsumfang",
+        "positionen": [
+          { "leistung": "Zusätzliche Bohrungen BS 15 bis BS 22", "menge": "8", "preis": "780.00", "einheit": "Stk" },
+          { "leistung": "Ingenieurstunde Mehraufwand", "menge": "24", "preis": "95.00", "einheit": "Std" }
+        ]
+      },
+      {
+        "vor_tagen": 6,
+        "betreff": "2. Nachtrag - Sondierungen Bauabschnitt 2",
+        "positionen": [
+          { "leistung": "Rammkernsondierungen, Zusatzprofil", "menge": "3", "preis": "640.00", "einheit": "Stk" }
+        ]
+      }
+    ]
+  },
+
+  {
+    "_kommentar": "DAS VORHABEN AM ANFANG - Auftrag da, kaum etwas erfasst. Der Gegenfall zu den anderen: Wer nur volle Vorhaben sieht, hält das Programm für eines, das erst am Ende etwas sagt.",
+    "nummer": "{jahr}-058",
+    "bezeichnung": "Bauüberwachung Kanalbau Ortsdurchfahrt",
+    "kunde": "Stadt Musterstadt",
+    "beschreibung": "Örtliche Bauüberwachung, Los 2.",
+
+    "auftrag": {
+      "beauftragt": true,
+      "positionen": [
+        { "leistung": "Projektleitung", "menge": "24", "preis": "110.00" },
+        { "leistung": "Technikerstunde", "menge": "180", "preis": "78.00" }
+      ]
+    },
+
+    "stunden": [
+      {
+        "leistung": "Technikerstunde", "person": "t.huber",
+        "vor_tagen": [1, 2, 3, 4, 5, 6, 7],
+        "von": "07:00", "bis": "15:00",
+        "ohne_auftrag": true
+      },
+      {
+        "_kommentar": "Die Aushilfe hat keinen Kostensatz - bewusst nur wenige Stunden, damit der Vorbehalt auf der Startseite sichtbar ist, ohne die Ergebnisse unbrauchbar zu machen.",
+        "leistung": "Technikerstunde", "person": "s.werk",
+        "vor_tagen": [2, 3, 4, 5],
+        "von": "08:00", "bis": "12:00",
+        "ohne_auftrag": true
+      }
+    ]
+  },
+
+  {
+    "_kommentar": "EIN ANGEBOT, AUF DAS NOCH KEINE ANTWORT DA IST - der häufigste Zustand im Vertrieb. Alle anderen Vorhaben sind beauftragt; ohne dieses sähe die Angebotsliste so aus, als würde jedes Angebot gewonnen. In der Projektakte ist der Auftragswert null, obwohl ein Angebot vorliegt.",
+    "nummer": "{jahr}-063",
+    "bezeichnung": "Gefährdungsabschätzung Deponie Nord",
+    "kunde": "Landratsamt Musterstadt",
+    "beschreibung": "Angebot auf Ausschreibung, Vergabe steht aus.",
+
+    "angebote": [
+      {
+        "vor_tagen": 9,
+        "betreff": "Gefährdungsabschätzung Deponie Nord",
+        "positionen": [
+          { "leistung": "Ingenieurstunde", "menge": "160", "preis": "95.00" },
+          { "leistung": "Probenahme vor Ort", "menge": "64", "preis": "85.00" },
+          { "leistung": "Eluatuntersuchung", "menge": "46", "preis": "210.00" },
+          { "leistung": "Gutachten und Bericht", "menge": "1", "preis": "1450.00" }
+        ]
+      }
+    ]
+  },
+
+  {
+    "_kommentar": "DER GANZE WEG AN EINEM STÜCK: Auftrag, zwei Abschläge, Schlussrechnung - und die Schlussrechnung ist noch nicht bezahlt, sondern gemahnt (09-mahnungen.json). Deshalb ist das Vorhaben OFFEN: Solange Geld aussteht, ist es nicht abgeschlossen.\n\nDIE ABSETZUNG IST DER PUNKT: Die Schlussrechnung führt die volle Leistung auf und zieht die geleisteten Abschläge wieder ab - so, wie es die Praxis verlangt und wie es kein Betrieb von Hand gern rechnet.",
+    "nummer": "{vorjahr}-118",
+    "bezeichnung": "Altlastenerkundung Verwaltungsgebäude",
+    "kunde": "Kreisbau Entwicklungs GmbH",
+    "beschreibung": "Schlussgerechnet, Zahlung steht aus - zeigt den vollständigen Abrechnungsweg.",
+
+    "auftrag": {
+      "angebot_vor_tagen": 210,
+      "auftrag_vor_tagen": 200,
+      "beauftragt": true,
+      "positionen": [
+        { "leistung": "Ingenieurstunde", "menge": "120", "preis": "95.00" },
+        { "leistung": "Projektleitung", "menge": "30", "preis": "110.00" },
+        { "leistung": "Gutachten und Bericht", "menge": "1", "preis": "1450.00" }
+      ]
+    },
+
+    "abschlaege": [
+      {
+        "_kommentar": "Bezahlt vor der Fälligkeit - und vor der Schlussrechnung, die nur absetzt, was bezahlt ist. Deshalb steht die Zahlung hier und nicht in 12-zahlungen.json.",
+        "vor_tagen": 150,
+        "bezahlt_vor_tagen": 131,
+        "betreff": "1. Abschlag {nummer}",
+        "leistung_von_tagen": 43,
+        "leistung_bis_tagen": 5,
+        "positionen": [
+          { "leistung": "Ingenieurstunde", "menge": "40" }
+        ]
+      },
+      {
+        "vor_tagen": 100,
+        "bezahlt_vor_tagen": 83,
+        "betreff": "2. Abschlag {nummer}",
+        "leistung_von_tagen": 54,
+        "leistung_bis_tagen": 5,
+        "positionen": [
+          { "leistung": "Ingenieurstunde", "menge": "40" },
+          { "leistung": "Projektleitung", "menge": "15" }
+        ]
+      }
+    ],
+
+    "schlussrechnung": {
+      "vor_tagen": 70,
+      "leistung_von_tagen": 123,
+      "leistung_bis_tagen": 0
+    }
+  },
+
+  {
+    "_kommentar": "DAS NACHVOLLZUGSPROJEKT - gebaut, um zu zeigen, welche Leistung auf welcher Rechnung steht. Eine Position wird über zwei Rechnungen abgerechnet, dazu ein Entwurf und offene Stunden; die Laborproben verteilen sich ebenso; die Vermessung hängt an keiner Position; das Gutachten ist noch ganz offen. Die Rechnungen entstehen in 11-abrechnungen.json aus den erfassten Zeiten. Die Tage liegen in Blöcken zu je drei, damit jedes Zeitfenster auch über ein Wochenende hinweg etwas enthält.",
+    "nummer": "{jahr}-070",
+    "bezeichnung": "Gutachten Stützmauer Nord",
+    "kunde": "Huber Bau GmbH & Co. KG",
+    "beschreibung": "Standsicherheit der Stützmauer an der Zufahrt Nord, Baugrund und Bestand.",
+    "auftrag": {
+      "beauftragt": true,
+      "angebot_vor_tagen": 40,
+      "auftrag_vor_tagen": 35,
+      "positionen": [
+        { "leistung": "Ingenieurstunde", "menge": "40", "preis": "95.00" },
+        { "leistung": "Bodenprobe LAGA-Paket", "menge": "10", "preis": "145.00" },
+        { "leistung": "Gutachten und Bericht", "menge": "1", "preis": "1450.00" }
+      ]
+    },
+    "stunden": [
+      {
+        "_kommentar": "Block für die 1. Rechnung.",
+        "leistung": "Ingenieurstunde", "person": "k.reiter",
+        "vor_tagen": [28, 27, 26], "von": "08:00", "bis": "12:00",
+        "beschreibung": "Ortsbegehung und Bestandsaufnahme"
+      },
+      {
+        "leistung": "Ingenieurstunde", "person": "t.huber",
+        "vor_tagen": [25, 24, 23], "von": "13:00", "bis": "16:00",
+        "beschreibung": "Aufmaß Mauerkrone"
+      },
+      {
+        "_kommentar": "Block für die 2. Rechnung.",
+        "leistung": "Ingenieurstunde", "person": "k.reiter",
+        "vor_tagen": [17, 16, 15], "von": "08:00", "bis": "12:00",
+        "beschreibung": "Berechnung Erddruck"
+      },
+      {
+        "leistung": "Ingenieurstunde", "person": "m.bach",
+        "vor_tagen": [14, 13], "von": "09:00", "bis": "11:00",
+        "beschreibung": "Prüfung der Berechnung"
+      },
+      {
+        "_kommentar": "Block für den Rechnungsentwurf.",
+        "leistung": "Ingenieurstunde", "person": "t.huber",
+        "vor_tagen": [10, 9, 8], "von": "13:00", "bis": "15:00",
+        "beschreibung": "Planunterlagen"
+      },
+      {
+        "_kommentar": "Noch offen - auf keiner Rechnung.",
+        "leistung": "Ingenieurstunde", "person": "k.reiter",
+        "vor_tagen": [4, 3, 2], "von": "08:00", "bis": "10:00",
+        "beschreibung": "Abstimmung Statik"
+      }
+    ]
+  }
+]

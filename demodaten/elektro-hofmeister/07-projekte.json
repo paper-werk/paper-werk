@@ -1,0 +1,204 @@
+[
+  {
+    "_kommentar": "DIE BAUSTELLE, DIE TRÄGT. Der größte Auftrag des Betriebs und der einzige, der über Monate läuft. Er zeigt, wofür ein Handwerksbetrieb überhaupt Projekte braucht: Bei einem Auftrag über zwei Stunden lohnt sich keiner, bei einer Strangsanierung über vier Monate schon.\n\nDie Auftragssumme ist bewusst groß (gut 88.000): Mit 50.000 stand das Projekt nach vier Monaten Arbeit bei 138 Prozent Ausschöpfung und meldete dieselbe Warnung wie das Autohaus. Dann gäbe es keinen Fall mehr, der trägt - und der Vergleich, um den es in der Vorführung geht, wäre keiner.",
+    "nummer": "{jahr}-014",
+    "bezeichnung": "Elektrosanierung Ludwigsplatz 9",
+    "kunde": "Wohnbau Isartal eG",
+    "beschreibung": "Erneuerung der Elektroinstallation in zwölf Wohneinheiten, strangweise bei laufender Vermietung. Zählerplatz und Steigleitungen neu, Wohnungsverteilungen mit FI-Schutz.",
+
+    "auftrag": {
+      "angebot_vor_tagen": 132,
+      "auftrag_vor_tagen": 124,
+      "beauftragt": true,
+      "positionen": [
+        { "leistung": "Zählerschrank komplett", "menge": "1", "preis": "1480.00" },
+        { "leistung": "FI/LS-Schalter 16 A", "menge": "48", "preis": "68.00" },
+        { "leistung": "Steckdose Unterputz", "menge": "186", "preis": "12.50" },
+        { "leistung": "LED-Einbaustrahler", "menge": "96", "preis": "34.00" },
+        { "leistung": "Leitung NYM-J 3x1,5", "menge": "3600", "preis": "2.40" },
+        { "leistung": "Leitung NYM-J 5x2,5", "menge": "620", "preis": "4.80" },
+        { "leistung": "Meisterstunde", "menge": "220", "preis": "78.00" },
+        { "leistung": "Gesellenstunde", "menge": "620", "preis": "62.00" },
+        { "leistung": "Auszubildendenstunde", "menge": "320", "preis": "34.00" }
+      ]
+    },
+
+    "stunden": [
+      {
+        "_kommentar": "Gearbeitet wird seit vier Monaten, von allen dreien - und zwar so viel, wie die Abschläge abrechnen. Das ist keine Kosmetik: Beim ersten Lauf rechneten die Abschläge 278 Stunden ab, während nur 154 erfasst waren. Der Erlös stand da, die Kosten dahinter fehlten - und das Projekt meldete 68 Prozent Marge. Eine Zahl, die kein Elektrobetrieb je gesehen hat.\n\nDie Tage aller drei streuen über alle Wochentage. Sonst hingen die Zahlen am Wochentag des Einspielens.",
+        "leistung": "Meisterstunde",
+        "person": "m.hofmeister",
+        "vor_tagen": [118, 110, 109, 105, 99, 94, 93, 83, 82, 77, 69, 68, 60, 57, 52, 51, 42, 38, 32, 29, 23, 20, 12, 11, 7],
+        "von": "07:30",
+        "bis": "12:00"
+      },
+      {
+        "leistung": "Gesellenstunde",
+        "person": "s.aigner",
+        "vor_tagen": [117, 116, 111, 108, 105, 100, 99, 95, 89, 87, 83, 79, 77, 74, 68, 67, 61, 60, 55, 50, 45, 44, 42, 36, 34, 30, 24, 22, 21, 17, 12, 9, 6],
+        "von": "07:00",
+        "bis": "16:30"
+      },
+      {
+        "_kommentar": "Der Azubi ist erst seit dem Spätsommer dabei - deshalb nur die jüngeren Tage. Seine Stunden bleiben unbewertet (kein Kostensatz), und genau das meldet die Startseite als Vorbehalt.",
+        "leistung": "Auszubildendenstunde",
+        "person": "l.perl",
+        "vor_tagen": [68, 60, 59, 55, 49, 44, 43, 33, 32, 27, 17, 16, 14, 8],
+        "von": "07:00",
+        "bis": "16:00"
+      }
+    ],
+
+    "mengen": [
+      {
+        "leistung": "Leitung NYM-J 3x1,5",
+        "person": "s.aigner",
+        "vor_tagen": [95, 68, 38, 11],
+        "menge": "320"
+      }
+    ],
+
+    "abschlaege": [
+      {
+        "_kommentar": "Zwei gestellte Abschläge - so arbeitet ein Betrieb, der über Monate baut und nicht vier Monate auf sein Geld wartet.",
+        "vor_tagen": 86,
+        "leistung_von_tagen": 38,
+        "leistung_bis_tagen": 2,
+        "positionen": [
+          { "leistung": "Zählerschrank komplett", "menge": "1" },
+          { "leistung": "Meisterstunde", "menge": "48" },
+          { "leistung": "Gesellenstunde", "menge": "120" }
+        ]
+      },
+      {
+        "vor_tagen": 34,
+        "leistung_von_tagen": 53,
+        "leistung_bis_tagen": 2,
+        "positionen": [
+          { "leistung": "FI/LS-Schalter 16 A", "menge": "24" },
+          { "leistung": "Steckdose Unterputz", "menge": "92" },
+          { "leistung": "Gesellenstunde", "menge": "110" }
+        ]
+      }
+    ]
+  },
+
+  {
+    "_kommentar": "DIE BAUSTELLE, DIE KIPPT - der Lehrfall. Sechs Wallboxen, kalkuliert nach Katalog. Was nicht drinstand: Der Netzanschluss reichte nicht, es brauchte Erdarbeiten und eine zweite Zuleitung. Der Aufwand läuft über den Auftrag hinaus, die Startseite warnt - und der Nachtrag ist die Antwort darauf. Ohne ihn bliebe die Warnung eine Sackgasse.",
+    "nummer": "{jahr}-021",
+    "bezeichnung": "Ladeinfrastruktur Autohaus Brandmeier",
+    "kunde": "Autohaus Brandmeier GmbH",
+    "beschreibung": "Sechs Ladepunkte für Kunden- und Mitarbeiterstellplätze, Lastmanagement, Anmeldung beim Netzbetreiber.",
+
+    "auftrag": {
+      "angebot_vor_tagen": 98,
+      "auftrag_vor_tagen": 91,
+      "beauftragt": true,
+      "positionen": [
+        { "leistung": "Wallbox 11 kW", "menge": "6", "preis": "1240.00" },
+        { "leistung": "Leitung NYM-J 5x2,5", "menge": "240", "preis": "4.80" },
+        { "leistung": "FI/LS-Schalter 16 A", "menge": "6", "preis": "68.00" },
+        { "leistung": "Meisterstunde", "menge": "40", "preis": "78.00" },
+        { "leistung": "Gesellenstunde", "menge": "80", "preis": "62.00" }
+      ]
+    },
+
+    "stunden": [
+      {
+        "_kommentar": "Deutlich mehr Stunden als beauftragt - daran kippt es, nicht an einer einzelnen Panne. Beim ersten Lauf stand das Projekt bei 81 Prozent, also brav im Rahmen; ein Lehrfall, der nichts vorführt, ist keiner.\n\nDie Abstände sind absichtlich ungleich: Eine reine Siebener-Reihe trifft immer denselben Wochentag, und fiele der auf ein Wochenende, ließe der Lader sämtliche Tage aus.\n\nMeister und Geselle arbeiten hier an ANDEREN Tagen als am Ludwigsplatz ({jahr}-014). Doppelt gebuchte Tage lässt der Lader nicht zu. Die Tage verteilen sich auf mindestens fünf Wochentage, und vor dem Abschlag liegen genug, um ihn zu tragen.",
+        "leistung": "Meisterstunde",
+        "person": "m.hofmeister",
+        "vor_tagen": [74, 73, 72, 71, 70, 67, 66, 65, 64, 63, 61, 47, 43, 39, 37, 35, 24],
+        "von": "07:00",
+        "bis": "16:30"
+      },
+      {
+        "leistung": "Gesellenstunde",
+        "person": "s.aigner",
+        "vor_tagen": [73, 72, 71, 70, 69, 66, 65, 64, 63, 62, 59, 58, 57, 43, 41, 37, 35, 31],
+        "von": "06:30",
+        "bis": "17:00"
+      }
+    ],
+
+    "abschlaege": [
+      {
+        "_kommentar": "Eine Abschlagsrechnung nach den ersten Ladepunkten. Beim ersten Lauf stand hier gar nichts: vier Monate Arbeit, 156 Prozent Ausschöpfung, fakturiert null. So arbeitet kein Betrieb, der überleben will.\n\nDer Fall bleibt trotzdem der, der kippt: Ein Abschlag zählt nicht in den Leistungswert (er rechnet keine Erfassungszeilen ab), die Ausschöpfung bleibt also, wo sie ist. Genau dafür ist die Trennung da.",
+        "vor_tagen": 44,
+        "leistung_von_tagen": 47,
+        "leistung_bis_tagen": 2,
+        "positionen": [
+          { "leistung": "Wallbox 11 kW", "menge": "4" },
+          { "leistung": "Meisterstunde", "menge": "60" },
+          { "leistung": "Gesellenstunde", "menge": "90" }
+        ]
+      }
+    ],
+
+    "nachtraege": [
+      {
+        "_kommentar": "Für die Vorführung der wichtigste Beleg überhaupt: Er ist die Antwort auf die Warnung 'über dem Auftrag'. Man sieht die Überschreitung, verhandelt nach, bestätigt - und die Zahl geht zurück.\n\nDie ersten beiden Positionen stehen in keinem Katalog. Das ist der Normalfall bei einem Nachtrag: Was man vorher nicht wusste, hat auch keine Katalognummer.",
+        "vor_tagen": 22,
+        "betreff": "Nachtrag 1 - Netzanschluss und Erdarbeiten",
+        "positionen": [
+          { "leistung": "Erdarbeiten und Kabelgraben Stellplatzreihe Nord", "menge": "1", "preis": "4200.00", "einheit": "pausch" },
+          { "leistung": "Zweite Zuleitung ab Hausanschlusskasten", "menge": "1", "preis": "2800.00", "einheit": "pausch" },
+          { "leistung": "Meisterstunde", "menge": "24", "preis": "78.00" }
+        ]
+      }
+    ]
+  },
+
+  {
+    "_kommentar": "DIE BAUSTELLE AM ANFANG - Auftrag da, kaum etwas erfasst. Sie ist der Gegenfall zu den anderen beiden: Wer nur volle Projekte sieht, hält das Programm für eines, das erst am Ende etwas sagt.",
+    "nummer": "{jahr}-028",
+    "bezeichnung": "Neubau Einfamilienhaus Steinberger",
+    "kunde": "Familie Steinberger",
+    "beschreibung": "Elektroinstallation Neubau, Rohbauphase. Leerrohre und Steigleitungen gesetzt, Verteilung folgt.",
+
+    "auftrag": {
+      "angebot_vor_tagen": 34,
+      "auftrag_vor_tagen": 27,
+      "beauftragt": true,
+      "positionen": [
+        { "leistung": "Zählerschrank komplett", "menge": "1", "preis": "1480.00" },
+        { "leistung": "Steckdose Unterputz", "menge": "68", "preis": "12.50" },
+        { "leistung": "Leitung NYM-J 3x1,5", "menge": "820", "preis": "2.40" },
+        { "leistung": "Meisterstunde", "menge": "32", "preis": "78.00" },
+        { "leistung": "Gesellenstunde", "menge": "110", "preis": "62.00" }
+      ]
+    },
+
+    "stunden": [
+      {
+        "leistung": "Gesellenstunde",
+        "person": "s.aigner",
+        "vor_tagen": [14, 7],
+        "von": "07:00",
+        "bis": "15:30"
+      }
+    ]
+  },
+
+  {
+    "_kommentar": "EIN ANGEBOT, AUF DAS NOCH KEINE ANTWORT DA IST. Es steht im Auftragsbestand nicht - Angebote zählen dort nicht mit, und genau darüber wird im Termin gesprochen: Was ist verbindlich, was ist Hoffnung.\n\nDeshalb 'angebote' und nicht 'auftrag': Auf ein unbeantwortetes Angebot wird nicht kontiert, es hat keine Auftragspositionen.",
+    "nummer": "{jahr}-031",
+    "bezeichnung": "PV-Anlage mit Speicher Schreinerei",
+    "kunde": "Schreinerei Gruber",
+    "beschreibung": "Aufdachanlage 28 kWp auf der Hallensüdseite, Speicher 20 kWh, Anbindung an die vorhandene Unterverteilung.",
+
+    "angebote": [
+      {
+        "vor_tagen": 16,
+        "betreff": "PV-Anlage mit Speicher",
+        "kopftext": "für die Errichtung Ihrer Photovoltaikanlage unterbreiten wir Ihnen folgendes Angebot:",
+        "positionen": [
+          { "leistung": "Photovoltaikanlage 28 kWp, Aufdachmontage", "menge": "1", "preis": "31400.00", "einheit": "pausch" },
+          { "leistung": "Batteriespeicher 20 kWh mit Notstromfunktion", "menge": "1", "preis": "14800.00", "einheit": "pausch" },
+          { "leistung": "Meisterstunde", "menge": "48", "preis": "78.00" },
+          { "leistung": "Gesellenstunde", "menge": "96", "preis": "62.00" }
+        ]
+      }
+    ]
+  }
+]

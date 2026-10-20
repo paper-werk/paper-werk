@@ -1,0 +1,805 @@
+{
+  "id": "pwRechnungParse1",
+  "name": "rechnung-parsen",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🧾 Rechnung parsen (E-Rechnung oder Mistral)\n\n**Zweck:** Füllt an einer Eingangsrechnung die Felder, die der Übertrag an paper-werk braucht: Nettobetrag, Gesamtbetrag, Rechnungsnummer, Rechnungsdatum, Projektnummer.\n\n**Zuerst die E-Rechnung.** Der Workflow holt das Original-PDF (`?original=true`, die Archivfassung verliert den Anhang oft) und fragt paper-werk (`POST /api/v1/eingangsrechnungen/erechnung-pruefen/`), ob XML darin steckt. Ist es eine lesbare E-Rechnung, kommen die Felder aus dem XML (dazu `Fällig am`), **Mistral wird nicht gefragt**, und das Dokument bekommt den Tag `E-Rechnung`. Sonst liest Mistral aus dem OCR-Text wie `felder-erkennen-mistral`.\n\n**Trigger:** Paperless-Ablauf „Rechnungsfelder erkennen\" bei Tag `rechnung-erkennen` → `POST /webhook/rechnung-parsen` mit `{\"doc_url\": \"{{doc_url}}\"}`. Optional `felder` wie bei `felder-erkennen-mistral`; ohne gelten die Rechnungsfelder.\n\n**Muster wie `handschrift-ocr-titel-mistral`:** Zuständigkeit am echten Dokument prüfen, `wird bearbeitet` setzen, am Ende Kommando- und pending-Tag in EINEM Aufruf weg. Paperless räumt nichts selbst weg. So löst das Zurückschreiben der Felder den Ablauf nicht erneut aus.\n\n**Braucht** `paperless_url` und `paperwerk_url` in `pw_config`, die Credentials „Header Auth paperless\", „Header Auth paper-werk\", „Header Auth Mistral\". Die Tags legt `manage.py paperless_einrichten` in paper-werk an.\n\n**Bricht ein Lauf ab,** bleibt `wird bearbeitet` stehen, und `fehler-melden` schickt eine Mail. Dann den Fehler beheben, `wird bearbeitet` entfernen und `rechnung-erkennen` neu setzen.\n\n⚠️ Beim Mistral-Weg geht OCR-Text an die Mistral-Cloud (DSGVO/AVV beachten).",
+        "height": 760,
+        "width": 700
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1560,
+        -1060
+      ],
+      "id": "f7000007-0007-4000-8000-000000000027",
+      "name": "Doku"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "rechnung-parsen",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1500,
+        -256
+      ],
+      "id": "f7000007-0007-4000-8000-000000000001",
+      "name": "Webhook",
+      "webhookId": "b7000007-0007-4000-8000-000000000001"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "pwSubEinstell01",
+          "mode": "list",
+          "cachedResultName": "sub-einstellungen"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -1300,
+        -256
+      ],
+      "id": "f7000007-0007-4000-8000-000000000002",
+      "name": "Einstellungen holen"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Die Instanzwerte kommen aus sub-einstellungen (Knoten davor) und werden\n// in der Data Table pw_config gepflegt (n8n-Oberfläche, \"Data Tables\").\n// HIER stehen nur die FACHLICHEN Einstellungen dieses Workflows.\nconst werte = $('Einstellungen holen').first().json;\nconst pw = (key) => {\n  const v = werte[key];\n  if (v === undefined || String(v).trim() === '') {\n    throw new Error('pw_config: \"' + key + '\" fehlt oder ist leer; in der n8n-Oberfläche unter \"Data Tables\" eintragen.');\n  }\n  return v;\n};\nreturn [{\n  json: {\n    // ── aus der Data Table pw_config ──\n    paperless_url: pw('paperless_url'),\n    // paper-werk prüft, ob eine E-Rechnung im PDF steckt. Im Stack der\n    // Docker-Servicename, nicht die Browser-Adresse.\n    paperwerk_url: String(pw('paperwerk_url')).replace(/\\/+$/, ''),\n\n    // ── fachlich ──\n    // tag_kommando: der Auftrag; der Paperless-Ablauf \"Rechnungsfelder\n    //   erkennen\" löst bei diesem Tag aus.\n    // tag_pending: global. Solange er hängt, ruht JEDE Verarbeitung dieses\n    //   Dokuments; so feuert das Zurückschreiben der Felder den Ablauf\n    //   nicht erneut.\n    // tag_erechnung: kennzeichnet eine erkannte E-Rechnung. Er lenkt später\n    //   den Übertrag auf das XML (paper-werk-eingangsrechnung).\n    tag_kommando: 'rechnung-erkennen',\n    tag_pending: 'wird bearbeitet',\n    tag_erechnung: 'E-Rechnung',\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1100,
+        -256
+      ],
+      "id": "f7000007-0007-4000-8000-000000000003",
+      "name": "Konfiguration"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Dokument-ID aus dem Paperless-Aufruf. Wirft bewusst nicht, wenn keine\n// dabei ist; dann endet der Workflow ohne Meldung (siehe handschrift-ocr-titel-mistral).\nconst body = $('Webhook').first().json.body ?? {};\nlet id = body.doc_id ?? body.id;\nif (!id && body.doc_url) {\n  id = String(body.doc_url).match(/\\/documents\\/(\\d+)/)?.[1];\n}\nreturn [{ json: {\n  doc_id: id ? Number(id) : null,\n  grund: id ? null : 'Aufruf ohne Dokument-ID. Nichts zu tun.',\n} }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -900,
+        -256
+      ],
+      "id": "f7000007-0007-4000-8000-000000000004",
+      "name": "Auftrag lesen"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "f7000007-0007-4000-8000-000000000005",
+              "leftValue": "={{ $json.doc_id !== null }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -700,
+        -256
+      ],
+      "id": "f7000007-0007-4000-8000-000000000006",
+      "name": "Dokument-ID dabei?"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/tags/?page_size=500",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -500,
+        -256
+      ],
+      "id": "f7000007-0007-4000-8000-000000000007",
+      "name": "Tags laden",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/documents/{{ $('Auftrag lesen').first().json.doc_id }}/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -300,
+        -256
+      ],
+      "id": "f7000007-0007-4000-8000-000000000008",
+      "name": "Get Document",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ist dieser Lauf zuständig? Geschaut wird auf den ECHTEN Dokumentzustand,\n// nicht auf eine Absprache mit Paperless. Eine geänderte\n// Auslöser-Konfiguration erzeugt so höchstens Leerläufe, keine Schleifen.\nconst cfg = $('Konfiguration').first().json;\nconst alle = $('Tags laden').first().json.results ?? [];\nconst doc = $input.first().json;\n\nconst finde = (name) => {\n  const t = alle.find((x) => String(x.name).toLowerCase() === String(name).toLowerCase());\n  if (!t) {\n    throw new Error('In Paperless gibt es kein Schlagwort \"' + name + '\". '\n      + 'In paper-werk anlegen lassen: manage.py paperless_einrichten');\n  }\n  return t.id;\n};\nconst kommando = finde(cfg.tag_kommando);\nconst pending = finde(cfg.tag_pending);\nconst erechnung = finde(cfg.tag_erechnung);\nconst hat = (id) => (doc.tags ?? []).includes(id);\n\nlet grund = null;\nif (!hat(kommando)) {\n  grund = 'Dokument trägt \"' + cfg.tag_kommando + '\" nicht mehr. Nichts zu tun.';\n} else if (hat(pending)) {\n  grund = 'Dokument ist als \"' + cfg.tag_pending + '\" markiert; es läuft bereits eine Verarbeitung. Nichts zu tun.';\n}\n\nreturn [{ json: {\n  doc_id: doc.id,\n  zustaendig: grund === null,\n  grund,\n  tag_kommando_id: kommando,\n  tag_pending_id: pending,\n  tag_erechnung_id: erechnung,\n} }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -100,
+        -256
+      ],
+      "id": "f7000007-0007-4000-8000-000000000009",
+      "name": "Zuständigkeit prüfen"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "f7000007-0007-4000-8000-000000000010",
+              "leftValue": "={{ $json.zustaendig }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        100,
+        -256
+      ],
+      "id": "f7000007-0007-4000-8000-000000000011",
+      "name": "Zuständig?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/documents/bulk_edit/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { documents: [$json.doc_id], method: 'modify_tags', parameters: { add_tags: [$json.tag_pending_id], remove_tags: [] } } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        300,
+        -256
+      ],
+      "id": "f7000007-0007-4000-8000-000000000012",
+      "name": "Als \"wird bearbeitet\" markieren",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/documents/{{ $('Zuständigkeit prüfen').first().json.doc_id }}/download/?original=true",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        500,
+        -256
+      ],
+      "id": "f7000007-0007-4000-8000-000000000013",
+      "name": "Original holen",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      },
+      "notes": "original=true: Die Archivfassung, die Paperless selbst erzeugt (PDF/A), hat den XML-Anhang oft nicht mehr."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Konfiguration').first().json.paperwerk_url }}/api/v1/eingangsrechnungen/erechnung-pruefen/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "datei",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        700,
+        -256
+      ],
+      "id": "f7000007-0007-4000-8000-000000000014",
+      "name": "paper-werk prüft",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "pwApiToken000001",
+          "name": "Header Auth paper-werk"
+        }
+      },
+      "notes": "Legt nichts an. Antwortet immer 200, auch ohne E-Rechnung, dann mit erechnung=false."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c4nd0004-0004-4000-8000-000000000023",
+              "leftValue": "={{ $json.lesbar }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "looseTypeValidation": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        900,
+        -256
+      ],
+      "id": "f7000007-0007-4000-8000-000000000015",
+      "name": "E-Rechnung lesbar?"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Die Werte aus dem XML, in derselben Form wie \"Extract entities\" sie\n// für Mistral liefert, damit der Rest des Workflows beide Wege gleich\n// behandelt. paper-werk nennt die Felder schon beim Paperless-Namen:\n// Rechnungsnummer, Rechnungsdatum, Nettobetrag, Gesamtbetrag, Fällig am\n// und die Projektnummer, wenn die Projektreferenz eindeutig passt.\nconst befund = $input.first().json;\nconst doc = $('Get Document').first().json;\nconst entities = { ...(befund.felder ?? {}) };\nreturn [{\n  json: {\n    id: doc.id,\n    existingCustomFields: doc.custom_fields ?? [],\n    entityNames: Object.keys(entities),\n    entities,\n    has_entity: true,\n    erechnung: true,\n  },\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        -256
+      ],
+      "id": "f7000007-0007-4000-8000-000000000016",
+      "name": "E-Werte übernehmen"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Das Dokument beim Namen und nicht über $input: Kommt der Lauf von der\n// E-Rechnungs-Prüfung (keine oder keine lesbare E-Rechnung), liegt dort\n// die Antwort von paper-werk.\nconst doc = $('Get Document').first().json;\nconst content = (doc.content ?? '').trim();\nif (!content) throw new Error('Dokument hat keinen Text (content leer)');\nreturn [{ json: { id: doc.id, content, existingCustomFields: doc.custom_fields ?? [] } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        64
+      ],
+      "id": "f7000007-0007-4000-8000-000000000017",
+      "name": "Extract content"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// WELCHE FELDER extrahiert werden: zwei Wege, und der erste gewinnt.\n//\n// 1. Aus dem Webhook-Body: { \"felder\": { \"Nettobetrag\": \"Beschreibung\", ... } }\n//    Damit entscheidet der AUFRUFER, was er braucht. Ein Paperless-Workflow\n//    fuer Laborrechnungen fragt nach anderen Feldern als einer fuer\n//    Versicherungspost, ohne dass dieser Workflow dafuer angefasst wird.\n//\n// 2. Ohne Angabe gelten die VORGABEN unten: die Felder, die der Übertrag\n//    an paper-werk braucht. Der Regelfall.\n//\n// Schluessel  = Name des Custom Fields in Paperless (Suche case-insensitive).\n// Wert        = Beschreibung fuer das Modell (was ist gemeint, welches Format).\n// Das Custom Field muss in Paperless existieren.\n// ============================================================\nconst VORGABEN = {\n  'Nettobetrag': 'Der Rechnungsbetrag OHNE Umsatzsteuer. Nur die Zahl, mit Punkt als Dezimaltrenner und ohne Tausenderpunkte (also \"1758.00\").',\n  'Gesamtbetrag': 'Der Rechnungsbetrag MIT Umsatzsteuer, also der Betrag, der zu zahlen ist. Format wie beim Nettobetrag.',\n  'Rechnungsnummer': 'Die Rechnungsnummer des Lieferanten, exakt wie sie auf dem Beleg steht (z. B. \"AL-2026-08777\").',\n  'Rechnungsdatum': 'Das Rechnungsdatum im Format JJJJ-MM-TT (z. B. \"2026-08-28\").',\n  'Projektnummer': 'Die Projektnummer bzw. das Projektkennzeichen (z. B. \"2026-042\"). Steht oft unter \"Ihre Referenz\" oder \"Bauvorhaben\".',\n};\nconst MISTRAL_MODEL = 'mistral-small-latest';\nconst MAX_CONTENT_CHARS = 15000;\n// ============================================================\n\nconst body = $('Webhook').first().json.body ?? {};\nlet gewuenscht = body.felder;\n\n// **Auch als JSON-String, und das ist kein Luxus.** Ein\n// Paperless-Arbeitsablauf sendet seine Parameter formular-kodiert; ein\n// verschachteltes Objekt gibt es dort nicht. Wer aus Paperless heraus\n// eigene Felder will, schickt sie deshalb als Zeichenkette:\n//   params: { \"felder\": \"{\\\"Nettobetrag\\\": \\\"Der Betrag ohne USt\\\"}\" }\nif (typeof gewuenscht === 'string' && gewuenscht.trim() !== '') {\n  try {\n    gewuenscht = JSON.parse(gewuenscht);\n  } catch (e) {\n    throw new Error('\"felder\" ist ein Text, aber kein gueltiges JSON: ' + e.message\n      + '; erwartet wird {\"Feldname\": \"Beschreibung\", ...}');\n  }\n}\n\nlet ENTITIES;\nif (gewuenscht === undefined || gewuenscht === null) {\n  ENTITIES = VORGABEN;\n} else {\n  // Streng pruefen statt still auf die Vorgaben zurueckfallen: Wer \"felder\"\n  // mitschickt, meint es; ein Tippfehler im Schluesselnamen soll auffallen\n  // und nicht dazu fuehren, dass etwas ganz anderes extrahiert wird.\n  if (typeof gewuenscht !== 'object' || Array.isArray(gewuenscht)) {\n    throw new Error('\"felder\" muss ein Objekt sein: {\"Feldname\": \"Beschreibung fuer das Modell\", ...}');\n  }\n  const namen = Object.keys(gewuenscht);\n  if (namen.length === 0) {\n    throw new Error('\"felder\" ist leer, dann gibt es nichts zu extrahieren. Feld weglassen, um die Vorgaben zu benutzen.');\n  }\n  for (const name of namen) {\n    const beschreibung = gewuenscht[name];\n    if (typeof beschreibung !== 'string' || beschreibung.trim() === '') {\n      throw new Error('Feld \"' + name + '\" braucht eine Beschreibung fuer das Modell (ein nicht-leerer Text). Ohne sie raet Mistral, was gemeint ist.');\n    }\n  }\n  ENTITIES = gewuenscht;\n}\n\nconst src = $('Extract content').first().json;\nconst entityNames = Object.keys(ENTITIES);\n\nconst fieldList = entityNames\n  .map((name) => `- \"${name}\": ${ENTITIES[name]}`)\n  .join('\\n');\n\nconst jsonSkeleton = '{' + entityNames.map((n) => `\"${n}\": \"...\"`).join(', ') + '}';\n\nconst SYSTEM_PROMPT = `Du bist ein Assistent zur Datenextraktion aus Dokumenten in einem Paperless-Dokumentenmanagementsystem. Du bekommst den OCR-Volltext eines Dokuments und extrahierst daraus definierte Felder.\n\nZu extrahierende Felder:\n${fieldList}\n\nRegeln:\n- Übernimm den Wert exakt so, wie er im Dokument steht (gleiche Schreibweise, Bindestriche, Schrägstriche)\n- Gib nur den Wert selbst zurück, ohne Beschriftung davor (also \"RE-2026-0042\", nicht \"Rechnungsnummer: RE-2026-0042\")\n- Ist ein Feld im Dokument nicht vorhanden oder bist du unsicher, gib null zurück; erfinde niemals Werte\n- Kommt ein Feld mehrfach vor, nimm den Wert, der sich auf das Dokument selbst bezieht (z. B. die eigene Rechnungsnummer, nicht eine referenzierte fremde)\n- Beträge ohne Währungszeichen und ohne Tausendertrennung, mit Punkt als Dezimaltrenner (also \"1758.00\", nicht \"1.758,00 €\")\n\nAntworte ausschließlich mit gültigem JSON in genau diesem Format, mit genau diesen Schlüsseln und ohne weitere Felder:\n${jsonSkeleton}\n(Wert jeweils ein String oder null)`;\n\nconst contentExcerpt = src.content.slice(0, MAX_CONTENT_CHARS);\n\nconst userContent = `OCR-Volltext des Dokuments (Auszug, ggf. gekürzt):\\n---\\n${contentExcerpt}\\n---\\n\\nExtrahiere nun die Felder und antworte als JSON.`;\n\nreturn [{\n  json: {\n    id: src.id,\n    existingCustomFields: src.existingCustomFields,\n    entityNames,\n    mistralBody: {\n      model: MISTRAL_MODEL,\n      response_format: { type: 'json_object' },\n      temperature: 0,\n      max_tokens: 300,\n      messages: [\n        { role: 'system', content: SYSTEM_PROMPT },\n        { role: 'user', content: userContent },\n      ],\n    },\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1300,
+        64
+      ],
+      "id": "f7000007-0007-4000-8000-000000000018",
+      "name": "Prepare extraction"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mistral.ai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.mistralBody }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1500,
+        64
+      ],
+      "id": "f7000007-0007-4000-8000-000000000019",
+      "name": "Mistral extract",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "OHN0lQXlD0SCttqZ",
+          "name": "Header Auth Mistral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Mistral-Antwort parsen und auf die konfigurierten Entitäten normalisieren.\nconst src = $('Prepare extraction').first().json;\nconst aiItem = $input.first().json;\n\nlet raw = aiItem?.choices?.[0]?.message?.content;\nif (typeof raw !== 'string' || raw.trim() === '') {\n  throw new Error('Keine Antwort von Mistral erhalten: ' + JSON.stringify(aiItem).slice(0, 500));\n}\n\n// Eventuelle Markdown-Zäune entfernen, dann JSON parsen.\nraw = raw.trim().replace(/^```(?:json)?\\s*/i, '').replace(/```\\s*$/, '').trim();\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch {\n  throw new Error('Mistral-Antwort ist kein gültiges JSON: ' + raw.slice(0, 500));\n}\n\n// Schlüssel case-insensitive zuordnen, Werte säubern.\nconst lowerMap = {};\nfor (const [k, v] of Object.entries(parsed)) lowerMap[k.toLowerCase()] = v;\n\nconst entities = {};\nfor (const name of src.entityNames) {\n  let v = parsed[name] ?? lowerMap[name.toLowerCase()] ?? null;\n  if (typeof v === 'number') v = String(v);\n  if (typeof v === 'string') {\n    v = v.trim();\n    if (v === '' || v.toLowerCase() === 'null') v = null;\n  } else if (v !== null) {\n    v = null;\n  }\n  entities[name] = v;\n}\n\nconst has_entity = Object.values(entities).some((v) => v !== null);\n\nreturn [{\n  json: {\n    id: src.id,\n    existingCustomFields: src.existingCustomFields,\n    entityNames: src.entityNames,\n    entities,\n    has_entity,\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1700,
+        64
+      ],
+      "id": "f7000007-0007-4000-8000-000000000020",
+      "name": "Extract entities"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/custom_fields/?page_size=100",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1900,
+        -256
+      ],
+      "id": "f7000007-0007-4000-8000-000000000021",
+      "name": "Find custom fields",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Die Werte kommen von einem der beiden Wege: aus der E-Rechnung oder\n// von Mistral.\nconst entityData = $('E-Werte übernehmen').isExecuted\n  ? $('E-Werte übernehmen').first().json\n  : $('Extract entities').first().json;\nconst allFields = $input.first().json.results ?? [];\n\nfunction findFieldId(name) {\n  const field = allFields.find(f => String(f.name).toLowerCase() === name.toLowerCase());\n  return field ? field.id : null;\n}\n\n// Für jede gefundene Entität das passende Custom Field ermitteln.\nconst updates = [];\nfor (const name of entityData.entityNames) {\n  const value = entityData.entities[name];\n  if (value === null) continue;\n  const fieldId = findFieldId(name);\n  if (!fieldId) {\n    throw new Error('Custom field \"' + name + '\" nicht in Paperless gefunden. Bitte unter Einstellungen > Benutzerdefinierte Felder anlegen (Typ Text).');\n  }\n  updates.push({ fieldId, value });\n}\n\n// Vorhandene Custom-Field-Werte behalten, nur die extrahierten überschreiben.\nconst updateIds = new Set(updates.map(u => u.fieldId));\nconst existingFields = entityData.existingCustomFields ?? [];\nconst otherFields = existingFields.filter(f => !updateIds.has(f.field));\nconst customFields = [\n  ...otherFields,\n  ...updates.map(u => ({ field: u.fieldId, value: u.value })),\n];\n\nreturn [{ json: { id: entityData.id, customFields, entities: entityData.entities,\n  erechnung: entityData.erechnung === true } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2100,
+        -256
+      ],
+      "id": "f7000007-0007-4000-8000-000000000022",
+      "name": "Build PATCH body"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/documents/{{ $json.id }}/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { custom_fields: $json.customFields } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2300,
+        -256
+      ],
+      "id": "f7000007-0007-4000-8000-000000000023",
+      "name": "PATCH custom fields",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/documents/bulk_edit/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { documents: [$('Zuständigkeit prüfen').first().json.doc_id], method: 'modify_tags', parameters: { add_tags: $('Build PATCH body').first().json.erechnung ? [$('Zuständigkeit prüfen').first().json.tag_erechnung_id] : [], remove_tags: [$('Zuständigkeit prüfen').first().json.tag_kommando_id, $('Zuständigkeit prüfen').first().json.tag_pending_id] } } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2500,
+        -256
+      ],
+      "id": "f7000007-0007-4000-8000-000000000024",
+      "name": "Abschließen: Tags umsetzen",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      },
+      "notes": "Kommando- und pending-Tag in EINEM Aufruf weg, dazu bei einer E-Rechnung ihr Tag. Danach trägt das Dokument keinen Auslöser mehr."
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: {\n  status: 'erledigt',\n  doc_id: $('Zuständigkeit prüfen').first().json.doc_id,\n  erechnung: $('Build PATCH body').first().json.erechnung,\n} }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2700,
+        -256
+      ],
+      "id": "f7000007-0007-4000-8000-000000000025",
+      "name": "Fertig"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ende ohne Meldung: kein Fehler, keine Mail. Der Aufruf gilt einem anderen Ablauf.\nreturn [{ json: {\n  status: 'übersprungen',\n  grund: $json.grund ?? 'unbekannt',\n  doc_id: $json.doc_id ?? null,\n} }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        224
+      ],
+      "id": "f7000007-0007-4000-8000-000000000026",
+      "name": "Nichts zu tun"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Einstellungen holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Einstellungen holen": {
+      "main": [
+        [
+          {
+            "node": "Konfiguration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Konfiguration": {
+      "main": [
+        [
+          {
+            "node": "Auftrag lesen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auftrag lesen": {
+      "main": [
+        [
+          {
+            "node": "Dokument-ID dabei?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dokument-ID dabei?": {
+      "main": [
+        [
+          {
+            "node": "Tags laden",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Nichts zu tun",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tags laden": {
+      "main": [
+        [
+          {
+            "node": "Get Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Document": {
+      "main": [
+        [
+          {
+            "node": "Zuständigkeit prüfen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zuständigkeit prüfen": {
+      "main": [
+        [
+          {
+            "node": "Zuständig?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zuständig?": {
+      "main": [
+        [
+          {
+            "node": "Als \"wird bearbeitet\" markieren",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Nichts zu tun",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Als \"wird bearbeitet\" markieren": {
+      "main": [
+        [
+          {
+            "node": "Original holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Original holen": {
+      "main": [
+        [
+          {
+            "node": "paper-werk prüft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "paper-werk prüft": {
+      "main": [
+        [
+          {
+            "node": "E-Rechnung lesbar?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "E-Rechnung lesbar?": {
+      "main": [
+        [
+          {
+            "node": "E-Werte übernehmen",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "E-Werte übernehmen": {
+      "main": [
+        [
+          {
+            "node": "Find custom fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract content": {
+      "main": [
+        [
+          {
+            "node": "Prepare extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare extraction": {
+      "main": [
+        [
+          {
+            "node": "Mistral extract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral extract": {
+      "main": [
+        [
+          {
+            "node": "Extract entities",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract entities": {
+      "main": [
+        [
+          {
+            "node": "Find custom fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find custom fields": {
+      "main": [
+        [
+          {
+            "node": "Build PATCH body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build PATCH body": {
+      "main": [
+        [
+          {
+            "node": "PATCH custom fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PATCH custom fields": {
+      "main": [
+        [
+          {
+            "node": "Abschließen: Tags umsetzen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Abschließen: Tags umsetzen": {
+      "main": [
+        [
+          {
+            "node": "Fertig",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "errorWorkflow": "pwFehlerMelden01"
+  },
+  "active": false,
+  "pinData": {}
+}

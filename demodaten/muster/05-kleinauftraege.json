@@ -1,0 +1,12 @@
+[
+  {
+    "_kommentar": "Eine Rechnung OHNE Projekt, direkt an den Kunden - für einen Handwerksbetrieb der Alltag. Ein Beleg trägt Kunde ODER Projekt, nie beides.",
+    "vor_monaten": 3,
+    "kunde": "Hausverwaltung Brunner",
+    "betreff": "Stoerung Treppenhausbeleuchtung",
+    "positionen": [
+      { "leistung": "Meisterstunde", "menge": "2", "preis": "78.00" },
+      { "leistung": "Steckdose Unterputz", "menge": "4", "preis": "12.50" }
+    ]
+  }
+]

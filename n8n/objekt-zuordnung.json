@@ -1,0 +1,438 @@
+{
+  "name": "objekt-zuordnung",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🏠 Objekt-Zuordnung (Hausverwaltung, Mistral)\n\n**Zweck:** Ordnet eingehende Dokumente (Handwerkerrechnungen, Schreiben, Protokolle) automatisch der richtigen **Liegenschaft** zu, indem das LLM die im Text genannte Objektadresse erkennt und den passenden Objekt-Tag setzt.\n\n**Konvention:** Pro Liegenschaft ein Paperless-Tag mit Präfix `obj:` anlegen, z. B. `obj:Musterstr-12`, `obj:Hauptplatz-3`. Das LLM darf NUR aus dieser Liste wählen (IDs werden zusätzlich in n8n validiert); es kann keine Objekte erfinden.\n\n**Trigger:** Paperless-Workflow (Auslöser: Dokument hinzugefügt) → `POST /webhook/objekt-zuordnung` mit Body `{\"doc_url\": \"{doc_url}\"}` (alternativ `doc_id`).\n\n**Logik:** Hat das Dokument bereits einen `obj:`-Tag, passiert nichts (manuelle Zuordnung wird nie überschrieben). Ist kein Objekt eindeutig erkennbar, bleibt das Dokument unzugeordnet, ohne Vermutungen.\n\n**Fehlerverhalten:** Fehlende ID, leerer OCR-Text, keine `obj:`-Tags in Paperless oder ungültige Mistral-Antwort ⇒ Abbruch mit klarer Meldung. Mistral-Aufruf hat 60 s Timeout.\n\n⚠️ OCR-Text (8000 Zeichen) geht an die Mistral-Cloud (DSGVO/AVV beachten).",
+        "height": 640,
+        "width": 720
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1408,
+        -960
+      ],
+      "id": "e6000006-0006-4000-8000-000000000099",
+      "name": "Doku"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "objekt-zuordnung",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1328,
+        -256
+      ],
+      "id": "e6000006-0006-4000-8000-000000000001",
+      "name": "Webhook",
+      "webhookId": "b6000006-0006-4000-8000-000000000001"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "pwSubEinstell01",
+          "mode": "list",
+          "cachedResultName": "sub-einstellungen"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -1120,
+        -256
+      ],
+      "id": "e6000006-0006-4000-8000-0000000000c1",
+      "name": "Einstellungen holen"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Die Instanzwerte kommen aus sub-einstellungen (Knoten davor) und werden\n// in der Data Table pw_config gepflegt (n8n-Oberfläche, \"Data Tables\").\n// HIER stehen nur die FACHLICHEN Einstellungen dieses Workflows: Fristen,\n// Tag-Namen, Feldnamen.\nconst werte = $('Einstellungen holen').first().json;\nconst pw = (key) => {\n  const v = werte[key];\n  if (v === undefined || String(v).trim() === '') {\n    throw new Error('pw_config: \"' + key + '\" fehlt oder ist leer; in der n8n-Oberfläche unter \"Data Tables\" eintragen.');\n  }\n  return v;\n};\nreturn [{\n  json: {\n    // ── aus der Data Table pw_config ──\n    // Dieser Workflow verschickt keine Mail und braucht deshalb nur die\n    // Paperless-Adresse für seine API-Aufrufe.\n    paperless_url: pw('paperless_url')\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -912,
+        -256
+      ],
+      "id": "e6000006-0006-4000-8000-0000000000c2",
+      "name": "Konfiguration"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Dokument-ID aus dem Paperless-Webhook holen.\n// Body kann { doc_id }, { id } oder { doc_url } enthalten.\nconst body = $('Webhook').first().json.body ?? {};\nlet id = body.doc_id ?? body.id;\nif (!id && body.doc_url) {\n  id = String(body.doc_url).match(/\\/documents\\/(\\d+)/)?.[1];\n}\nif (!id) throw new Error('Keine doc_id/doc_url im Webhook-Body');\nreturn [{ json: { id: Number(id) } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        -256
+      ],
+      "id": "e6000006-0006-4000-8000-000000000002",
+      "name": "Extract ID"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/documents/{{ $('Extract ID').first().json.id }}/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -512,
+        -256
+      ],
+      "id": "e6000006-0006-4000-8000-000000000003",
+      "name": "Get Document",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const doc = $input.first().json;\nconst content = (doc.content ?? '').trim();\nif (!content) throw new Error('Dokument hat keinen Text (content leer)');\nreturn [{ json: { id: doc.id, content, docTags: doc.tags ?? [] } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        -256
+      ],
+      "id": "e6000006-0006-4000-8000-000000000004",
+      "name": "Extract content"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/tags/?page_size=500",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -112,
+        -256
+      ],
+      "id": "e6000006-0006-4000-8000-000000000005",
+      "name": "Objekt-Tags laden",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// KONFIGURATION\nconst OBJEKT_PREFIX = 'obj:';\nconst MISTRAL_MODEL = 'mistral-small-latest';\nconst MAX_CONTENT_CHARS = 8000;\n// ============================================================\n\nconst src = $('Extract content').first().json;\nconst alle = $input.first().json.results || [];\nconst objekte = alle.filter(t => String(t.name || '').toLowerCase().startsWith(OBJEKT_PREFIX));\nif (!objekte.length) {\n  throw new Error('Keine Objekt-Tags mit Präfix \"' + OBJEKT_PREFIX + '\" in Paperless gefunden; pro Liegenschaft einen Tag wie \"obj:Musterstr-12\" anlegen.');\n}\n\n// Manuelle Zuordnung nie überschreiben: hat das Dokument schon einen obj:-Tag, überspringen.\nconst bereits = objekte.find(t => (src.docTags || []).includes(t.id));\n\nconst liste = objekte.map(t => t.id + ' = ' + t.name).join('\\n');\n\nconst SYSTEM_PROMPT = `Du bist ein Klassifikationssystem einer Hausverwaltung. Du bekommst den OCR-Volltext eines Dokuments und ordnest es genau einer Liegenschaft (Objekt) zu.\n\nVerfügbare Objekte (id = Bezeichnung):\n${liste}\n\nRegeln:\n- Wähle genau ein Objekt, nur wenn es eindeutig im Dokument erkennbar ist (Objektadresse, Objektbezeichnung, Wohnungs-/Einheitsnummer)\n- Die Adresse des Absenders oder der Hausverwaltung selbst zählt NICHT als Objektadresse\n- Verwende keine Vermutungen; passt kein Objekt eindeutig, gib null zurück\n- Antworte ausschließlich mit gültigem JSON in genau diesem Format und ohne weitere Felder:\n{\"objekt_tag_id\": 12} oder {\"objekt_tag_id\": null}`;\n\nconst userContent = `OCR-Volltext (Auszug, ggf. gekürzt):\\n---\\n${src.content.slice(0, MAX_CONTENT_CHARS)}\\n---\\n\\nOrdne nun das Objekt zu und antworte als JSON.`;\n\nreturn [{\n  json: {\n    id: src.id,\n    bereits_zugeordnet: !!bereits,\n    allowed_ids: objekte.map(t => t.id),\n    mistralBody: {\n      model: MISTRAL_MODEL,\n      response_format: { type: 'json_object' },\n      temperature: 0,\n      max_tokens: 100,\n      messages: [\n        { role: 'system', content: SYSTEM_PROMPT },\n        { role: 'user', content: userContent },\n      ],\n    },\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        -256
+      ],
+      "id": "e6000006-0006-4000-8000-000000000006",
+      "name": "Prompt bauen"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-obj-not-assigned",
+              "leftValue": "={{ $json.bereits_zugeordnet }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "looseTypeValidation": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        288,
+        -256
+      ],
+      "id": "e6000006-0006-4000-8000-000000000007",
+      "name": "Noch ohne Objekt?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mistral.ai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.mistralBody }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        496,
+        -256
+      ],
+      "id": "e6000006-0006-4000-8000-000000000008",
+      "name": "Mistral zuordnen",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "OHN0lQXlD0SCttqZ",
+          "name": "Header Auth Mistral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Mistral-Antwort parsen. Sicherheitsnetz: nur Tag-IDs aus der\n// Objektliste akzeptieren; das LLM darf nichts erfinden.\nconst src = $('Prompt bauen').first().json;\nconst aiItem = $input.first().json;\n\nlet raw = aiItem?.choices?.[0]?.message?.content;\nif (typeof raw !== 'string' || raw.trim() === '') {\n  throw new Error('Keine Antwort von Mistral erhalten: ' + JSON.stringify(aiItem).slice(0, 500));\n}\nraw = raw.trim().replace(/^```(?:json)?\\s*/i, '').replace(/```\\s*$/, '').trim();\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch {\n  throw new Error('Mistral-Antwort ist kein gültiges JSON: ' + raw.slice(0, 500));\n}\n\nlet tagId = parsed.objekt_tag_id;\nif (typeof tagId === 'string' && /^\\d+$/.test(tagId)) tagId = Number(tagId);\nif (!src.allowed_ids.includes(tagId)) tagId = null;\n\nreturn [{ json: { id: src.id, objekt_tag_id: tagId, gefunden: tagId !== null } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        -256
+      ],
+      "id": "e6000006-0006-4000-8000-000000000009",
+      "name": "Antwort parsen"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-obj-found",
+              "leftValue": "={{ $json.gefunden }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "looseTypeValidation": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        896,
+        -256
+      ],
+      "id": "e6000006-0006-4000-8000-000000000010",
+      "name": "Objekt gefunden?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/documents/bulk_edit/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { documents: [$json.id], method: 'modify_tags', parameters: { add_tags: [$json.objekt_tag_id], remove_tags: [] } } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1104,
+        -256
+      ],
+      "id": "e6000006-0006-4000-8000-000000000011",
+      "name": "Objekt-Tag setzen",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Einstellungen holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract ID": {
+      "main": [
+        [
+          {
+            "node": "Get Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Document": {
+      "main": [
+        [
+          {
+            "node": "Extract content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract content": {
+      "main": [
+        [
+          {
+            "node": "Objekt-Tags laden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Objekt-Tags laden": {
+      "main": [
+        [
+          {
+            "node": "Prompt bauen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prompt bauen": {
+      "main": [
+        [
+          {
+            "node": "Noch ohne Objekt?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Noch ohne Objekt?": {
+      "main": [
+        [
+          {
+            "node": "Mistral zuordnen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral zuordnen": {
+      "main": [
+        [
+          {
+            "node": "Antwort parsen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Antwort parsen": {
+      "main": [
+        [
+          {
+            "node": "Objekt gefunden?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Objekt gefunden?": {
+      "main": [
+        [
+          {
+            "node": "Objekt-Tag setzen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Konfiguration": {
+      "main": [
+        [
+          {
+            "node": "Extract ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Einstellungen holen": {
+      "main": [
+        [
+          {
+            "node": "Konfiguration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "tags": [
+    {
+      "id": "Qr4w77Oluq8Hi4TJ",
+      "name": "paperless"
+    }
+  ],
+  "id": "DLCpWgAx37Cf7jtJ"
+}

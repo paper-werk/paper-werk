@@ -1,0 +1,18 @@
+[
+  {
+    "_kommentar": "matching_algorithm 6 = 'automatisch': Paperless lernt aus den Dokumenten, denen ein Mensch den Typ bereits zugewiesen hat, und ordnet neue selbständig zu. 'match' bleibt dabei leer; der Wert wird bei Algorithmus 6 nicht ausgewertet, Paperless nutzt sein eigenes Modell. is_insensitive ist ebenfalls ohne Wirkung, steht aber so in der API-Antwort. --- WICHTIG für neue Installationen: Automatische Zuordnung braucht Trainingsmaterial. Auf einer frisch aufgesetzten Instanz ohne zugewiesene Dokumente ordnet sie nichts zu, und die ersten Zuweisungen muss ein Mensch von Hand machen. Das ist kein Fehler, sondern die Funktionsweise."
+  },
+  { "name": "Beleg", "matching_algorithm": 6, "is_insensitive": true },
+  {
+    "_kommentar": "Die gespeicherte Ansicht 'Rechnungen' filtert auf diesen Typ. Fehlt er, bricht das Modul paperless beim Anlegen der Ansichten ab.",
+    "name": "Rechnung", "matching_algorithm": 6, "is_insensitive": true
+  },
+  { "name": "Angebot", "matching_algorithm": 6, "is_insensitive": true },
+  { "name": "Auftragsbestätigung", "matching_algorithm": 6, "is_insensitive": true },
+  { "name": "Lieferschein", "matching_algorithm": 6, "is_insensitive": true },
+  { "name": "Vertrag", "matching_algorithm": 6, "is_insensitive": true },
+  { "name": "Kontoauszug", "matching_algorithm": 6, "is_insensitive": true },
+  { "name": "Bescheid", "matching_algorithm": 6, "is_insensitive": true },
+  { "name": "Dokumentation", "matching_algorithm": 6, "is_insensitive": true },
+  { "name": "Sonstiges", "matching_algorithm": 6, "is_insensitive": true }
+]

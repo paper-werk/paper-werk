@@ -1,0 +1,15 @@
+{
+  "_kommentar": "Elektro Hofmeister im Übergang: Michael Hofmeister hat im Vorjahr allein angefangen, seit Januar ist ein Geselle da, seit dem Spätsommer ein Azubi. Diese eine Konstellation spricht alle drei Zielgruppen an - der Solo erkennt den Anfang, das Startup den Übergang mit dem ersten Angestellten, das Handwerk das Gewerk.",
+  "name": "Elektro Hofmeister e.K.",
+  "strasse": "Schirmbeckstraße 14",
+  "plz": "84034",
+  "ort": "Landshut",
+  "telefon": "0871 43120-0",
+  "email": "buero@example.invalid",
+  "steuernummer": "132/218/40391",
+  "ust_id": "DE327451908",
+  "bank": "Sparkasse Landshut",
+  "iban": "DE76743500000001204561",
+  "bic": "BYLADEM1LAH",
+  "geschaeftsfuehrung": "Elektromeister Michael Hofmeister"
+}

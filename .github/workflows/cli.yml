@@ -1,0 +1,25 @@
+# Tests der Kommandozeile (paperwerk/). 3.8 als ältestes Python, das auf
+# einem Docker-Host noch anzutreffen ist (Ubuntu 20.04, ältere Jetson-Images),
+# 3.13 als aktuelles. Laufzeit ohne Abhängigkeiten; pytest nur für die Tests.
+name: cli
+
+on:
+  push:
+    paths: ["paperwerk/**", "tests/**", "paper-werk", ".github/workflows/cli.yml"]
+  pull_request:
+    paths: ["paperwerk/**", "tests/**", "paper-werk", ".github/workflows/cli.yml"]
+
+jobs:
+  tests:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        python: ["3.8", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install pytest
+      - run: python -m pytest tests -q
+      - run: ./paper-werk -h

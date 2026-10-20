@@ -1,0 +1,8 @@
+[
+  {
+    "_kommentar": "Eine Zahlungserinnerung zur ältesten offenen Rechnung. Ohne sie zeigt die Startseite unter 'Gemahnt' eine Null, und der ganze Weg vom Zahlungsziel zur Mahnstufe bliebe unbelegt.\n\n'zu': 'aelteste' ist der einzige Sonderwert im ganzen Format - gemeint ist die älteste festgeschriebene Rechnung. Ein Verweis über den Betreff ginge auch, wäre hier aber schlechter: Welche Rechnung die älteste ist, ergibt sich aus dem Bestand und soll sich mit ihm ändern dürfen.",
+    "zu": "aelteste",
+    "stufe": 1,
+    "vor_tagen": 18
+  }
+]

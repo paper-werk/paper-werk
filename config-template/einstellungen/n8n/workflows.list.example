@@ -1,0 +1,125 @@
+# Welche n8n-Workflows bei der Erstinstallation eingespielt werden.
+# Format:  <pfad-relativ-zur-repo-wurzel>;<aktivieren: true|false>
+# Zeilen mit # und Leerzeilen werden ignoriert. Kommentare stehen auf einer
+# EIGENEN Zeile; apply.sh liest alles nach dem ';' als Aktivierungsflag, ein
+# angehängtes "# ..." würde ';true' also unbemerkt entwerten.
+#
+# Hinweis: Der n8n-CLI-Import setzt 'active' immer auf false zurück;
+# das Aktivieren übernimmt apply.sh danach explizit.
+#
+
+# ── Fehlermeldung: muss aktiv sein ───────────────────────────────────────────
+# fehler-melden ist der globale Error-Workflow. Alle anderen Workflows zeigen
+# per "settings": { "errorWorkflow": "pwFehlerMelden01" } auf ihn; bricht einer
+# ab, verschickt er eine Mail an die Betreiber-Adresse mail_betrieb aus der
+# Data Table pw_config.
+#
+# Er verschickt zwar Mail, ist aber trotzdem ';true', anders als alle anderen
+# Mail-Workflows unten. Der Unterschied: er schreibt an den BETREIBER und nur
+# im Fehlerfall, nicht an Kunden oder Dritte. Und vor allem muss er aktiv sein,
+# sonst passiert nichts; n8n protokolliert dann nur
+# "Workflow ... is not active and cannot be executed".
+#
+# fehler-melden-test bleibt ';false': ein Prüfwerkzeug, das absichtlich einen
+# Fehler wirft. Nach dem Einrichten einmal aktivieren, Webhook aufrufen,
+# Postfach kontrollieren, wieder deaktivieren. Dieser Test ist nicht optional -
+# scheitert fehler-melden selbst, etwa an einer falschen SMTP-Credential,
+# verschluckt n8n das kommentarlos.
+n8n/fehler-melden.json;true
+n8n/fehler-melden-test.json;false
+
+# ── sub-Workflows: IMMER ';true' ─────────────────────────────────────────────
+# Konvention: Alles, was mit "sub-" beginnt, ist Bibliothek und kein
+# Einstiegspunkt. Diese Workflows haben keinen eigenen Trigger, sondern nur
+# einen Execute-Workflow-Trigger; sie sind also ausschließlich über ihren
+# Aufrufer erreichbar und tun von sich aus nichts.
+#
+# Trotzdem müssen sie veröffentlicht sein: n8n 2.x holt beim Aufruf über
+# getPublishedWorkflowData die VERÖFFENTLICHTE Fassung und bricht sonst mit
+# "Workflow is not active and cannot be executed" ab (unter n8n 1.x war das
+# nicht nötig). Ein unveröffentlichter Sub ist
+# damit ein stiller Totalausfall seines Aufrufers. Deshalb steht hier nie
+# etwas anderes als ';true', und deshalb ist es eine Regel und keine
+# Einzelfallentscheidung.
+n8n/sub-einstellungen.json;true
+n8n/sub-handschrift-ocr-titel.json;true
+#
+# sub-duo-versand und sub-stb-versand sind die beiden Unterbauten des
+# Steuerversands. Sie stehen BEIDE hier, obwohl immer nur einer benutzt
+# wird: ein nicht eingehängter Sub tut nichts, kostet nichts und ruft
+# nichts auf. Fehlt er dagegen, wenn jemand den Kanal wechselt, bricht
+# der Aufrufer mit "Workflow is not active and cannot be executed" ab -
+# und das erst beim ersten echten Versand. Beide vorhalten ist billiger.
+n8n/sub-duo-versand.json;true
+# Die Fassung für Installationen MIT paper-werk: hängt
+# bei XRechnung das XML an. Gewählt über steuer_kanal = duo_paperwerk.
+n8n/sub-duo-versand-paperwerk.json;true
+n8n/sub-stb-versand.json;true
+n8n/sub-sevdesk-versand.json;true
+
+# ── Sofort aktiv: Webhook-Workflows ohne Mailversand ─────────────────────────
+# Diese vier tun von sich aus nichts. Sie warten auf den Aufruf des zugehörigen
+# Paperless-Arbeitsablaufs, und der hängt an einem Tag, den ein Mensch bewusst
+# setzt. Aktiv ausliefern ist hier das bessere Verhalten: ein INAKTIVER
+# Webhook-Workflow beantwortet den Aufruf aus Paperless mit 404, und das steht
+# dann nur im Paperless-Log. Aktiv, aber mit noch fehlendem Mistral-API-Key,
+# schlägt der Lauf sichtbar in der n8n-Ausführungsliste fehl: derselbe Fehler,
+# nur auffindbar. Die vier Paperless-Gegenstücke stehen in workflows.json
+# passend dazu auf "enabled": true.
+n8n/titel-erzeugen-mistral.json;true
+n8n/handschrift-ocr-titel-mistral.json;true
+n8n/felder-erkennen-mistral.json;true
+n8n/vertragsdaten-erkennen-mistral.json;true
+
+# ── Erst nach Konfiguration aktivieren ───────────────────────────────────────
+# Alle folgenden verschicken Mail. Empfänger und Absender stehen in der Data
+# Table pw_config; beim Ausliefern ist dort noch nicht geprüft, ob die
+# Adressen stimmen und die SMTP-Credential trägt. Sechs davon hängen
+# zusätzlich an einem Zeitplan und laufen ungefragt los:
+#   angebots-nachfass            Mo 08:30
+#   erinnerung-einfach           täglich 08:00
+#   kuendigungsfristen-melden    Mo 08:00
+#   paperless-health-check       täglich 07:00
+#   steuer-beleg-monatslauf      1. des Monats 06:00
+# steuer-beleg-sofort ist zwar ein Webhook, verschickt aber ebenfalls Mail.
+#
+# Reihenfolge beim Scharfschalten: SMTP-Credential in der n8n-UI prüfen,
+# Adressen in der Data Table pw_config kontrollieren (n8n-Oberfläche ->
+# Data Tables; im Konfigurations-Node des Workflows stehen sie nicht mehr,
+# dort ist nur noch Fachliches wie nachfass_tage), einmal manuell ausführen,
+# dann aktivieren.
+n8n/angebots-nachfass.json;false
+n8n/erinnerung-einfach.json;false
+n8n/kuendigungsfristen-melden.json;false
+n8n/paperless-health-check.json;false
+
+# ── Steuerversand: erst den Kanal wählen, dann scharf schalten ──────────────
+# Die beiden hier wählen nur aus; verschickt wird im Sub (siehe oben).
+# VOR dem Aktivieren in BEIDEN den Kanal festlegen, sonst geht der Sofortfall
+# woanders hin als der Monatslauf. Je Workflow zwei Stellen, beide sind im
+# Editor mit einem farbigen Kasten "Kanal wechseln" markiert:
+#   1. Knoten "Konfiguration", Block KANALWAHL:  mail_duo  <->  mail_stb
+#   2. Knoten "Versand ausführen", Feld Workflow: sub-duo-versand
+#                                              <-> sub-stb-versand
+# Ausgeliefert wird DUO. Wer keinen DATEV-Zugang hat, stellt auf StB um -
+# das ist der Weg, der immer geht (Zip + CSV-Belegliste per Mail).
+n8n/steuer-beleg-sofort.json;false
+n8n/steuer-beleg-monatslauf.json;false
+
+# ── Übergabe an paper-werk ───────────────────────────────────────────────────
+# paper-werk-eingangsrechnung übergibt gegengeprüfte Eingangsrechnungen an
+# paper-werk. ';true' aus demselben Grund wie die Webhook-Workflows oben: Ein
+# inaktiver Workflow beantwortet den Aufruf aus Paperless mit 404, und das
+# steht nur im Paperless-Log. Aktiv, aber ohne gültigen Dienstzugang, scheitert
+# der Lauf mit 401 sichtbar in der n8n-Ausführungsliste, und der Tag
+# "Paper-Werk senden" bleibt am Dokument hängen. Die hängenden Dokumente sind dann
+# die Liste der offenen Fälle, verloren geht nichts.
+# Voraussetzung für den echten Betrieb: Das Modul app hat paperless_einrichten
+# laufen lassen, der Dienstzugang steht in der Credential "Header Auth
+# paper-werk", und paperwerk_url ist in pw_config eingetragen.
+n8n/paper-werk-eingangsrechnung.json;true
+# rechnung-parsen füllt vorher die Felder dafür: erst E-Rechnung (paper-werk
+# liest das XML), sonst Mistral. Ausgelöst vom Paperless-Ablauf
+# "Rechnungsfelder erkennen" (Tag rechnung-erkennen). Dieselben
+# Voraussetzungen wie oben, dazu die Credential "Header Auth Mistral".
+n8n/rechnung-parsen.json;true

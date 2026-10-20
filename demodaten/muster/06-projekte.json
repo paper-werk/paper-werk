@@ -1,0 +1,64 @@
+[
+  {
+    "_kommentar": "Das Projekt zeigt den ganzen Kreislauf: Angebot wird Auftrag, auf dessen Positionen wird gearbeitet, und der Abschlag rechnet aus dem Vertrag ab. '{jahr}' wird zum laufenden Jahr.",
+    "nummer": "{jahr}-001",
+    "bezeichnung": "Sanierung Treppenhaus",
+    "kunde": "Hausverwaltung Brunner",
+    "beschreibung": "Erneuerung der Elektroinstallation im Treppenhaus.",
+
+    "auftrag": {
+      "_kommentar": "Angebot ein paar Tage vor dem Auftrag - in dieser Reihenfolge entsteht es auch im Betrieb. Ohne 'beauftragt' bleibt es beim Angebot.",
+      "angebot_vor_tagen": 90,
+      "auftrag_vor_tagen": 84,
+      "beauftragt": true,
+      "positionen": [
+        { "leistung": "Meisterstunde", "menge": "40", "preis": "78.00" },
+        { "leistung": "Steckdose Unterputz", "menge": "25", "preis": "12.50" }
+      ]
+    },
+
+    "stunden": [
+      {
+        "_kommentar": "Gebucht wird auf die Auftragsposition derselben Leistung - der Preis kommt dann aus dem Vertrag. Wochenenden laesst der Lader aus: Ein Bestand, in dem durchgearbeitet wird, fällt jedem Praktiker auf.",
+        "leistung": "Meisterstunde",
+        "person": "m.muster",
+        "vor_tagen": [80, 79, 78, 77, 76],
+        "von": "07:30",
+        "bis": "16:00"
+      }
+    ],
+
+    "mengen": [
+      {
+        "leistung": "Steckdose Unterputz",
+        "person": "m.muster",
+        "vor_tagen": [73, 72, 71],
+        "menge": "6"
+      }
+    ],
+
+    "abschlaege": [
+      {
+        "_kommentar": "Nur Bezeichnung und Menge: Einheit und Preis holt der Abschlag aus der Auftragsposition. Eine Position, die nicht beauftragt ist, wäre ein Fehler im Bestand - der Lauf bricht dann ab.",
+        "vor_tagen": 40,
+        "leistung_von_tagen": 44,
+        "leistung_bis_tagen": 5,
+        "positionen": [
+          { "leistung": "Meisterstunde", "menge": "20" }
+        ]
+      }
+    ],
+
+    "rechnungen": [
+      {
+        "_kommentar": "Eine gewoehnliche Rechnung am Projekt - hier mit eigenen Preisen statt aus dem Vertrag.",
+        "vor_tagen": 10,
+        "betreff": "Zusaetzliche Steckdosen 2. OG",
+        "kopftext": "wir berechnen Ihnen die nachstehend aufgefuehrten Leistungen.",
+        "positionen": [
+          { "leistung": "Steckdose Unterputz", "menge": "6", "preis": "12.50" }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,30 @@
+{
+    // Die zweite Hälfte der Zeilenenden-Frage; die erste steht in
+    // .gitattributes.
+    //
+    // Git sorgt dafür, dass richtig ANKOMMT, was aus dem Repo geholt wird.
+    // Diese Datei sorgt dafür, dass richtig GESPEICHERT wird, was hier
+    // entsteht. Ohne sie folgt VS Code unter Windows der Systemvorgabe
+    // (CRLF) und schreibt beim nächsten Speichern wieder Wagenrückläufe in
+    // ein Shell-Skript, und bash bricht dort ab.
+    //
+    // Und er fällt nicht auf: Mit core.autocrlf=input normalisiert Git beim
+    // Vergleich, `git status` bleibt still. Erst bash meckert, und dann
+    // steht der Aufruf.
+    "files.eol": "\n",
+
+    // Leerzeichen am Zeilenende und fehlende Schlusszeile sind in Shell und
+    // YAML keine Kosmetik: Ein Here-Doc-Terminator mit angehängtem
+    // Leerzeichen wird nicht erkannt, und eine YAML-Datei ohne
+    // Zeilenumbruch am Ende hängt beim Zusammenfügen an der nächsten.
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+
+    // Shell-Skripte in diesem Repo sind bash, nicht sh; sie benutzen
+    // Arrays, [[ ]] und local. Ohne diese Zuordnung meldet die
+    // ShellCheck-Erweiterung Fehler, die keine sind.
+    "files.associations": {
+        "*.sh": "shellscript",
+        ".env.*": "dotenv"
+    }
+}

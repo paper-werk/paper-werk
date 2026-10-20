@@ -1,0 +1,1086 @@
+[
+  {
+    "vor_monaten": 11,
+    "kunde": "Bäckerei Wimmer GmbH",
+    "betreff": "Störungsbeseitigung Backstube",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Notdienststunde",
+        "menge": "4",
+        "preis": "116.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "FI/LS-Schalter 16 A",
+        "menge": "3",
+        "preis": "68.00",
+        "einheit": "Stk"
+      },
+      {
+        "leistung": "Anfahrt",
+        "menge": "18",
+        "preis": "0.70",
+        "einheit": "km"
+      }
+    ],
+    "_kommentar": "Der Alltag des Betriebs und der Unterschied zum Ingenieurbüro: Rechnungen ohne Projekt, direkt an den Kunden. Für einen Auftrag über zwei Stunden ein Vorhaben anzulegen wäre Buchhaltung um ihrer selbst willen.\n\nSie füllen zugleich den Zwölf-Monats-Verlauf der Startseite - nicht mit zwölf großen Schlussrechnungen, sondern mit vielen kleinen. Die Zählung beginnt bei elf, nicht bei zwölf: Der Verlauf zeigt die letzten zwölf Monate EINSCHLIESSLICH des laufenden, ein Eintrag mit 12 landete davor und fehlte im Diagramm.\n\n\"leistung_von_tagen\"/\"leistung_bis_tagen\" zählen ab dem Belegdatum zurück, nicht ab heute: Die Leistung liegt ein paar Tage vor der Rechnung."
+  },
+  {
+    "vor_monaten": 11,
+    "kunde": "Familie Steinberger",
+    "betreff": "Wohnung 3: Installation nach Mieterwechsel",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Gesellenstunde",
+        "menge": "26",
+        "preis": "62.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "Steckdose Unterputz",
+        "menge": "18",
+        "preis": "12.50",
+        "einheit": "Stk"
+      },
+      {
+        "leistung": "FI/LS-Schalter 16 A",
+        "menge": "4",
+        "preis": "68.00",
+        "einheit": "Stk"
+      },
+      {
+        "leistung": "Leitung NYM-J 3x1,5",
+        "menge": "210",
+        "preis": "2.40",
+        "einheit": "m"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 10,
+    "kunde": "Schreinerei Gruber",
+    "betreff": "Beleuchtung Werkstatt erneuern",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Gesellenstunde",
+        "menge": "34",
+        "preis": "62.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "LED-Einbaustrahler",
+        "menge": "38",
+        "preis": "34.00",
+        "einheit": "Stk"
+      },
+      {
+        "leistung": "Leitung NYM-J 3x1,5",
+        "menge": "240",
+        "preis": "2.40",
+        "einheit": "m"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 10,
+    "kunde": "Familie Steinberger",
+    "betreff": "Steckdosen Küche nachrüsten",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Gesellenstunde",
+        "menge": "14",
+        "preis": "62.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "Steckdose Unterputz",
+        "menge": "12",
+        "preis": "12.50",
+        "einheit": "Stk"
+      },
+      {
+        "leistung": "Leitung NYM-J 3x1,5",
+        "menge": "95",
+        "preis": "2.40",
+        "einheit": "m"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 10,
+    "kunde": "Bäckerei Wimmer GmbH",
+    "betreff": "Kühlaggregate: eigener Stromkreis",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Meisterstunde",
+        "menge": "12",
+        "preis": "78.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "FI/LS-Schalter 16 A",
+        "menge": "3",
+        "preis": "68.00",
+        "einheit": "Stk"
+      },
+      {
+        "leistung": "Leitung NYM-J 5x2,5",
+        "menge": "54",
+        "preis": "4.80",
+        "einheit": "m"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 9,
+    "kunde": "Bäckerei Wimmer GmbH",
+    "betreff": "E-Check Betriebsräume",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "E-Check Wohneinheit",
+        "menge": "3",
+        "preis": "145.00",
+        "einheit": "pausch"
+      },
+      {
+        "leistung": "Prüfung ortsveränderlicher Geräte",
+        "menge": "124",
+        "preis": "9.50",
+        "einheit": "Stk"
+      },
+      {
+        "leistung": "Meisterstunde",
+        "menge": "9",
+        "preis": "78.00",
+        "einheit": "Std"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 9,
+    "kunde": "Schreinerei Gruber",
+    "betreff": "Maschinenanschluss Absauganlage",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Meisterstunde",
+        "menge": "18",
+        "preis": "78.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "Leitung NYM-J 5x2,5",
+        "menge": "86",
+        "preis": "4.80",
+        "einheit": "m"
+      },
+      {
+        "leistung": "FI/LS-Schalter 16 A",
+        "menge": "4",
+        "preis": "68.00",
+        "einheit": "Stk"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 9,
+    "kunde": "Familie Steinberger",
+    "betreff": "Kellerverteilung erneuern",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Gesellenstunde",
+        "menge": "22",
+        "preis": "62.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "FI/LS-Schalter 16 A",
+        "menge": "8",
+        "preis": "68.00",
+        "einheit": "Stk"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 8,
+    "kunde": "Familie Steinberger",
+    "betreff": "Rauchwarnmelder Jahreswartung",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Rauchwarnmelder-Wartung",
+        "menge": "96",
+        "preis": "12.00",
+        "einheit": "Stk"
+      },
+      {
+        "leistung": "Gesellenstunde",
+        "menge": "16",
+        "preis": "62.00",
+        "einheit": "Std"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 8,
+    "kunde": "Bäckerei Wimmer GmbH",
+    "betreff": "Kühltheke absichern und Notbeleuchtung",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Meisterstunde",
+        "menge": "14",
+        "preis": "78.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "FI/LS-Schalter 16 A",
+        "menge": "5",
+        "preis": "68.00",
+        "einheit": "Stk"
+      },
+      {
+        "leistung": "LED-Einbaustrahler",
+        "menge": "12",
+        "preis": "34.00",
+        "einheit": "Stk"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 8,
+    "kunde": "Schreinerei Gruber",
+    "betreff": "Hallentor: Steuerung und Zuleitung",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Gesellenstunde",
+        "menge": "19",
+        "preis": "62.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "Leitung NYM-J 5x2,5",
+        "menge": "42",
+        "preis": "4.80",
+        "einheit": "m"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 7,
+    "kunde": "Schreinerei Gruber",
+    "betreff": "Außenbeleuchtung Hof",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Gesellenstunde",
+        "menge": "24",
+        "preis": "62.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "LED-Einbaustrahler",
+        "menge": "22",
+        "preis": "34.00",
+        "einheit": "Stk"
+      },
+      {
+        "leistung": "Leitung NYM-J 3x1,5",
+        "menge": "180",
+        "preis": "2.40",
+        "einheit": "m"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 7,
+    "kunde": "Familie Steinberger",
+    "betreff": "Klingel- und Sprechanlage erneuern",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Gesellenstunde",
+        "menge": "21",
+        "preis": "62.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "Leitung NYM-J 3x1,5",
+        "menge": "140",
+        "preis": "2.40",
+        "einheit": "m"
+      },
+      {
+        "leistung": "Anfahrt",
+        "menge": "24",
+        "preis": "0.70",
+        "einheit": "km"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 7,
+    "kunde": "Bäckerei Wimmer GmbH",
+    "betreff": "Zweiter Backofen: Anschluss",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Meisterstunde",
+        "menge": "11",
+        "preis": "78.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "Leitung NYM-J 5x2,5",
+        "menge": "38",
+        "preis": "4.80",
+        "einheit": "m"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 6,
+    "kunde": "Bäckerei Wimmer GmbH",
+    "betreff": "Störung Kühlhaus, Nachteinsatz",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Notdienststunde",
+        "menge": "5",
+        "preis": "116.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "FI/LS-Schalter 16 A",
+        "menge": "2",
+        "preis": "68.00",
+        "einheit": "Stk"
+      },
+      {
+        "leistung": "Anfahrt",
+        "menge": "18",
+        "preis": "0.70",
+        "einheit": "km"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 6,
+    "kunde": "Schreinerei Gruber",
+    "betreff": "Unterverteilung Lager erweitern",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Meisterstunde",
+        "menge": "16",
+        "preis": "78.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "FI/LS-Schalter 16 A",
+        "menge": "9",
+        "preis": "68.00",
+        "einheit": "Stk"
+      },
+      {
+        "leistung": "Leitung NYM-J 5x2,5",
+        "menge": "78",
+        "preis": "4.80",
+        "einheit": "m"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 6,
+    "kunde": "Familie Steinberger",
+    "betreff": "Treppenhaus: Bewegungsmelder nachrüsten",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Gesellenstunde",
+        "menge": "18",
+        "preis": "62.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "LED-Einbaustrahler",
+        "menge": "16",
+        "preis": "34.00",
+        "einheit": "Stk"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 5,
+    "kunde": "Familie Steinberger",
+    "betreff": "E-Check Treppenhaus, Keller und Waschküche",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "E-Check Wohneinheit",
+        "menge": "6",
+        "preis": "145.00",
+        "einheit": "pausch"
+      },
+      {
+        "leistung": "Gesellenstunde",
+        "menge": "14",
+        "preis": "62.00",
+        "einheit": "Std"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 5,
+    "kunde": "Bäckerei Wimmer GmbH",
+    "betreff": "Verkaufsraum: Beleuchtung und Kassenplatz",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Gesellenstunde",
+        "menge": "26",
+        "preis": "62.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "LED-Einbaustrahler",
+        "menge": "28",
+        "preis": "34.00",
+        "einheit": "Stk"
+      },
+      {
+        "leistung": "Steckdose Unterputz",
+        "menge": "11",
+        "preis": "12.50",
+        "einheit": "Stk"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 5,
+    "kunde": "Schreinerei Gruber",
+    "betreff": "Druckluftkompressor: Zuleitung",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Meisterstunde",
+        "menge": "13",
+        "preis": "78.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "Leitung NYM-J 5x2,5",
+        "menge": "46",
+        "preis": "4.80",
+        "einheit": "m"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 4,
+    "kunde": "Schreinerei Gruber",
+    "betreff": "Prüfung Elektrowerkzeuge und Maschinen",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Prüfung ortsveränderlicher Geräte",
+        "menge": "186",
+        "preis": "9.50",
+        "einheit": "Stk"
+      },
+      {
+        "leistung": "Auszubildendenstunde",
+        "menge": "16",
+        "preis": "34.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "Meisterstunde",
+        "menge": "6",
+        "preis": "78.00",
+        "einheit": "Std"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 4,
+    "kunde": "Familie Steinberger",
+    "betreff": "Waschküche: Anschlüsse und Beleuchtung",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Gesellenstunde",
+        "menge": "17",
+        "preis": "62.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "Leitung NYM-J 5x2,5",
+        "menge": "34",
+        "preis": "4.80",
+        "einheit": "m"
+      },
+      {
+        "leistung": "LED-Einbaustrahler",
+        "menge": "9",
+        "preis": "34.00",
+        "einheit": "Stk"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 3,
+    "kunde": "Bäckerei Wimmer GmbH",
+    "betreff": "Notbeleuchtung prüfen und ergänzen",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Meisterstunde",
+        "menge": "12",
+        "preis": "78.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "E-Check Wohneinheit",
+        "menge": "2",
+        "preis": "145.00",
+        "einheit": "pausch"
+      },
+      {
+        "leistung": "LED-Einbaustrahler",
+        "menge": "14",
+        "preis": "34.00",
+        "einheit": "Stk"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 3,
+    "kunde": "Schreinerei Gruber",
+    "betreff": "Büro: Arbeitsplätze verkabeln",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Auszubildendenstunde",
+        "menge": "22",
+        "preis": "34.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "Gesellenstunde",
+        "menge": "12",
+        "preis": "62.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "Steckdose Unterputz",
+        "menge": "24",
+        "preis": "12.50",
+        "einheit": "Stk"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 3,
+    "kunde": "Familie Steinberger",
+    "betreff": "Aufzugsmaschinenraum: Beleuchtung",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Meisterstunde",
+        "menge": "8",
+        "preis": "78.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "Leitung NYM-J 3x1,5",
+        "menge": "68",
+        "preis": "2.40",
+        "einheit": "m"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 2,
+    "kunde": "Familie Steinberger",
+    "betreff": "Sicherungskasten Wohnung 4 und 6 tauschen",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Meisterstunde",
+        "menge": "19",
+        "preis": "78.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "FI/LS-Schalter 16 A",
+        "menge": "14",
+        "preis": "68.00",
+        "einheit": "Stk"
+      },
+      {
+        "leistung": "Leitung NYM-J 3x1,5",
+        "menge": "110",
+        "preis": "2.40",
+        "einheit": "m"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 2,
+    "kunde": "Bäckerei Wimmer GmbH",
+    "betreff": "Jahreswartung Rauchwarnmelder",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Rauchwarnmelder-Wartung",
+        "menge": "64",
+        "preis": "12.00",
+        "einheit": "Stk"
+      },
+      {
+        "leistung": "Gesellenstunde",
+        "menge": "9",
+        "preis": "62.00",
+        "einheit": "Std"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 2,
+    "kunde": "Schreinerei Gruber",
+    "betreff": "Lagerhalle: Steckdosenverteilung",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Gesellenstunde",
+        "menge": "20",
+        "preis": "62.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "Steckdose Unterputz",
+        "menge": "16",
+        "preis": "12.50",
+        "einheit": "Stk"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 1,
+    "kunde": "Schreinerei Gruber",
+    "betreff": "Maschinensteuerung nachrüsten",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Meisterstunde",
+        "menge": "24",
+        "preis": "78.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "Leitung NYM-J 5x2,5",
+        "menge": "62",
+        "preis": "4.80",
+        "einheit": "m"
+      },
+      {
+        "leistung": "FI/LS-Schalter 16 A",
+        "menge": "5",
+        "preis": "68.00",
+        "einheit": "Stk"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 1,
+    "kunde": "Familie Steinberger",
+    "betreff": "Wohnung 9: Bad und Küche neu",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Gesellenstunde",
+        "menge": "28",
+        "preis": "62.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "Steckdose Unterputz",
+        "menge": "14",
+        "preis": "12.50",
+        "einheit": "Stk"
+      },
+      {
+        "leistung": "FI/LS-Schalter 16 A",
+        "menge": "4",
+        "preis": "68.00",
+        "einheit": "Stk"
+      },
+      {
+        "leistung": "Leitung NYM-J 3x1,5",
+        "menge": "160",
+        "preis": "2.40",
+        "einheit": "m"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 0,
+    "kunde": "Familie Steinberger",
+    "betreff": "Wohnung 7: Herdanschluss und Steckdosen",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Gesellenstunde",
+        "menge": "15",
+        "preis": "62.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "Leitung NYM-J 5x2,5",
+        "menge": "28",
+        "preis": "4.80",
+        "einheit": "m"
+      },
+      {
+        "leistung": "Steckdose Unterputz",
+        "menge": "12",
+        "preis": "12.50",
+        "einheit": "Stk"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 0,
+    "kunde": "Bäckerei Wimmer GmbH",
+    "betreff": "Störung Backofen-Zuleitung",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Notdienststunde",
+        "menge": "3",
+        "preis": "116.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "Meisterstunde",
+        "menge": "5",
+        "preis": "78.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "Anfahrt",
+        "menge": "16",
+        "preis": "0.70",
+        "einheit": "km"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 11,
+    "kunde": "Familie Steinberger",
+    "betreff": "Zählerplatz Wohnung 2 erneuern",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Meisterstunde",
+        "menge": "12",
+        "preis": "78.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "FI/LS-Schalter 16 A",
+        "menge": "5",
+        "preis": "68.00",
+        "einheit": "Stk"
+      },
+      {
+        "leistung": "Leitung NYM-J 3x1,5",
+        "menge": "140",
+        "preis": "2.40",
+        "einheit": "m"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 11,
+    "kunde": "Schreinerei Gruber",
+    "betreff": "Werkstatt: Drehstromanschlüsse",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Meisterstunde",
+        "menge": "16",
+        "preis": "78.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "Leitung NYM-J 5x2,5",
+        "menge": "62",
+        "preis": "4.80",
+        "einheit": "m"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 10,
+    "kunde": "Bäckerei Wimmer GmbH",
+    "betreff": "Ladentheke und Kühlung neu verkabeln",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Meisterstunde",
+        "menge": "21",
+        "preis": "78.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "Steckdose Unterputz",
+        "menge": "14",
+        "preis": "12.50",
+        "einheit": "Stk"
+      },
+      {
+        "leistung": "Leitung NYM-J 3x1,5",
+        "menge": "180",
+        "preis": "2.40",
+        "einheit": "m"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 9,
+    "kunde": "Familie Steinberger",
+    "betreff": "Kellerbeleuchtung und Verteilung",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Meisterstunde",
+        "menge": "18",
+        "preis": "78.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "LED-Einbaustrahler",
+        "menge": "22",
+        "preis": "34.00",
+        "einheit": "Stk"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 8,
+    "kunde": "Schreinerei Gruber",
+    "betreff": "Absauganlage: Steuerung und Not-Aus",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Meisterstunde",
+        "menge": "24",
+        "preis": "78.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "Leitung NYM-J 5x2,5",
+        "menge": "48",
+        "preis": "4.80",
+        "einheit": "m"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 7,
+    "kunde": "Bäckerei Wimmer GmbH",
+    "betreff": "Zweite Backstube: Elektroinstallation",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Meisterstunde",
+        "menge": "38",
+        "preis": "78.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "FI/LS-Schalter 16 A",
+        "menge": "9",
+        "preis": "68.00",
+        "einheit": "Stk"
+      },
+      {
+        "leistung": "Steckdose Unterputz",
+        "menge": "24",
+        "preis": "12.50",
+        "einheit": "Stk"
+      },
+      {
+        "leistung": "Leitung NYM-J 3x1,5",
+        "menge": "320",
+        "preis": "2.40",
+        "einheit": "m"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 6,
+    "kunde": "Familie Steinberger",
+    "betreff": "Treppenhausbeleuchtung mit Bewegungsmeldern",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Meisterstunde",
+        "menge": "16",
+        "preis": "78.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "LED-Einbaustrahler",
+        "menge": "18",
+        "preis": "34.00",
+        "einheit": "Stk"
+      }
+    ]
+  },
+  {
+    "vor_monaten": 5,
+    "kunde": "Schreinerei Gruber",
+    "betreff": "Hallenbeleuchtung umrüsten",
+    "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+    "leistung_von_tagen": 6,
+    "leistung_bis_tagen": 2,
+    "positionen": [
+      {
+        "leistung": "Gesellenstunde",
+        "menge": "28",
+        "preis": "62.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "LED-Einbaustrahler",
+        "menge": "34",
+        "preis": "34.00",
+        "einheit": "Stk"
+      }
+    ]
+  },
+  {
+    "_kommentar": "DER BELEG, WEGEN DEM DIESES PROGRAMM E-RECHNUNG KANN. Öffentliche Auftraggeber nehmen seit Jahren nichts anderes mehr an, und seit 2025 gilt die Empfangspflicht im ganzen B2B. Im Publikum wird danach gefragt werden - dann soll ein Beleg dastehen, an dem sich das zeigen lässt, und nicht eine Beteuerung. Die Leitweg-ID steht beim Kunden in der Käuferreferenz.",
+    "vor_monaten": 2,
+    "kunde": "Gemeinde Altdorf",
+    "betreff": "Wiederholungsprüfung DGUV V3 - Bauhof und Schule",
+    "kopftext": "für die jährliche Wiederholungsprüfung Ihrer ortsfesten und ortsveränderlichen Betriebsmittel berechnen wir Ihnen:",
+    "leistung_von_tagen": 12,
+    "leistung_bis_tagen": 3,
+    "positionen": [
+      {
+        "leistung": "E-Check Wohneinheit",
+        "menge": "4",
+        "preis": "145.00",
+        "einheit": "pausch"
+      },
+      {
+        "leistung": "Prüfung ortsveränderlicher Geräte",
+        "menge": "218",
+        "preis": "9.50",
+        "einheit": "Stk"
+      },
+      {
+        "leistung": "Meisterstunde",
+        "menge": "16",
+        "preis": "78.00",
+        "einheit": "Std"
+      },
+      {
+        "leistung": "Anfahrt",
+        "menge": "64",
+        "preis": "0.70",
+        "einheit": "km"
+      }
+    ]
+  }
+]

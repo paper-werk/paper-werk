@@ -1,0 +1,9 @@
+[
+  {
+    "_kommentar": "Zugekauft wird nicht nur Analytik: Bohrfirma, Vermessung und Entsorgung laufen durch dieselbe Kette. Ein Bestand mit einem einzigen Lieferanten legt den Gedanken nahe, das Ganze sei eine Schnittstelle zu genau diesem.",
+    "name": "ISARTAL", "eigene_kundennummer": "88-4711"
+  },
+  { "name": "Bohrtechnik Sedlmeier GmbH", "eigene_kundennummer": "ING-204" },
+  { "name": "Vermessungsbüro Kastner" },
+  { "name": "Entsorgung Isartal GmbH", "eigene_kundennummer": "4711-B" }
+]

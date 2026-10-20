@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+"""Einstieg für die Kommandozeile: ``./paper-werk <befehl>``, Hilfe mit ``-h``.
+
+Liegt in der Repo-Wurzel neben ``stack.sh`` und findet das Paket ``paperwerk``
+daneben; keine Installation per pip nötig.
+"""
+
+import sys
+from pathlib import Path
+
+if sys.version_info < (3, 8):
+    sys.exit("paper-werk braucht Python 3.8 oder neuer.")
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from paperwerk.cli import main  # noqa: E402
+
+sys.exit(main())

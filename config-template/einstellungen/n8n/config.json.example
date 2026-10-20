@@ -1,0 +1,60 @@
+[
+  {
+    "_kommentar": "Instanz-Einstellungen für die n8n-Data-Table pw_config. Von hier holen sich ALLE Workflows ihre Adressen und URLs; in den Workflows selbst steht keine. Wird von setup/n8n/apply.sh eingespielt; danach ist die Tabelle in der n8n-Oberfläche unter 'Data Tables' zu pflegen, Änderungen wirken sofort und ohne Neustart. Diese Datei ist versioniert: Sie enthält Adressen und URLs, keine Geheimnisse; die gehören in credentials.json. Vorlage ist config-template/einstellungen/n8n/config.json.example."
+  },
+  {
+    "key": "paperless_url",
+    "value": "http://paperless:8000",
+    "hint": "Paperless für die API-Aufrufe von n8n aus. Docker-interner Servicename, NICHT im Browser erreichbar. Bleibt in aller Regel so."
+  },
+  {
+    "key": "paperless_url_oeffentlich",
+    "value": "http://paperless.home",
+    "hint": "Paperless für die Links in den Mails. Diese Adresse öffnet der Empfänger im Browser, sie muss also von seinem Rechner aus auflösen."
+  },
+  {
+    "key": "paperwerk_url",
+    "value": "",
+    "hint": "paper-werk fuer die API-Aufrufe von n8n aus. Im Stack der Docker-Servicename (http://paper-werk-app:8000), NICHT die Browser-Adresse. Nur noetig, wenn Belege aus Paperless nach paper-werk uebernommen werden."
+  },
+  {
+    "key": "mail_betrieb",
+    "value": "",
+    "hint": "Empfänger aller Berichte, Erinnerungen und Störungsmeldungen. Die Adresse, die jemand auch wirklich liest."
+  },
+  {
+    "key": "mail_absender",
+    "value": "",
+    "hint": "Absender aller Mails. Muss zur SMTP-Credential in n8n passen; der Mailserver bindet den Absender an die authentifizierte Mailbox, ein abweichendes From wird abgelehnt."
+  },
+  {
+    "key": "instanz",
+    "value": "",
+    "hint": "Name dieser Anlage, steht im Betreff der Störungsmeldungen. Ohne ihn sieht man einer Fehlermail nicht an, von welcher Installation sie kommt. Z. B. 'mueller-gmbh'."
+  },
+  {
+    "key": "mail_duo",
+    "value": "",
+    "hint": "Upload-Adresse des Mandanten aus DATEV Unternehmen online (dort: Belege → Einstellungen → Upload Mail). Nur nötig für den Kanal DUO (sub-duo-versand)."
+  },
+  {
+    "key": "mail_stb",
+    "value": "",
+    "hint": "Mail-Adresse der Steuerberater-Kanzlei. Nur nötig für den Kanal StB (sub-stb-versand)."
+  },
+  {
+    "key": "mail_sevdesk",
+    "value": "autobox@sevdesk.email",
+    "hint": "Einlieferadresse der sevDesk-Autobox. Fest, nicht mandantenspezifisch. Nur nötig, wenn sevdesk-mail-* verwendet wird."
+  },
+  {
+    "key": "mail_sevdesk_absender",
+    "value": "",
+    "hint": "Absender für sevDesk: MUSS die in sevDesk hinterlegte Adresse sein, sonst ordnet sevDesk den Beleg nicht automatisch zu. Weicht bewusst von mail_absender ab und braucht eine eigene SMTP-Credential."
+  },
+  {
+    "key": "steuer_kanal",
+    "value": "stb",
+    "hint": "Auf welchem Weg Steuerbelege den Steuerberater erreichen: duo (DATEV Unternehmen online), duo_paperwerk (dasselbe, bei Installationen mit paper-werk haengt es an XRechnungen das XML an), stb (Zip + CSV an die Kanzlei) oder sevdesk (Autobox). Steuert BEIDE Selektoren, steuer-beleg-sofort und -monatslauf, sowie welcher Versand-Sub laeuft und welches Adresspaar benutzt wird. Ein unbekannter Wert bricht mit einer Meldung ab, die die erlaubten aufzaehlt. Ausgeliefert wird 'stb', der Weg, der ohne DATEV-Zugang und ohne sevDesk-Konto funktioniert."
+  }
+]

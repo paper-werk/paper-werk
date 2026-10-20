@@ -1,0 +1,668 @@
+{
+  "name": "steuer-beleg-sofort",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## steuer-beleg-sofort: Auftragsannahme\n\nVon Paperless aufgerufen (Ablauf \"Steuerbeleg senden (sofort)\",\nKommando-Tag `Steuer-senden`). Macht die Arbeit nicht selbst: Er\nprueft, ob er zustaendig ist, markiert das Dokument als in\nBearbeitung, laesst den Versand-Sub arbeiten und raeumt danach auf.\n\n**Paperless loest aus, n8n entscheidet.** Paperless ruft nur den\nWebhook mit `doc_url` auf, sonst nichts: keine `remove_tags`-Aktion,\nkeine Mitwirkung an einem Protokoll. Alles Weitere entscheidet dieser\nWorkflow anhand des Dokumentzustands, den er ohnehin liest.\n\n**FUER DEN NUTZER GIBT ES NUR \"Steuer senden\".** Ob die Belege per\nDATEV Unternehmen online, per Zip an die Kanzlei oder spaeter\nirgendwie sonst rausgehen, ist eine Betreibersache und steht in\nder Data Table `pw_config` unter `steuer_kanal`, siehe den Kasten\n\"Kanal wechseln\".\n\n**Drei Ausgaenge, und nur einer verschickt etwas:**\n1. *senden*: `Steuer-senden` haengt dran, `Steuer-gesendet` nicht.\n2. *quittieren*: schon gesendet. Es geht nichts raus, aber das\n   Kommando-Tag muss weg, sonst haengt es fuer immer am Dokument.\n   Ein Beleg darf nicht zweimal beim Steuerberater landen.\n3. *nichts*: Der Aufruf gilt einem anderen Ablauf. Ohne Meldung beenden.\n\n**`buchungsrelevant` wird hier BEWUSST NICHT verlangt.** Beim\nMonatslauf ist es das Auswahlkriterium; hier hat ein Mensch das\nDokument ausdruecklich zum Senden markiert. Ein zusaetzlich noetiges\nzweites Tag waere eine Falle: der Nutzer setzt `Steuer-senden`, es\npassiert nichts, und niemand sagt ihm warum.\n\n**Das pending-Tag `wird bearbeitet` verhindert die Schleife.** Der\nSub setzt `Steuer-gesendet`; diese Aenderung ruft uns erneut auf.\nDer Waechter sieht dann das pending-Tag und steigt aus.\n\n**FEHLERFALL: `wird bearbeitet` bleibt absichtlich haengen.** Wuerde\nder Workflow es beim Abbruch entfernen, waere das wieder eine\nDokumentaenderung, und weil das Kommando-Tag noch dranhaengt,\nentstuende eine Endlos-Wiederholung. Das Dokument steht also\nsichtbar auf \"wird bearbeitet\", `fehler-melden` schickt eine Mail,\nund `paperless-health-check` meldet taeglich, was laenger als zwei\nStunden so haengt. Aufraeumen ist eine Menschenentscheidung.",
+        "height": 980,
+        "width": 520
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        -420
+      ],
+      "id": "ss000000-0000-4000-8000-000000000000",
+      "name": "Doku"
+    },
+    {
+      "parameters": {
+        "content": "## Kanal wechseln: EINE Zeile in pw_config\n\nWohin die Steuerbelege gehen, steht in der Data Table `pw_config`\nunter dem Schluessel **`steuer_kanal`**. Umstellen geht in der\nn8n-Oberflaeche unter \"Data Tables\", ohne Deploy und ohne Neustart.\n\n| steuer_kanal | Empfaenger | Absender | Versand-Sub |\n| --- | --- | --- | --- |\n| `duo` | mail_duo | mail_absender | sub-duo-versand |\n| `duo_paperwerk` | mail_duo | mail_absender | sub-duo-versand-paperwerk |\n| `stb` | mail_stb | mail_absender | sub-stb-versand |\n| `sevdesk` | mail_sevdesk | mail_sevdesk_absender | sub-sevdesk-versand |\n\nDie Zuordnung steht im Knoten \"Konfiguration\", Block KANALWAHL. Ein\nunbekannter Wert bricht dort mit einer Meldung ab, die die erlaubten\naufzaehlt; er laeuft nicht still ins Leere.\n\n**Der Kanal steht nicht in der Datei**, weil sich ALLE Instanzen die\nDateien unter `n8n/` teilen: eine faehrt DUO, eine andere sevDesk. Fest\nverdrahtet bekaeme eine von beiden beim Einspielen den falschen Kanal.\n\n**Sofort und Monatslauf lesen denselben Schluessel**; sie koennen also\nnicht auseinanderlaufen.\n\n**`duo_paperwerk`** ist DUO fuer Installationen MIT paper-werk: Bei XRechnung haengt der Sub das XML als zweiten Anhang an. Ohne paper-werk bleibt es bei `duo`.",
+        "height": 520,
+        "width": 460,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        300,
+        -480
+      ],
+      "id": "ss000000-0000-4000-8000-0000000000f0",
+      "name": "Kanal"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "steuer-beleg-sofort",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ss000000-0000-4000-8000-000000000001",
+      "name": "Webhook",
+      "webhookId": "ss000000-0000-4000-8000-0000000000aa"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "pwSubEinstell01",
+          "mode": "list",
+          "cachedResultName": "sub-einstellungen"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "ss000000-0000-4000-8000-0000000000c1",
+      "name": "Einstellungen holen"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Die Instanzwerte kommen aus sub-einstellungen (Knoten davor) und\n// werden in der Data Table pw_config gepflegt (n8n-Oberfläche,\n// \"Data Tables\"). HIER stehen nur die FACHLICHEN Werte dieses Workflows.\nconst werte = $('Einstellungen holen').first().json;\nconst pw = (key) => {\n  const v = werte[key];\n  if (v === undefined || String(v).trim() === '') {\n    throw new Error('pw_config: \"' + key + '\" fehlt oder ist leer; in der n8n-Oberfläche unter \"Data Tables\" eintragen.');\n  }\n  return v;\n};\n\n// ══ KANALWAHL: steht in pw_config, nicht hier ═══════════════════\n// Welcher Weg zum Steuerberater benutzt wird, entscheidet der\n// Schlüssel \"steuer_kanal\" in der Data Table pw_config, umstellbar in\n// der n8n-Oberfläche unter \"Data Tables\", ohne Deploy.\n//\n// WARUM NICHT FEST VERDRAHTET:\n// Die Workflow-Dateien unter n8n/ teilen sich ALLE Instanzen. Steht der\n// Kanal in der Datei, bekommt jede Instanz beim Einspielen denselben -\n// eine Installation fährt aber DUO, eine andere sevDesk. Instanz-\n// spezifisches gehört in pw_config, und genau dafür gibt es sie.\n//\n// Ein Kanal ist ein Adresspaar plus ein Versand-Sub. sevDesk hat einen\n// EIGENEN Absender: die Autobox verwirft Mail von nicht hinterlegten\n// Adressen stillschweigend.\nconst kanaele = {\n  duo:     { name: 'DUO',     empf: 'mail_duo',     abs: 'mail_absender',         sub: 'pwSubDuoVersand' },\n  // DUO mit paper-werk: bei XRechnung geht das XML als zweiter\n  // Anhang mit. Nur mit paper-werk, siehe sub-duo-versand-paperwerk.\n  duo_paperwerk: { name: 'DUO', empf: 'mail_duo', abs: 'mail_absender', sub: 'pwSubDuoVersPW1' },\n  stb:     { name: 'StB',     empf: 'mail_stb',     abs: 'mail_absender',         sub: 'pwSubStbVersand' },\n  sevdesk: { name: 'sevDesk', empf: 'mail_sevdesk', abs: 'mail_sevdesk_absender', sub: 'pwSubSevdeskVer' }\n};\nconst gewaehlt = String(pw('steuer_kanal')).trim().toLowerCase();\nconst kanal = kanaele[gewaehlt];\nif (!kanal) {\n  throw new Error('pw_config: \"steuer_kanal\" steht auf \"' + gewaehlt + '\"; erlaubt sind: ' + Object.keys(kanaele).join(', ') + '.');\n}\n// ════════════════════════════════════════════════════════════════\n\nreturn [{\n  json: {\n    // ── aus pw_config ──\n    paperless_url: pw('paperless_url'),\n    kanal: kanal.name,\n    empfaenger: pw(kanal.empf),\n    absender: pw(kanal.abs),\n    // Welchen Sub der Knoten \"Versand ausführen\" ruft, als Ausdruck,\n    // damit die Kanalwahl an EINER Stelle bleibt.\n    versand_sub: kanal.sub,\n\n    // ── fachlich, hier zu pflegen ──\n    // tag_kommando: setzt ein Mensch und meint \"an den Steuerberater\".\n    //   Bewusst kanalneutral benannt: Welcher Weg das ist, geht ihn\n    //   nichts an.\n    // tag_gesendet: ERGEBNIS, bleibt dauerhaft dran und verhindert den\n    //   zweiten Versand für immer. Anders als bei Titel und OCR ist\n    //   Wiederholen hier NICHT erwünscht.\n    // tag_pending:  global, nicht workflow-spezifisch. Solange er hängt,\n    //   ruht JEDE Verarbeitung dieses Dokuments.\n    tag_kommando: 'Steuer-senden',\n    tag_gesendet: 'Steuer-gesendet',\n    tag_pending: 'wird bearbeitet',\n\n    // dateiname_quelle: 'titel' = Paperless-Titel als Anhangsname\n    //   (sprechend), 'original' = Original-Dateiname (oft Scanner-Namen\n    //   wie Scan_00382.pdf).\n    dateiname_quelle: 'titel'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "ss000000-0000-4000-8000-000000000002",
+      "name": "Konfiguration"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Dokument-ID aus dem Paperless-Aufruf holen.\n//\n// WIRFT BEWUSST NICHT, wenn keine dabei ist: Ein Auslöser vom Typ\n// \"Consumption\" ruft ohne doc_url auf, weil das Dokument zu dem\n// Zeitpunkt noch gar nicht existiert; Paperless setzt den Platzhalter\n// dann auf einen leeren String. Ein Kunde darf so einen Auslöser\n// anlegen, ohne dass Fehlermails entstehen. Der Workflow endet dann ohne Meldung.\nconst body = $('Webhook').first().json.body ?? {};\nlet id = body.doc_id ?? body.id;\nif (!id && body.doc_url) {\n  id = String(body.doc_url).match(/\\/documents\\/(\\d+)/)?.[1];\n}\n\nreturn [{\n  json: Object.assign({}, $('Konfiguration').first().json, {\n    doc_id: id ? Number(id) : null,\n    grund: id ? null : 'Aufruf ohne Dokument-ID, vermutlich ein Auslöser, der schon beim Einzug feuert. Nichts zu tun.'\n  })\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "ss000000-0000-4000-8000-000000000003",
+      "name": "Auftrag lesen"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-hat-doc-id",
+              "leftValue": "={{ $json.doc_id !== null }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        832,
+        0
+      ],
+      "id": "ss000000-0000-4000-8000-000000000004",
+      "name": "Dokument-ID dabei?"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/tags/?page_size=500",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1040,
+        -96
+      ],
+      "id": "ss000000-0000-4000-8000-000000000005",
+      "name": "Tags laden",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/documents/{{ $('Auftrag lesen').first().json.doc_id }}/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1248,
+        -96
+      ],
+      "id": "ss000000-0000-4000-8000-000000000006",
+      "name": "Dokument laden",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Wächter: Was ist hier eigentlich zu tun?\n//\n// Alle Prüfungen schauen auf den ECHTEN Dokumentzustand, nicht auf\n// eine Absprache mit Paperless. Damit kann eine geänderte\n// Auslöser-Konfiguration nichts kaputtmachen; sie erzeugt\n// höchstens Leerläufe.\nconst cfg = $('Konfiguration').first().json;\nconst doc_id = $('Auftrag lesen').first().json.doc_id;\nconst alleTags = $('Tags laden').first().json.results || [];\nconst doc = $input.first().json;\n\nconst finde = (name) => alleTags.find(t => String(t.name).toLowerCase() === String(name).toLowerCase());\nconst kommando = finde(cfg.tag_kommando);\nconst gesendet = finde(cfg.tag_gesendet);\nconst pending  = finde(cfg.tag_pending);\n\n// Fehlende Tags sind ein echter Einrichtungsfehler und keine\n// Zuständigkeitsfrage; hier wird geworfen.\nif (!kommando) throw new Error('Tag \"' + cfg.tag_kommando + '\" existiert nicht in Paperless; bitte anlegen.');\nif (!gesendet) throw new Error('Tag \"' + cfg.tag_gesendet + '\" existiert nicht in Paperless; bitte anlegen.');\nif (!pending)  throw new Error('Tag \"' + cfg.tag_pending + '\" existiert nicht in Paperless; bitte anlegen (das globale \"wird bearbeitet\").');\n\nconst hat = (t) => (doc.tags || []).includes(t.id);\n\n// Drei Ausgänge. 'buchungsrelevant' steht hier absichtlich nicht:\n// ein Mensch hat das Dokument ausdrücklich zum Senden markiert, das\n// IST die Entscheidung. Beim Monatslauf ist es umgekehrt: Dort ist\n// 'buchungsrelevant' das Auswahlkriterium.\nlet aktion, grund;\nif (!hat(kommando)) {\n  aktion = 'nichts';\n  grund = 'Dokument trägt \"' + cfg.tag_kommando + '\" nicht; der Aufruf kam von einem anderen Auslöser. Nichts zu tun.';\n} else if (hat(pending)) {\n  aktion = 'nichts';\n  grund = 'Dokument ist als \"' + cfg.tag_pending + '\" markiert; es läuft bereits eine Verarbeitung. Nichts zu tun.';\n} else if (hat(gesendet)) {\n  aktion = 'quittieren';\n  grund = 'Dokument trägt bereits \"' + cfg.tag_gesendet + '\"; es wurde schon einmal an den Steuerberater übermittelt und geht nicht erneut raus. Das Kommando-Tag wird trotzdem entfernt. Für einen bewussten Zweitversand zuerst \"' + cfg.tag_gesendet + '\" von Hand entfernen.';\n} else {\n  aktion = 'senden';\n  grund = null;\n}\n\nreturn [{\n  json: Object.assign({}, cfg, {\n    doc_id,\n    titel: doc.title || ('Dokument ' + doc_id),\n    tag_kommando_id: kommando.id,\n    tag_gesendet_id: gesendet.id,\n    tag_pending_id: pending.id,\n    aktion,\n    grund\n  })\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1456,
+        -96
+      ],
+      "id": "ss000000-0000-4000-8000-000000000007",
+      "name": "Lage prüfen"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-senden",
+              "leftValue": "={{ $json.aktion }}",
+              "rightValue": "senden",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1664,
+        -96
+      ],
+      "id": "ss000000-0000-4000-8000-000000000008",
+      "name": "Senden?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/documents/bulk_edit/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { documents: [$json.doc_id], method: 'modify_tags', parameters: { add_tags: [$json.tag_pending_id], remove_tags: [] } } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1872,
+        -240
+      ],
+      "id": "ss000000-0000-4000-8000-000000000009",
+      "name": "Als \"wird bearbeitet\" markieren",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "={{ $('Konfiguration').first().json.versand_sub }}",
+          "mode": "id"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "doc_ids": "={{ [ $('Lage prüfen').first().json.doc_id ] }}",
+            "paperless_url": "={{ $('Konfiguration').first().json.paperless_url }}",
+            "empfaenger": "={{ $('Konfiguration').first().json.empfaenger }}",
+            "absender": "={{ $('Konfiguration').first().json.absender }}",
+            "dateiname_quelle": "={{ $('Konfiguration').first().json.dateiname_quelle }}",
+            "zeitraum": "={{ $now.toFormat('yyyy-MM-dd') }}",
+            "tag_gesendet_id": "={{ $('Lage prüfen').first().json.tag_gesendet_id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "doc_ids",
+              "displayName": "doc_ids",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "array"
+            },
+            {
+              "id": "paperless_url",
+              "displayName": "paperless_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "empfaenger",
+              "displayName": "empfaenger",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "absender",
+              "displayName": "absender",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "dateiname_quelle",
+              "displayName": "dateiname_quelle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "zeitraum",
+              "displayName": "zeitraum",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "tag_gesendet_id",
+              "displayName": "tag_gesendet_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        2080,
+        -240
+      ],
+      "id": "ss000000-0000-4000-8000-00000000000a",
+      "name": "Versand ausführen"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/documents/bulk_edit/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { documents: [$('Lage prüfen').first().json.doc_id], method: 'modify_tags', parameters: { add_tags: [], remove_tags: [$('Lage prüfen').first().json.tag_kommando_id, $('Lage prüfen').first().json.tag_pending_id] } } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2288,
+        -240
+      ],
+      "id": "ss000000-0000-4000-8000-00000000000b",
+      "name": "Abschließen: beide Tags weg",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Kommando- und pending-Tag sind in EINEM Aufruf weggeräumt, das\n// Ergebnis-Tag \"Steuer-gesendet\" hat der Versand-Sub gesetzt. Der\n// Zustand danach trägt weder Kommando noch pending; der\n// Paperless-Auslöser greift also nicht erneut, und der Lauf ist zu\n// Ende.\nconst lage = $('Lage prüfen').first().json;\nconst versand = $('Versand ausführen').first().json;\nreturn [{ json: {\n  status: 'gesendet',\n  kanal: versand.kanal ?? lage.kanal,\n  doc_id: lage.doc_id,\n  titel: lage.titel\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2496,
+        -240
+      ],
+      "id": "ss000000-0000-4000-8000-00000000000c",
+      "name": "Fertig"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-quittieren",
+              "leftValue": "={{ $json.aktion }}",
+              "rightValue": "quittieren",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1872,
+        48
+      ],
+      "id": "ss000000-0000-4000-8000-00000000000d",
+      "name": "Quittieren?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/documents/bulk_edit/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { documents: [$json.doc_id], method: 'modify_tags', parameters: { add_tags: [], remove_tags: [$json.tag_kommando_id] } } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2080,
+        -32
+      ],
+      "id": "ss000000-0000-4000-8000-00000000000e",
+      "name": "Nur Kommando-Tag weg",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Auftrag erledigt, aber nichts verschickt. Kein pending-Tag nötig:\n// entfernt wird nur das Kommando-Tag, und der Zustand danach trägt\n// es nicht mehr; der Auslöser greift also nicht erneut.\nconst lage = $('Lage prüfen').first().json;\nreturn [{ json: {\n  status: 'nicht gesendet',\n  doc_id: lage.doc_id,\n  titel: lage.titel,\n  grund: lage.grund\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2288,
+        -32
+      ],
+      "id": "ss000000-0000-4000-8000-00000000000f",
+      "name": "Erledigt ohne Versand"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ende ohne Meldung: kein Fehler, keine Mail. Der Aufruf war schlicht\n// nicht für uns. Er taucht in der n8n-Liste als erfolgreicher Lauf\n// auf, und der Grund steht im Ergebnis; damit ist nachvollziehbar,\n// WARUM nichts passiert ist, ohne dass jemand aufgeschreckt wird.\nreturn [{ json: {\n  status: 'übersprungen',\n  grund: $json.grund ?? 'unbekannt',\n  doc_id: $json.doc_id ?? null\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2080,
+        144
+      ],
+      "id": "ss000000-0000-4000-8000-000000000010",
+      "name": "Nichts zu tun"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Einstellungen holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Einstellungen holen": {
+      "main": [
+        [
+          {
+            "node": "Konfiguration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Konfiguration": {
+      "main": [
+        [
+          {
+            "node": "Auftrag lesen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auftrag lesen": {
+      "main": [
+        [
+          {
+            "node": "Dokument-ID dabei?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dokument-ID dabei?": {
+      "main": [
+        [
+          {
+            "node": "Tags laden",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Nichts zu tun",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tags laden": {
+      "main": [
+        [
+          {
+            "node": "Dokument laden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dokument laden": {
+      "main": [
+        [
+          {
+            "node": "Lage prüfen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lage prüfen": {
+      "main": [
+        [
+          {
+            "node": "Senden?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Senden?": {
+      "main": [
+        [
+          {
+            "node": "Als \"wird bearbeitet\" markieren",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Quittieren?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Als \"wird bearbeitet\" markieren": {
+      "main": [
+        [
+          {
+            "node": "Versand ausführen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Versand ausführen": {
+      "main": [
+        [
+          {
+            "node": "Abschließen: beide Tags weg",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Abschließen: beide Tags weg": {
+      "main": [
+        [
+          {
+            "node": "Fertig",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quittieren?": {
+      "main": [
+        [
+          {
+            "node": "Nur Kommando-Tag weg",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Nichts zu tun",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Nur Kommando-Tag weg": {
+      "main": [
+        [
+          {
+            "node": "Erledigt ohne Versand",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "errorWorkflow": "pwFehlerMelden01"
+  },
+  "tags": [
+    {
+      "id": "Qr4w77Oluq8Hi4TJ",
+      "name": "paperless"
+    }
+  ],
+  "id": "pwSteuerSofort1"
+}

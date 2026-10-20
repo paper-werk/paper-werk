@@ -1,0 +1,57 @@
+[
+  {
+    "anmeldename": "m.bach",
+    "vorname": "Martin",
+    "nachname": "Bach",
+    "kostensaetze": [
+      {
+        "vor_tagen": 540,
+        "satz": "68.00"
+      },
+      {
+        "vor_tagen": 60,
+        "satz": "72.00",
+        "notiz": "Tarifrunde"
+      }
+    ],
+    "_kommentar": "Zwei Sätze je Person, damit die Lohnrunde in den Zahlen steht: Stunden vor dem Stichtag werden mit dem alten Satz bewertet."
+  },
+  {
+    "anmeldename": "k.reiter",
+    "vorname": "Katrin",
+    "nachname": "Reiter",
+    "kostensaetze": [
+      {
+        "vor_tagen": 540,
+        "satz": "52.00"
+      },
+      {
+        "vor_tagen": 60,
+        "satz": "55.00",
+        "notiz": "Tarifrunde"
+      }
+    ]
+  },
+  {
+    "anmeldename": "t.huber",
+    "vorname": "Tobias",
+    "nachname": "Huber",
+    "kostensaetze": [
+      {
+        "vor_tagen": 540,
+        "satz": "44.00"
+      },
+      {
+        "vor_tagen": 60,
+        "satz": "47.00",
+        "notiz": "Tarifrunde"
+      }
+    ]
+  },
+  {
+    "anmeldename": "s.werk",
+    "vorname": "Sophie",
+    "nachname": "Werk",
+    "_kommentar": "Die Aushilfe bleibt ohne Kostensatz - Absicht, und bewusst nur mit wenigen Stunden: Die Startseite zeigt dann den Vorbehalt \"1 Person ohne Kostensatz\", ohne die Ergebnisse aller Vorhaben unbrauchbar zu machen. Das Programm erfindet keine Zahl, es sagt, was ihm fehlt."
+  }
+]

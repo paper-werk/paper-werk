@@ -1,0 +1,189 @@
+{
+  "name": "config-tabelle-schreiben",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🔧 Instanz-Einstellungen in die Data Table schreiben\n\n**Zweck:** Legt die Data Table `pw_config` an und schreibt die übergebenen Zeilen hinein. Aus dieser Tabelle holen sich ALLE anderen Workflows ihre Adressen und URLs; sie steht nirgends sonst.\n\n**Wer ruft das auf:** `setup/n8n/apply.sh` bei der Erstinstallation, mit dem Inhalt von `<installation>/einstellungen/n8n/config.json`. Danach nimmt apply.sh diesen Workflow per `n8n unpublish:workflow` wieder vom Netz, weil ein dauerhaft offener Webhook, der die Betriebsadressen umschreiben kann, auf einer Kundeninstallation nichts verloren hat.\n\n**Von Hand aufrufen** (z. B. nach einem Umzug):\n```\ncurl -X POST http://localhost:5678/webhook/pw-config-schreiben \\\n  -H 'Content-Type: application/json' \\\n  --data-binary @setup/n8n/config.json\n```\nDer Workflow muss dafür veröffentlicht sein, sonst antwortet n8n mit 404.\n\n**Normalfall ist aber der Browser:** n8n-Oberfläche → Data Tables → `pw_config`. Änderungen dort wirken sofort, ohne Neustart und ohne diesen Workflow.\n\n**Idempotent in beide Richtungen:** Die Tabelle wird per `createIfNotExists` wiederverwendet, die Zeilen per Upsert auf die Spalte `key` geschrieben. Mehrfaches Aufrufen ändert nichts, ein nachgereichter Schlüssel kommt hinzu. Zeilen, die nur in der Tabelle stehen und nicht im Aufruf, bleiben unangetastet; dieser Workflow löscht nie.",
+        "height": 700,
+        "width": 560
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        -160
+      ],
+      "id": "e9000020-0020-4000-8000-000000000099",
+      "name": "Doku"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pw-config-schreiben",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e9000020-0020-4000-8000-000000000001",
+      "name": "Webhook",
+      "webhookId": "e9000020-0020-4000-8000-0000000000aa"
+    },
+    {
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "pw_config",
+        "columns": {
+          "column": [
+            {
+              "name": "key",
+              "type": "string"
+            },
+            {
+              "name": "value",
+              "type": "string"
+            },
+            {
+              "name": "hint",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "e9000020-0020-4000-8000-000000000002",
+      "name": "Tabelle anlegen"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Die Zeilen aus dem Webhook-Body in einzelne Items zerlegen; der\n// Data-Table-Knoten schreibt eine Zeile pro Item. Die Feldnamen der Items\n// müssen exakt den Spalten von pw_config entsprechen: der Knoten danach\n// mappt per autoMapInputData.\n//\n// Erwartetes Format (= Inhalt von setup/n8n/config.json):\n//   [ { \"key\": \"mail_betrieb\", \"value\": \"…\", \"hint\": \"…\" }, … ]\n\nconst body = $('Webhook').first().json.body;\nconst zeilen = Array.isArray(body) ? body : body?.zeilen;\n\nif (!Array.isArray(zeilen) || zeilen.length === 0) {\n  throw new Error('Kein Array im Body. Erwartet wird der Inhalt von setup/n8n/config.json: [{\"key\":\"…\",\"value\":\"…\",\"hint\":\"…\"}, …]');\n}\n\nreturn zeilen.map((z, i) => {\n  const key = String(z.key ?? '').trim();\n  if (!key) {\n    throw new Error('Eintrag ' + (i + 1) + ' hat kein \"key\"-Feld.');\n  }\n  return { json: {\n    key,\n    // Leere Werte sind erlaubt: die Tabelle darf mit unausgefüllten Zeilen\n    // ausgeliefert werden, damit im Browser sichtbar ist, WAS noch fehlt.\n    // Gemeckert wird erst beim Lesen, im Konfigurations-Node des Workflows,\n    // der den Wert tatsächlich braucht.\n    value: String(z.value ?? ''),\n    hint: String(z.hint ?? '')\n  } };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "e9000020-0020-4000-8000-000000000003",
+      "name": "Zeilen aufbereiten"
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "pw_config"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "key",
+              "condition": "eq",
+              "keyValue": "={{ $json.key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": null,
+          "matchingColumns": [
+            "key"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "e9000020-0020-4000-8000-000000000004",
+      "name": "Zeile schreiben"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Kurze Quittung für apply.sh; der Aufrufer soll sehen, dass wirklich\n// geschrieben wurde, und nicht nur ein leeres 200 bekommen.\nconst geschrieben = $('Zeilen aufbereiten').all().map(i => i.json.key);\nconst leer = $('Zeilen aufbereiten').all()\n  .filter(i => i.json.value === '')\n  .map(i => i.json.key);\n\nreturn [{ json: {\n  tabelle: 'pw_config',\n  geschrieben: geschrieben.length,\n  keys: geschrieben,\n  noch_leer: leer\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        0
+      ],
+      "id": "e9000020-0020-4000-8000-000000000005",
+      "name": "Quittung"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Tabelle anlegen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tabelle anlegen": {
+      "main": [
+        [
+          {
+            "node": "Zeilen aufbereiten",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zeilen aufbereiten": {
+      "main": [
+        [
+          {
+            "node": "Zeile schreiben",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zeile schreiben": {
+      "main": [
+        [
+          {
+            "node": "Quittung",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "tags": [],
+  "id": "pwConfigSchreib1"
+}

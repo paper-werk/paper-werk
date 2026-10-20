@@ -1,0 +1,137 @@
+[
+  {
+    "_kommentar": "Laborrechnung zur Turnhalle - vollständig zugeordnet, und zwar auf die beauftragte Leistung \"Bodenprobe LAGA-Paket\". Einen Verkaufspreis hat die Fremdleistung nicht: Beim Übernehmen in die Rechnung gilt der Preis der Auftragsposition, weil die Einheit passt. Hier also 145,00 gegen 96,00 Einkauf.",
+    "lieferant": "ISARTAL",
+    "nummer": "AL-2026-08431",
+    "vor_tagen": 18,
+    "betrag_netto": "3840.00",
+    "notiz": "Bodenproben Turnhalle, 1. Charge",
+    "fremdleistungen": [
+      {
+        "projekt": "{jahr}-042",
+        "leistung": "Bodenprobe LAGA-Paket",
+        "bezeichnung": "Paket 4711 LAGA Boden",
+        "einheit": "Stk", "menge": "40", "einkaufspreis": "96.00"
+      }
+    ]
+  },
+  {
+    "_kommentar": "Die Eluate zum Gewerbegebiet - und die zweite Position ist der Lehrfall: eine WIEDERHOLUNG nach einem eigenen Probenfehler. Sie steht auf 'weiterberechenbar': false, kostet also Geld und bringt keines. Das zieht das Ergebnis herunter, und das ist die Wahrheit.",
+    "lieferant": "ISARTAL",
+    "nummer": "AL-2026-08502",
+    "vor_tagen": 12,
+    "betrag_netto": "5208.00",
+    "notiz": "Eluate Gewerbegebiet, zwei Chargen",
+    "fremdleistungen": [
+      {
+        "projekt": "{jahr}-051",
+        "leistung": "Eluatuntersuchung",
+        "bezeichnung": "Paket 8802 Eluat DEV-S4",
+        "einheit": "Stk", "menge": "18", "einkaufspreis": "168.00"
+      },
+      {
+        "projekt": "{jahr}-051",
+        "leistung": "Eluatuntersuchung",
+        "bezeichnung": "Paket 8802 Eluat, Wiederholung nach Probenfehler",
+        "einheit": "Stk", "menge": "13", "einkaufspreis": "168.00",
+        "weiterberechenbar": false
+      }
+    ]
+  },
+  {
+    "_kommentar": "Die Bohrfirma - zugekauft wird nicht nur Analytik. Ohne Auftragsposition: Sie wird zum Einkauf durchgereicht, ein Aufschlag entsteht erst in der Rechnung.",
+    "lieferant": "Bohrtechnik Sedlmeier GmbH",
+    "nummer": "2026-1184",
+    "vor_tagen": 22,
+    "betrag_netto": "6720.00",
+    "notiz": "Rammkernsondierungen Gewerbegebiet, 14 Ansatzpunkte",
+    "fremdleistungen": [
+      {
+        "projekt": "{jahr}-051",
+        "bezeichnung": "Rammkernsondierung bis 6 m, RKS 1 bis RKS 14",
+        "einheit": "Stk", "menge": "14",
+        "einkaufspreis": "480.00"
+      }
+    ]
+  },
+  {
+    "_kommentar": "Die Vermessung - eine Pauschale, durchgereicht zum Einkauf.",
+    "lieferant": "Vermessungsbüro Kastner",
+    "nummer": "R-2026-0417",
+    "vor_tagen": 9,
+    "betrag_netto": "1180.00",
+    "notiz": "Einmessung Bohrpunkte Gewerbegebiet",
+    "fremdleistungen": [
+      {
+        "projekt": "{jahr}-051",
+        "bezeichnung": "Einmessung Bohrpunkte RKS 1 bis RKS 14, Lage und Höhe",
+        "einheit": "pausch", "menge": "1",
+        "einkaufspreis": "1180.00"
+      }
+    ]
+  },
+  {
+    "_kommentar": "DIE RECHNUNG, DIE NOCH NICHT VERTEILT IST - der rote Rest. Von 2.470 Euro ist erst ein Teil kontiert, der Rest steht offen da. Das ist der Zustand, in dem im Betrieb Geld verlorengeht, und deshalb gehört er in einen Vorführbestand: Man soll ihn suchen und finden können, nicht nur davon hören.",
+    "lieferant": "ISARTAL",
+    "nummer": "AL-2026-08610",
+    "vor_tagen": 4,
+    "betrag_netto": "2470.00",
+    "notiz": "Sammelrechnung August - noch nicht vollständig zugeordnet",
+    "fremdleistungen": [
+      {
+        "projekt": "{jahr}-042",
+        "bezeichnung": "Paket 3310 Asbest REM",
+        "einheit": "Stk", "menge": "8",
+        "einkaufspreis": "89.00"
+      }
+    ]
+  },
+
+  {
+    "_kommentar": "Nachvollzugsprojekt, 1. Laborcharge - geht mit der 1. Rechnung hinaus.",
+    "lieferant": "ISARTAL",
+    "nummer": "AL-2026-09117",
+    "vor_tagen": 24,
+    "betrag_netto": "576.00",
+    "notiz": "Bodenproben Stützmauer Nord, Proben 1-6",
+    "fremdleistungen": [
+      {
+        "projekt": "{jahr}-070",
+        "leistung": "Bodenprobe LAGA-Paket",
+        "bezeichnung": "LAGA-Paket, Proben 1-6",
+        "einheit": "Stk", "menge": "6", "einkaufspreis": "96.00"
+      }
+    ]
+  },
+  {
+    "_kommentar": "Nachvollzugsprojekt, 2. Laborcharge - geht mit der 2. Rechnung hinaus.",
+    "lieferant": "ISARTAL",
+    "nummer": "AL-2026-09240",
+    "vor_tagen": 14,
+    "betrag_netto": "384.00",
+    "notiz": "Bodenproben Stützmauer Nord, Proben 7-10",
+    "fremdleistungen": [
+      {
+        "projekt": "{jahr}-070",
+        "leistung": "Bodenprobe LAGA-Paket",
+        "bezeichnung": "LAGA-Paket, Proben 7-10",
+        "einheit": "Stk", "menge": "4", "einkaufspreis": "96.00"
+      }
+    ]
+  },
+  {
+    "_kommentar": "Nachvollzugsprojekt: Vermessung ohne Auftragsposition - sie steht in der Projektakte unter 'Noch nicht zugeordnet' und in keiner Rechnung.",
+    "lieferant": "Vermessungsbüro Kastner",
+    "nummer": "VK-2026-118",
+    "vor_tagen": 12,
+    "betrag_netto": "640.00",
+    "notiz": "Lage- und Höhenaufnahme Stützmauer Nord",
+    "fremdleistungen": [
+      {
+        "projekt": "{jahr}-070",
+        "bezeichnung": "Lage- und Höhenaufnahme Mauer",
+        "einheit": "pausch", "menge": "1", "einkaufspreis": "640.00"
+      }
+    ]
+  }
+]

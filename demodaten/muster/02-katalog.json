@@ -1,0 +1,21 @@
+[
+  {
+    "_kommentar": "Eine Zeitleistung: 'art' entscheidet, ob die Erfassungsmaske zwei Uhrzeiten oder ein Mengenfeld zeigt. Erlaubt sind zeit, menge und pauschale.",
+    "nummer": "L-100",
+    "bezeichnung": "Meisterstunde",
+    "einheit": "Std",
+    "preis": "78.00",
+    "art": "zeit",
+    "kontierbar": true
+  },
+  {
+    "_kommentar": "Und eine Materialposition mit Langtext - der Langtext wandert beim Anlegen eines Belegs automatisch mit.",
+    "nummer": "M-200",
+    "bezeichnung": "Steckdose Unterputz",
+    "einheit": "Stk",
+    "preis": "12.50",
+    "art": "menge",
+    "kontierbar": true,
+    "langtext": "Schutzkontakt-Steckdose, Unterputz, inkl. Montage"
+  }
+]

@@ -1,0 +1,453 @@
+{
+  "name": "sub-stb-versand",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## sub-stb-versand\n\nReine Funktion:  Liste von doc_ids  ->  EIN Zip + EINE CSV-Belegliste\nin EINER Mail an die Kanzlei, danach Ergebnis-Tag setzen.\n\nFuer Steuerberater OHNE DATEV Unternehmen online. Gleicher Vertrag\nwie `sub-duo-versand`, voellig andere Mechanik; deshalb sind es\nzwei Workflows und nicht einer mit Schalter. Ein Kanal kann sich\naendern, ohne den anderen anzufassen.\n\nDER UNTERSCHIED IN EINEM SATZ: DUO schickt n Mails mit je einem\nAnhang, StB schickt eine Mail mit n Anhaengen im Zip. Genau daran\nwaere ein gemeinsamer Workflow mit if/else zerbrochen.\n\nKENNT KEINE KOMMANDO-TAGS und keine Ausloeser. `Steuer-senden` und\n`wird bearbeitet` gehoeren dem Aufrufer. `Steuer-gesendet` setzt\nDIESER Workflow: ein ERGEBNIS, und nur er weiss, ob die Mail raus\nging.\n\nEINGABE ist definiert, nicht durchgereicht, identisch zu\n`sub-duo-versand`:\n  doc_ids           Liste  Paperless-IDs der zu sendenden Belege\n  paperless_url     Text\n  empfaenger        Text   Mail-Adresse der Kanzlei\n  absender          Text\n  dateiname_quelle  Text   'titel' oder 'original'\n  zeitraum          Text   Label fuer Betreff und Dateinamen\n  tag_gesendet_id   Zahl   Paperless-ID von `Steuer-gesendet`\n\nMARKIERT ERST AM ENDE, und zwar alle auf einmal, anders als beim\nDUO-Versand. Hier gibt es nur eine Mail: entweder sie geht raus,\ndann sind alle Belege gesendet, oder sie geht nicht raus, dann\nkeiner. Ein Teil-Erfolg existiert nicht.\n\nGRENZE: Viele Kanzlei-Mailserver lehnen Anhaenge ueber 15-20 MB ab.\nBei vielen Belegen den Aufrufer mitten im Monat zusaetzlich manuell\nlaufen lassen; er verschickt nur, was `Steuer-gesendet` noch nicht\ntraegt.\n\nMUSS VEROEFFENTLICHT SEIN, wie jeder sub-Workflow.\n\nKEIN eigener errorWorkflow: sonst meldet jede Stoerung zweimal.",
+        "height": 940,
+        "width": 500
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        -340
+      ],
+      "id": "sv000000-0000-4000-8000-000000000000",
+      "name": "Doku"
+    },
+    {
+      "parameters": {
+        "inputSource": "workflowInputs",
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "doc_ids",
+              "type": "array"
+            },
+            {
+              "name": "paperless_url",
+              "type": "string"
+            },
+            {
+              "name": "empfaenger",
+              "type": "string"
+            },
+            {
+              "name": "absender",
+              "type": "string"
+            },
+            {
+              "name": "dateiname_quelle",
+              "type": "string"
+            },
+            {
+              "name": "zeitraum",
+              "type": "string"
+            },
+            {
+              "name": "tag_gesendet_id",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "sv000000-0000-4000-8000-000000000001",
+      "name": "Aufruf"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Eingabe pruefen, bevor irgendetwas passiert. Wortgleich zu\n// sub-duo-versand; beide Subs haben denselben Vertrag, also auch\n// dieselbe Eingangspruefung.\nconst a = $('Aufruf').first().json ?? {};\n\nconst ids = (Array.isArray(a.doc_ids) ? a.doc_ids : [a.doc_ids])\n  .filter(v => v !== null && v !== undefined && String(v).trim() !== '')\n  .map(Number);\n\nif (!ids.length) throw new Error('sub-stb-versand ohne Belege aufgerufen: doc_ids ist leer. Der Aufrufer haette gar nicht rufen duerfen.');\nif (ids.some(n => !Number.isFinite(n))) throw new Error('doc_ids enthaelt etwas, das keine Zahl ist: ' + JSON.stringify(a.doc_ids));\nif (String(a.empfaenger ?? '').indexOf('@') === -1) throw new Error('Keine Kanzlei-Adresse uebergeben. In der n8n-Oberflaeche unter \"Data Tables\" den Schluessel mail_stb setzen.');\nif (String(a.absender ?? '').indexOf('@') === -1) throw new Error('Keine Absenderadresse uebergeben: pw_config, Schluessel mail_absender.');\nif (!Number.isFinite(Number(a.tag_gesendet_id))) throw new Error('tag_gesendet_id fehlt; der Aufrufer muss die Paperless-ID von \"Steuer-gesendet\" mitgeben.');\n\nreturn [{ json: {\n  doc_ids: ids,\n  id_liste: ids.join(','),\n  paperless_url: String(a.paperless_url).replace(/\\/+$/, ''),\n  empfaenger: a.empfaenger,\n  absender: a.absender,\n  dateiname_quelle: a.dateiname_quelle || 'titel',\n  // Der Zeitraum landet im Zip- und CSV-Dateinamen, muss also\n  // dateisystemtauglich sein. Faellt er aus, gilt das Datum.\n  zeitraum: String(a.zeitraum || new Date().toISOString().slice(0, 10)).replace(/[\\\\/:*?\"<>|\\s]+/g, '-'),\n  tag_gesendet_id: Number(a.tag_gesendet_id)\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "sv000000-0000-4000-8000-000000000002",
+      "name": "Auftrag prüfen"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.paperless_url }}/api/documents/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id__in",
+              "value": "={{ $json.id_liste }}"
+            },
+            {
+              "name": "page_size",
+              "value": "250"
+            },
+            {
+              "name": "ordering",
+              "value": "created"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "sv000000-0000-4000-8000-000000000003",
+      "name": "Dokumente laden",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Auftrag prüfen').first().json.paperless_url }}/api/correspondents/?page_size=500",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        624,
+        0
+      ],
+      "id": "sv000000-0000-4000-8000-000000000004",
+      "name": "Korrespondenten laden",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pro Beleg vorbereiten: Download-URL (Original bei PDF/TIF/TIFF,\n// sonst Archiv-PDF), einen im Zip eindeutigen Dateinamen mit\n// laufender Nummer, und den Korrespondentennamen fuer die CSV.\nconst auftrag = $('Auftrag prüfen').first().json;\nconst docs = $('Dokumente laden').first().json.results || [];\nconst okExt = ['.pdf', '.tif', '.tiff'];\n\n// Stille Datenverluste sichtbar machen, siehe sub-duo-versand.\nif (docs.length !== auftrag.doc_ids.length) {\n  const da = docs.map(d => d.id);\n  const fehlt = auftrag.doc_ids.filter(id => !da.includes(id));\n  throw new Error('Paperless lieferte ' + docs.length + ' von ' + auftrag.doc_ids.length + ' angeforderten Belegen. Fehlend: ' + fehlt.join(', ') + '. Entweder wurden sie zwischenzeitlich geloescht, oder es waren mehr als 250 auf einmal.');\n}\n\nconst korr = {};\n($input.first().json.results || []).forEach(k => { korr[k.id] = k.name; });\n\nreturn docs.map((d, i) => {\n  const orig = d.original_file_name || '';\n  const name = orig.toLowerCase();\n  const useOriginal = okExt.some(ext => name.endsWith(ext));\n\n  const dotPos = orig.lastIndexOf('.');\n  const ext = (useOriginal && dotPos > 0) ? orig.slice(dotPos).toLowerCase() : '.pdf';\n  let base;\n  if (auftrag.dateiname_quelle === 'original' && orig) {\n    base = dotPos > 0 ? orig.slice(0, dotPos) : orig;\n  } else {\n    base = d.title || ('Beleg-' + d.id);\n  }\n  base = base.replace(/[\\\\/:*?\"<>|\\r\\n\\t]+/g, ' ').replace(/\\s+/g, ' ').trim().slice(0, 120);\n  if (!base) base = 'Beleg-' + d.id;\n\n  return { json: {\n    nr: i + 1,\n    id: d.id,\n    title: d.title || ('Dokument ' + d.id),\n    created: d.created,\n    korrespondent: d.correspondent ? (korr[d.correspondent] || '') : '',\n    original_file_name: orig || null,\n    // Laufende Nummer als Praefix: zwei Belege duerfen denselben Titel\n    // tragen, im Zip waere der zweite sonst weg.\n    zip_name: String(i + 1).padStart(3, '0') + '_' + base + ext,\n    download_url: auftrag.paperless_url + '/api/documents/' + d.id + '/download/' + (useOriginal ? '?original=true' : '')\n  }};\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        0
+      ],
+      "id": "sv000000-0000-4000-8000-000000000005",
+      "name": "Dokumentliste aufbauen"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.download_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "sv000000-0000-4000-8000-000000000006",
+      "name": "Belege herunterladen",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Dateiname aus der Dokumentliste auf den Download uebernehmen -\n// sonst hiesse jede Datei im Zip 'data.pdf'.\nconst doc = $('Dokumentliste aufbauen').item.json;\nconst item = $input.item;\n\nif (!item.binary || !item.binary.data) {\n  throw new Error('Kein Binaerinhalt fuer Dokument ' + doc.id + ': Download fehlgeschlagen?');\n}\n\nitem.binary.data.fileName = doc.zip_name;\nreturn item;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        0
+      ],
+      "id": "sv000000-0000-4000-8000-000000000007",
+      "name": "Dateinamen setzen"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Alle Downloads in EIN Item buendeln, damit der Compression-Knoten\n// daraus ein einzelnes Zip baut.\nconst items = $input.all();\nif (!items.length) throw new Error('Keine Belege zum Packen vorhanden.');\n\nconst binary = {};\nitems.forEach((item, i) => {\n  if (!item.binary || !item.binary.data) {\n    throw new Error('Beleg ohne Binaerdaten an Position ' + (i + 1) + ': Download fehlgeschlagen?');\n  }\n  binary['file_' + String(i).padStart(3, '0')] = item.binary.data;\n});\n\nreturn [{ json: { anzahl: items.length }, binary }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1456,
+        0
+      ],
+      "id": "sv000000-0000-4000-8000-000000000008",
+      "name": "Belege bündeln"
+    },
+    {
+      "parameters": {
+        "operation": "compress",
+        "binaryPropertyName": "={{ Object.keys($binary).join(',') }}",
+        "outputFormat": "zip",
+        "fileName": "=Belege-{{ $('Auftrag prüfen').first().json.zeitraum }}.zip",
+        "binaryPropertyOutput": "zip"
+      },
+      "type": "n8n-nodes-base.compression",
+      "typeVersion": 1.1,
+      "position": [
+        1664,
+        0
+      ],
+      "id": "sv000000-0000-4000-8000-000000000009",
+      "name": "ZIP erstellen"
+    },
+    {
+      "parameters": {
+        "jsCode": "// CSV-Belegliste erzeugen und als zweiten Anhang an das Item haengen.\n// Semikolon-getrennt und mit BOM, damit deutsches Excel sie direkt\n// sauber oeffnet; mit Komma und ohne BOM landet alles in Spalte A.\nconst auftrag = $('Auftrag prüfen').first().json;\nconst docs = $('Dokumentliste aufbauen').all().map(i => i.json);\n\nconst esc = (v) => '\"' + String(v ?? '').replace(/\"/g, '\"\"') + '\"';\nconst header = ['Nr', 'Paperless-ID', 'Titel', 'Belegdatum', 'Korrespondent', 'Original-Dateiname', 'Datei im ZIP'].join(';');\nconst lines = docs.map(d => [\n  d.nr,\n  d.id,\n  esc(d.title),\n  d.created ? String(d.created).slice(0, 10) : '',\n  esc(d.korrespondent),\n  esc(d.original_file_name || ''),\n  esc(d.zip_name)\n].join(';'));\nconst csv = '\\ufeff' + header + '\\n' + lines.join('\\n') + '\\n';\n\nconst item = $input.first();\nitem.binary = item.binary || {};\nitem.binary.csv = await this.helpers.prepareBinaryData(\n  Buffer.from(csv, 'utf8'),\n  'Belegliste-' + auftrag.zeitraum + '.csv',\n  'text/csv'\n);\nitem.json.anzahl = docs.length;\nreturn item;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1872,
+        0
+      ],
+      "id": "sv000000-0000-4000-8000-00000000000a",
+      "name": "CSV-Belegliste anhängen"
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $('Auftrag prüfen').first().json.absender }}",
+        "toEmail": "={{ $('Auftrag prüfen').first().json.empfaenger }}",
+        "subject": "=Belegexport {{ $('Auftrag prüfen').first().json.zeitraum }}: {{ $json.anzahl }} Beleg(e)",
+        "emailFormat": "text",
+        "text": "=Guten Tag,\n\nanbei der Belegexport aus unserem Dokumentenmanagement:\n- Belege-{{ $('Auftrag prüfen').first().json.zeitraum }}.zip ({{ $json.anzahl }} Beleg(e))\n- Belegliste-{{ $('Auftrag prüfen').first().json.zeitraum }}.csv (Übersicht, mit Excel zu öffnen)\n\nDiese Mail wurde automatisch aus Paperless erzeugt (Paper-Werk). Bei Rückfragen einfach antworten.",
+        "options": {
+          "appendAttribution": false,
+          "attachments": "zip,csv"
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2080,
+        0
+      ],
+      "id": "sv000000-0000-4000-8000-00000000000b",
+      "name": "An Steuerberater senden",
+      "credentials": {
+        "smtp": {
+          "id": "Xg7X6xVdrbSzUQ4o",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Auftrag prüfen').first().json.paperless_url }}/api/documents/bulk_edit/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { documents: $('Dokumentliste aufbauen').all().map(i => i.json.id), method: 'modify_tags', parameters: { add_tags: [$('Auftrag prüfen').first().json.tag_gesendet_id], remove_tags: [] } } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2288,
+        0
+      ],
+      "id": "sv000000-0000-4000-8000-00000000000c",
+      "name": "Als gesendet markieren",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ergebnis an den Aufrufer, mit derselben Struktur wie sub-duo-versand,\n// damit der Monatslauf seinen Bericht bauen kann, ohne zu wissen,\n// welcher Kanal gelaufen ist.\nconst docs = $('Dokumentliste aufbauen').all().map(i => i.json);\nconst auftrag = $('Auftrag prüfen').first().json;\nreturn [{ json: {\n  status: 'gesendet',\n  kanal: 'StB',\n  anzahl: docs.length,\n  doc_ids: docs.map(d => d.id),\n  belege: docs.map(d => ({ id: d.id, titel: d.title, created: d.created, datei: d.zip_name })),\n  zeitraum: auftrag.zeitraum\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2496,
+        0
+      ],
+      "id": "sv000000-0000-4000-8000-00000000000d",
+      "name": "Ergebnis"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Aufruf": {
+      "main": [
+        [
+          {
+            "node": "Auftrag prüfen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auftrag prüfen": {
+      "main": [
+        [
+          {
+            "node": "Dokumente laden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dokumente laden": {
+      "main": [
+        [
+          {
+            "node": "Korrespondenten laden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Korrespondenten laden": {
+      "main": [
+        [
+          {
+            "node": "Dokumentliste aufbauen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dokumentliste aufbauen": {
+      "main": [
+        [
+          {
+            "node": "Belege herunterladen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Belege herunterladen": {
+      "main": [
+        [
+          {
+            "node": "Dateinamen setzen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dateinamen setzen": {
+      "main": [
+        [
+          {
+            "node": "Belege bündeln",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Belege bündeln": {
+      "main": [
+        [
+          {
+            "node": "ZIP erstellen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ZIP erstellen": {
+      "main": [
+        [
+          {
+            "node": "CSV-Belegliste anhängen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CSV-Belegliste anhängen": {
+      "main": [
+        [
+          {
+            "node": "An Steuerberater senden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "An Steuerberater senden": {
+      "main": [
+        [
+          {
+            "node": "Als gesendet markieren",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Als gesendet markieren": {
+      "main": [
+        [
+          {
+            "node": "Ergebnis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timezone": "Europe/Berlin"
+  },
+  "tags": [
+    {
+      "id": "Qr4w77Oluq8Hi4TJ",
+      "name": "paperless"
+    }
+  ],
+  "id": "pwSubStbVersand"
+}

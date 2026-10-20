@@ -1,0 +1,36 @@
+[
+  {
+    "_kommentar": "Gespeicherte Ansichten: das, was der Kunde nach dem ersten Login als Erstes sieht. Filterregeln sind immer {\"rule_type\": N, \"value\": \"...\"}; erst der Regeltyp verrät, worauf sich der Wert bezieht. Deshalb dürfen Tags, Dokumenttypen, Korrespondenten, Speicherpfade, Custom Fields und Nutzer hier per NAME dastehen; apply.sh löst sie über paperless/resolve-saved-view.jq in die IDs der Zielinstanz auf. Rohe Zahlen als String ('2') gehen unverändert durch. Mehrere Regeln in einer Ansicht sind UND-verknüpft. Gebräuchliche Regeltypen: 0 = Titel enthält, 1 = Inhalt enthält, 3 = Korrespondent ist, 4 = Dokumenttyp ist, 5 = im Posteingang, 6 = hat Tag, 7 = hat irgendeinen Tag, 17 = hat Tag NICHT, 19 = Titel oder Inhalt enthält, 25 = Speicherpfad ist, 28 = hat Dokumenttyp aus, 29 = hat Dokumenttyp NICHT aus, 41 = hat Custom Field nicht. Vollständige Liste: SavedViewFilterRule.RULE_TYPES in der Paperless-Quelle. sort_field: created | added | modified | title | correspondent__name | document_type__name | archive_serial_number. display_mode: table | smallCards | largeCards. Optional zusätzlich 'display_fields' (Spaltenauswahl im Tabellenmodus, z. B. [\"title\",\"created\",\"tag\",\"correspondent\"]) und 'page_size'. 'show_in_sidebar' MUSS bei jeder Ansicht dastehen, sonst sieht der Kunde nach dem ersten Login nichts. Es ist KEIN Feld der Paperless-API; seit 3.x gehört die Sichtbarkeit zu den UI-Einstellungen des Nutzers (settings.saved_views.sidebar_views_visible_ids). apply.sh liest das Feld hier als Absicht, nimmt es aus dem POST-Body heraus und trägt die ID nach dem Anlegen dort ein. Ohne 'owner' gehört die Ansicht dem Token-Inhaber aus setup.conf, für Einzelplatz-Installationen richtig so; sonst hier den Benutzernamen eintragen.",
+    "name": "Rechnungen",
+    "show_in_sidebar": true,
+    "sort_field": "created",
+    "sort_reverse": true,
+    "display_mode": "smallCards",
+    "filter_rules": [
+      { "rule_type": 28, "value": "Rechnung" }
+    ]
+  },
+  {
+    "_kommentar": "Zwei Regeln, UND-verknüpft: als wichtig markiert, aber noch nicht erledigt. Zeigt zugleich, dass die Namensauflösung über verschiedene Regeltypen hinweg funktioniert.",
+    "name": "Wichtig und offen",
+    "show_in_sidebar": true,
+    "sort_field": "created",
+    "sort_reverse": true,
+    "display_mode": "table",
+    "filter_rules": [
+      { "rule_type": 6,  "value": "wichtig" },
+      { "rule_type": 17, "value": "erledigt" }
+    ]
+  },
+  {
+    "_kommentar": "Posteingang: alles, was den Inbox-Tag noch trägt. Regeltyp 5 braucht keinen Objektbezug, der Wert ist ein Boolean-String.",
+    "name": "Posteingang",
+    "show_in_sidebar": true,
+    "sort_field": "added",
+    "sort_reverse": true,
+    "display_mode": "smallCards",
+    "filter_rules": [
+      { "rule_type": 5, "value": "true" }
+    ]
+  }
+]

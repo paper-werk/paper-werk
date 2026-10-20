@@ -1,0 +1,582 @@
+{
+  "id": "pwEingangsrech01",
+  "name": "paper-werk-eingangsrechnung",
+  "nodes": [
+    {
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1500,
+        -900
+      ],
+      "id": "e2000002-0002-4000-8000-000000000099",
+      "name": "Doku",
+      "parameters": {
+        "content": "## 📤 Eingangsrechnung an paper-werk\n\n**Zweck:** Übergibt ein gesichtetes Dokument aus Paperless als Eingangsrechnung an paper-werk. Dort entsteht ein Beleg **ohne eigenes PDF**; er trägt die übermittelten Werte und einen Link zurück ins Archiv.\n\n**Der Weg:**\n\n```\nDokument kommt in Paperless an\n  → rechnung-parsen liest Beträge und Projektnummer heraus (aus der E-Rechnung oder per Mistral)\n  → Mensch prüft in der Inbox gegen, setzt Tag \"Paper-Werk senden\"\n  → Paperless-Arbeitsablauf ruft DIESEN Workflow\n  → POST /api/v1/eingangsrechnungen/\n  → Tag wird auf \"Paper-Werk gesendet\" umgesetzt\n```\n\n**Trigger:** Paperless-Workflow → `POST /webhook/paper-werk-eingangsrechnung` mit Body `{\"doc_url\": \"{doc_url}\"}` (alternativ `doc_id`).\n\n**Zwei Wege, je nach Tag `E-Rechnung`** (seit paper-werk 0.1.3):\n\n* **Ohne den Tag** gehen die geprüften Felder an `POST /api/v1/eingangsrechnungen/` (unten beschrieben).\n* **Mit dem Tag** hat die Erkennung XML im PDF gefunden. Dann geht das **Original-PDF** an `POST /api/v1/eingangsrechnungen/erechnung/`, dazu nur die Projektnummer aus Paperless (leer: paper-werk nimmt die Projektreferenz der Rechnung). paper-werk liest Lieferant, Beträge und **alle Positionen** aus dem XML. Kein Korrespondent nötig. Ein zweiter Lauf ändert nichts, außer dass eine nachgetragene Projektnummer die Positionen anlegt.\n\n**Was am Dokument stehen muss** (Weg ohne E-Rechnung, Custom Fields, Typ wie angegeben):\n\n| Feld | Typ | Pflicht |\n| --- | --- | --- |\n| Nettobetrag | monetary | ja |\n| Rechnungsnummer | Text | ja |\n| Rechnungsdatum | Datum | ja |\n| Projektnummer | Text | nein¹ |\n\n¹ Fehlt sie, kommt die Rechnung trotzdem an; ihr Rest steht in paper-werk offen sichtbar da, jemand ordnet sie später zu. Eine **falsche** Nummer dagegen weist paper-werk mit 400 ab.\n\nDer **Lieferant** kommt aus dem Korrespondenten des Dokuments. Unbekannte legt paper-werk an und kennzeichnet sie in der Notiz.\n\n**Zweimal laufen ist erlaubt.** paper-werk antwortet beim ersten Mal mit 201, danach mit 200 und aktualisiert die Kopfdaten. Wer in Paperless einen Betrag korrigiert und den Tag zurücksetzt, findet die Korrektur wieder. Was ein Mensch dort aufgeteilt hat, bleibt unberührt; ist die Rechnung schon weiterberechnet, antwortet paper-werk mit 409 und ändert nichts.\n\n**Der Tag ist Auslöser, Fortschritt und Fehlerliste in einem:** Was nach dem Lauf noch `Paper-Werk senden` trägt, ist nicht durchgekommen.\n\n**Einstellungen** in der Data Table `pw_config`: `paperless_url`, `paperwerk_url`. Der API-Schlüssel steckt in der Credential „Header Auth paper-werk\" (Token eines Dienstbenutzers mit `add_eingangsrechnung` und `view_projekt`).",
+        "height": 1020,
+        "width": 700
+      }
+    },
+    {
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1400,
+        -256
+      ],
+      "id": "e2000002-0002-4000-8000-000000000001",
+      "name": "Webhook",
+      "webhookId": "b6000006-0006-4000-8000-000000000001",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "paper-werk-eingangsrechnung",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -1190,
+        -256
+      ],
+      "id": "e2000002-0002-4000-8000-0000000000c1",
+      "name": "Einstellungen holen",
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "pwSubEinstell01",
+          "mode": "list",
+          "cachedResultName": "sub-einstellungen"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      }
+    },
+    {
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -980,
+        -256
+      ],
+      "id": "e2000002-0002-4000-8000-0000000000c2",
+      "name": "Konfiguration",
+      "parameters": {
+        "jsCode": "// Die Instanzwerte kommen aus sub-einstellungen (Knoten davor) und werden\n// in der Data Table pw_config gepflegt (n8n-Oberfläche, \"Data Tables\").\n// HIER stehen nur die FACHLICHEN Einstellungen dieses Workflows.\nconst werte = $('Einstellungen holen').first().json;\nconst pw = (key) => {\n  const v = werte[key];\n  if (v === undefined || String(v).trim() === '') {\n    throw new Error('pw_config: \"' + key + '\" fehlt oder ist leer; in der n8n-Oberfläche unter \"Data Tables\" eintragen.');\n  }\n  return v;\n};\nreturn [{\n  json: {\n    paperless_url: pw('paperless_url'),\n    // Die Adresse von paper-werk aus Sicht von n8n. Im Stack der\n    // Docker-Servicename, nicht die Browser-Adresse.\n    paperwerk_url: String(pw('paperwerk_url')).replace(/\\/+$/, ''),\n\n    // ── fachlich ──\n    // Die Namen der Custom Fields, aus denen gelesen wird. Sie muessen zu\n    // dem passen, was \"manage.py paperless_einrichten\" in paper-werk\n    // anlegt; dort ist die verbindliche Liste.\n    feld_netto: 'Nettobetrag',\n    feld_nummer: 'Rechnungsnummer',\n    feld_datum: 'Rechnungsdatum',\n    feld_projekt: 'Projektnummer',\n    // Der Tag, der diesen Lauf ausgeloest hat, und der, auf den er\n    // umgesetzt wird. Was nach dem Lauf noch den ersten traegt, ist nicht\n    // durchgekommen; das ist die ganze Fehlerliste.\n    tag_offen: 'Paper-Werk senden',\n    tag_fertig: 'Paper-Werk gesendet',\n    // Trägt das Dokument diesen Tag, hat die Erkennung XML im PDF\n    // gefunden: Dann geht die Datei selbst an paper-werk und nicht die\n    // Felder, mit allen Positionen der Rechnung.\n    tag_erechnung: 'E-Rechnung',\n  }\n}];"
+      }
+    },
+    {
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -770,
+        -256
+      ],
+      "id": "e2000002-0002-4000-8000-000000000002",
+      "name": "Extract ID",
+      "parameters": {
+        "jsCode": "// Dokument-ID aus dem Paperless-Webhook holen.\n// Body kann { doc_id }, { id } oder { doc_url } enthalten, nach derselben\n// Verabredung wie in felder-erkennen-mistral.\nconst body = $('Webhook').first().json.body ?? {};\nlet id = body.doc_id ?? body.id;\nif (!id && body.doc_url) {\n  id = String(body.doc_url).match(/\\/documents\\/(\\d+)/)?.[1];\n}\nif (!id) throw new Error('Keine doc_id/doc_url im Webhook-Body');\nreturn [{ json: { id: Number(id) } }];"
+      }
+    },
+    {
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -560,
+        -256
+      ],
+      "id": "e2000002-0002-4000-8000-000000000003",
+      "name": "Dokument holen",
+      "parameters": {
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/documents/{{ $('Extract ID').first().json.id }}/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        490,
+        -256
+      ],
+      "id": "e2000002-0002-4000-8000-000000000004",
+      "name": "Korrespondenten holen",
+      "parameters": {
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/correspondents/?page_size=200",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        -256
+      ],
+      "id": "e2000002-0002-4000-8000-000000000005",
+      "name": "Korrespondent zuordnen",
+      "parameters": {
+        "jsCode": "// Den Namen des Korrespondenten nachschlagen.\n//\n// Paperless liefert am Dokument nur seine Kennung. paper-werk will den\n// NAMEN: Kennungen sind je Anlage andere, ein Name ist derselbe, und er\n// ist das, was der Mensch im Archiv sieht.\nconst dok = $('Dokument holen').first().json;\nconst alle = $json.results ?? [];\nconst treffer = alle.find((k) => k.id === dok.correspondent);\nreturn [{\n  json: { ...dok, correspondent_name: treffer ? treffer.name : '' },\n}];"
+      }
+    },
+    {
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -140,
+        -256
+      ],
+      "id": "e2000002-0002-4000-8000-000000000006",
+      "name": "Feldliste holen",
+      "parameters": {
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/custom_fields/?page_size=100",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        910,
+        -256
+      ],
+      "id": "e2000002-0002-4000-8000-000000000007",
+      "name": "Werte lesen",
+      "parameters": {
+        "jsCode": "// Aus dem Dokument und seinen Custom Fields wird die Nutzlast fuer\n// paper-werk.\n//\n// **Namen statt Kennungen, und deshalb dieser Umweg.** Paperless liefert\n// Custom Fields als { field: 15, value: \"EUR1758.00\" }; die 15 ist je\n// Anlage eine andere. Gelesen wird deshalb ueber die Feldliste, die der\n// Knoten davor geholt hat.\nconst cfg = $('Konfiguration').first().json;\n// **\"Korrespondent zuordnen\" und nicht \"Dokument holen\".** Der rohe\n// Dokumentknoten kennt nur die KENNUNG des Korrespondenten; den Namen\n// haengt der Knoten danach an. Wer hier auf \"Dokument holen\" zugreift,\n// bekommt ein Dokument ohne correspondent_name, und der Workflow bricht\n// mit \"hat keinen Korrespondenten\" ab, obwohl einer gesetzt ist.\nconst dok = $('Korrespondent zuordnen').first().json;\nconst felder = $('Feldliste holen').first().json.results ?? [];\n\n// Name -> Kennung, case-insensitive: Wer ein Feld von Hand anlegt,\n// schreibt es irgendwann klein.\nconst nachName = {};\nfor (const f of felder) nachName[String(f.name).toLowerCase()] = f.id;\n\nconst kennung = (name) => {\n  const id = nachName[String(name).toLowerCase()];\n  if (id === undefined) {\n    throw new Error('In Paperless gibt es kein Zusatzfeld \"' + name + '\". '\n      + 'In paper-werk anlegen lassen: manage.py paperless_einrichten');\n  }\n  return id;\n};\n\nconst werte = {};\nfor (const eintrag of (dok.custom_fields ?? [])) {\n  werte[eintrag.field] = eintrag.value;\n}\n\nconst lies = (name) => {\n  const roh = werte[kennung(name)];\n  return roh === null || roh === undefined ? '' : String(roh).trim();\n};\n\n// Ein monetary-Feld traegt den Waehrungscode im Wert: \"EUR1758.00\".\n// Genauso, wie paper-werk ihn beim Hochladen seiner eigenen Belege\n// voranstellt; hier wird er wieder abgeschnitten.\nconst betrag = (roh) => roh.replace(/^[A-Z]{3}/, '').trim();\n\nconst netto = betrag(lies(cfg.feld_netto));\nconst nummer = lies(cfg.feld_nummer);\nconst datum = lies(cfg.feld_datum);\nconst projekt = lies(cfg.feld_projekt);\n\n// **Vor dem Senden pruefen und nicht danach.** paper-werk wuerde es auch\n// bemaengeln, aber die Meldung dort spricht von Feldnamen der\n// Schnittstelle; hier lassen sich die Namen nennen, die der Mensch in\n// Paperless vor sich sieht.\nconst fehlend = [];\nif (!netto) fehlend.push(cfg.feld_netto);\nif (!nummer) fehlend.push(cfg.feld_nummer);\nif (!datum) fehlend.push(cfg.feld_datum);\nif (fehlend.length) {\n  throw new Error('Am Dokument ' + dok.id + ' fehlen: ' + fehlend.join(', ')\n    + '. In Paperless nachtragen und den Tag \"' + cfg.tag_offen\n    + '\" erneut setzen.');\n}\n\nconst lieferant = dok.correspondent_name || '';\nif (!lieferant) {\n  throw new Error('Dokument ' + dok.id + ' hat keinen Korrespondenten; '\n    + 'ohne ihn weiss paper-werk nicht, von wem die Rechnung ist.');\n}\n\nreturn [{\n  json: {\n    id: dok.id,\n    tags: dok.tags ?? [],\n    nutzlast: {\n      paperless_id: dok.id,\n      lieferant,\n      nummer,\n      datum,\n      betrag_netto: netto,\n      projekt,\n      notiz: 'Aus Paperless übernommen.',\n    },\n  },\n}];"
+      }
+    },
+    {
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        -256
+      ],
+      "id": "e2000002-0002-4000-8000-000000000008",
+      "name": "An paper-werk senden",
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Konfiguration').first().json.paperwerk_url }}/api/v1/eingangsrechnungen/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.nutzlast) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "pwApiToken000001",
+          "name": "Header Auth paper-werk"
+        }
+      }
+    },
+    {
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -350,
+        -256
+      ],
+      "id": "e2000002-0002-4000-8000-000000000009",
+      "name": "Tagliste holen",
+      "parameters": {
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/tags/?page_size=200",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        -256
+      ],
+      "id": "e2000002-0002-4000-8000-00000000000a",
+      "name": "Tag umsetzen",
+      "parameters": {
+        "jsCode": "// Den Tag umsetzen: \"Paper-Werk senden\" raus, \"Paper-Werk gesendet\" rein.\n//\n// **Erst jetzt, nach der Antwort von paper-werk.** Bricht der Uebertrag\n// ab, bleibt der alte Tag stehen, und damit ist das Dokument in Paperless\n// weiterhin als offen sichtbar. Der Tag IST die Arbeitsliste.\nconst cfg = $('Konfiguration').first().json;\n// Beim Namen und nicht über $json: Hier laufen beide Wege zusammen,\n// Felder und E-Rechnung.\nconst dok = $('Dokument holen').first().json;\nconst alle = $('Tagliste holen').first().json.results ?? [];\n\nconst finde = (name) => {\n  const t = alle.find((x) => String(x.name).toLowerCase() === String(name).toLowerCase());\n  if (!t) {\n    throw new Error('In Paperless gibt es kein Schlagwort \"' + name + '\". '\n      + 'In paper-werk anlegen lassen: manage.py paperless_einrichten');\n  }\n  return t.id;\n};\n\nconst offen = finde(cfg.tag_offen);\nconst fertig = finde(cfg.tag_fertig);\n\nconst neu = (dok.tags ?? []).filter((t) => t !== offen);\nif (!neu.includes(fertig)) neu.push(fertig);\n\nreturn [{ json: { id: dok.id, tags: neu } }];"
+      }
+    },
+    {
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1750,
+        -256
+      ],
+      "id": "e2000002-0002-4000-8000-00000000000b",
+      "name": "Tag schreiben",
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/documents/{{ $json.id }}/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { tags: $json.tags } }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Felder oder E-Rechnung? Das hat die Erkennung schon entschieden und am\n// Tag festgehalten; hier wird es nur nachgelesen.\nconst cfg = $('Konfiguration').first().json;\nconst dok = $('Dokument holen').first().json;\nconst tags = $('Tagliste holen').first().json.results ?? [];\nconst felder = $json.results ?? [];\n\nconst tag = tags.find((t) => String(t.name).toLowerCase() === cfg.tag_erechnung.toLowerCase());\nconst erechnung = !!tag && (dok.tags ?? []).includes(tag.id);\n\n// Die Projektnummer, die ein Mensch in Paperless geprüft hat. Für die\n// E-Rechnung ist sie das einzige Feld, das mitgeht; alles andere steht\n// im XML. Leer heißt: paper-werk nimmt die Projektreferenz der Rechnung.\nconst feld = felder.find((f) => String(f.name).toLowerCase() === cfg.feld_projekt.toLowerCase());\nconst eintrag = feld ? (dok.custom_fields ?? []).find((c) => c.field === feld.id) : null;\nconst projekt = eintrag && eintrag.value ? String(eintrag.value).trim() : '';\n\nreturn [{ json: { id: dok.id, erechnung, projekt } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        70,
+        -256
+      ],
+      "id": "e2000002-0002-4000-8000-000000000020",
+      "name": "Weg bestimmen"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c4nd0002-0002-4000-8000-000000000021",
+              "leftValue": "={{ $json.erechnung }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "looseTypeValidation": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        280,
+        -256
+      ],
+      "id": "e2000002-0002-4000-8000-000000000021",
+      "name": "E-Rechnung?"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/documents/{{ $('Dokument holen').first().json.id }}/download/?original=true",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        490,
+        0
+      ],
+      "id": "e2000002-0002-4000-8000-000000000022",
+      "name": "Original holen",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      },
+      "notes": "original=true: Die Archivfassung, die Paperless selbst erzeugt (PDF/A), hat den XML-Anhang oft nicht mehr."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Konfiguration').first().json.paperwerk_url }}/api/v1/eingangsrechnungen/erechnung/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "datei",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "paperless_id",
+              "value": "={{ $('Weg bestimmen').first().json.id }}"
+            },
+            {
+              "name": "projekt",
+              "value": "={{ $('Weg bestimmen').first().json.projekt }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        910,
+        0
+      ],
+      "id": "e2000002-0002-4000-8000-000000000023",
+      "name": "E-Rechnung senden",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "pwApiToken000001",
+          "name": "Header Auth paper-werk"
+        }
+      },
+      "notes": "201 neu, 200 schon vorhanden. 400 bei unbekannter Projektnummer, 409 wenn dieselbe Rechnung an einem anderen Dokument hängt."
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Einstellungen holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Einstellungen holen": {
+      "main": [
+        [
+          {
+            "node": "Konfiguration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Konfiguration": {
+      "main": [
+        [
+          {
+            "node": "Extract ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract ID": {
+      "main": [
+        [
+          {
+            "node": "Dokument holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dokument holen": {
+      "main": [
+        [
+          {
+            "node": "Tagliste holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tagliste holen": {
+      "main": [
+        [
+          {
+            "node": "Feldliste holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Feldliste holen": {
+      "main": [
+        [
+          {
+            "node": "Weg bestimmen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weg bestimmen": {
+      "main": [
+        [
+          {
+            "node": "E-Rechnung?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "E-Rechnung?": {
+      "main": [
+        [
+          {
+            "node": "Original holen",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Korrespondenten holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Original holen": {
+      "main": [
+        [
+          {
+            "node": "E-Rechnung senden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "E-Rechnung senden": {
+      "main": [
+        [
+          {
+            "node": "Tag umsetzen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Korrespondenten holen": {
+      "main": [
+        [
+          {
+            "node": "Korrespondent zuordnen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Korrespondent zuordnen": {
+      "main": [
+        [
+          {
+            "node": "Werte lesen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Werte lesen": {
+      "main": [
+        [
+          {
+            "node": "An paper-werk senden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "An paper-werk senden": {
+      "main": [
+        [
+          {
+            "node": "Tag umsetzen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag umsetzen": {
+      "main": [
+        [
+          {
+            "node": "Tag schreiben",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "errorWorkflow": "pwFehlerMelden01"
+  },
+  "active": false,
+  "pinData": {}
+}

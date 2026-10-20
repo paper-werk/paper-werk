@@ -1,0 +1,48 @@
+# Ignore-Regeln für das Default-Backup (Syntax wie .gitignore).
+# Quelle: erprobtes Setup, beschrieben in docs/kopia-backblaze.md.
+# redisdata: reiner Cache/Broker, muss nicht gesichert werden (getestet).
+/export
+/redisdata
+*.deb
+
+# Die vier folgenden Regeln gehören zu Komponenten, die der Stack nicht mehr
+# enthält (siehe docs/ocr-und-llm-alternativen.md). Sie bleiben stehen,
+# weil eine Ignore-Regel, die auf nichts greift, nichts kostet, während ihr
+# Entfernen eine ältere Installation überraschen würde, die diese Ordner
+# noch hat: dann liefen sie plötzlich ins Backup.
+/ollamadata
+/pdf
+/prompts
+/hocr
+
+# --- n8n ---------------------------------------------------------------------
+# n8ndata wird MITGESICHERT: dort liegt die n8n-Datenbank mit allen Workflows
+# und Credentials. Ein pauschales "/n8ndata" passt nur, wenn n8n über eine
+# zweite Snapshot-Quelle gesichert wird; ohne diese fehlen die Workflows still
+# im Backup.
+# Ausgenommen sind nur die nachinstallierten Node-Pakete, jederzeit über npm
+# wiederherstellbar und je nach Installation mehrere hundert MB:
+/n8ndata/nodes/node_modules
+
+# --- Regenerierbares aus data/ ------------------------------------------------
+# Diese vier ändern sich täglich vollständig und lassen sich deshalb kaum
+# deduplizieren (siehe docs/kopia-backblaze.md).
+# Alle sind wiederherstellbar, ohne dass Nutzerdaten verloren gehen:
+#
+#   index      -> baut Paperless beim Containerstart AUTOMATISCH neu
+#                 ([init-index] im Entrypoint). Kein Handgriff nötig.
+#   llm_index  -> muss manuell zurückgeholt werden:
+#                 docker compose exec paperless \
+#                   python3 manage.py document_llmindex rebuild
+#                 ca. 1 Sekunde pro Dokument, kostet Embedding-API-Calls.
+#   log        -> Anwendungslogs, füllen sich im Betrieb neu.
+#   classification_model.pickle -> entsteht beim nächsten geplanten Training.
+#
+# Erwartetes Verhalten nach einem Restore und der komplette getestete Ablauf:
+# docs/kopia-backblaze.md, Abschnitt "Ausgeschlossene Daten".
+# NICHT ausschließen: migration_lock und celerybeat-schedule.db (zusammen 28 KB)
+# sowie natürlich pgdata und media.
+/data/index
+/data/llm_index
+/data/log
+/data/classification_model.pickle

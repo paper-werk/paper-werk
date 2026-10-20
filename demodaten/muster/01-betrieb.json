@@ -1,0 +1,17 @@
+{
+  "_kommentar": "Die eigene Firma - ein Objekt, keine Liste, denn es gibt nur eine. Ohne sie laesst sich kein Beleg festschreiben: Eine Rechnung ohne Steuernummer ist beim Empfaenger nicht vorsteuerabzugsfaehig.",
+  "name": "Pruefbetrieb Muster GmbH",
+  "strasse": "Musterweg 1",
+  "plz": "84028",
+  "ort": "Landshut",
+  "telefon": "0871 1234567",
+  "email": "post@example.de",
+  "steuernummer": "143/815/47110",
+  "ust_id": "DE123456789",
+  "bank": "Sparkasse Landshut",
+  "iban": "DE02120300000000202051",
+  "bic": "BYLADEM1001",
+  "geschaeftsfuehrung": "Geschaeftsfuehrung: M. Muster",
+  "registergericht": "AG Landshut",
+  "handelsregister": "HRB 12345"
+}

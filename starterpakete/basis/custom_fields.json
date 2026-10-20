@@ -1,0 +1,84 @@
+[
+  {
+    "_kommentar": "Paperless-Custom-Fields. Werden über den Namen erkannt; vorhandene Felder werden übersprungen, nie überschrieben. Namen, die von n8n-Workflows gelesen/geschrieben werden, sind unten einzeln vermerkt und dürfen nicht umbenannt werden.",
+    "name": "Gesamtbetrag",
+    "data_type": "monetary"
+  },
+  {
+    "name": "Rechnungsnummer",
+    "data_type": "string"
+  },
+  {
+    "name": "Fällig am",
+    "data_type": "date"
+  },
+  {
+    "name": "Siehe auch",
+    "data_type": "documentlink"
+  },
+  {
+    "name": "bezahlt",
+    "data_type": "boolean"
+  },
+  {
+    "name": "geprüft",
+    "data_type": "select",
+    "extra_data": {
+      "select_options": [
+        {
+          "label": "ungeprüft"
+        },
+        {
+          "label": "genehmigt"
+        },
+        {
+          "label": "abgelehnt"
+        }
+      ]
+    }
+  },
+  {
+    "_kommentar": "KUNDENSPEZIFISCH: Die select_options sind nur ein Beispiel (Bauvorhaben-Nummern); vor der Installation durch die echten Projekte des Kunden ersetzen oder das Feld ganz entfernen. Nachträgliches Ändern der Optionen geht nur in der Paperless-UI, das Setup-Skript aktualisiert bestehende Felder nicht.",
+    "name": "Projekt",
+    "data_type": "select",
+    "extra_data": {
+      "select_options": [
+        {
+          "label": "Projekt A"
+        },
+        {
+          "label": "Projekt B"
+        },
+        {
+          "label": "allgemein"
+        }
+      ]
+    }
+  },
+  {
+    "_kommentar": "felder-erkennen-mistral: Namen müssen exakt zum ENTITIES-Objekt im n8n-Workflow passen (case-insensitive-Suche, aber Klarheit halber gleich schreiben).",
+    "name": "Versicherungsnummer",
+    "data_type": "string"
+  },
+  {
+    "name": "Projektnummer",
+    "data_type": "string"
+  },
+  {
+    "_kommentar": "vertragsdaten-erkennen-mistral befüllt diese drei Felder, kuendigungsfristen-melden liest sie wieder aus; Namen müssen exakt übereinstimmen (feld_vertragsende/feld_frist/feld_kuendigen_bis in dessen Konfiguration-Node).",
+    "name": "Vertragsende",
+    "data_type": "date"
+  },
+  {
+    "name": "Kündigungsfrist",
+    "data_type": "string"
+  },
+  {
+    "name": "Kündigen bis",
+    "data_type": "date"
+  },
+  {
+    "name": "Erinnern am",
+    "data_type": "date"
+  }
+]

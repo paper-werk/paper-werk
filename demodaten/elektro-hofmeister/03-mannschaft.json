@@ -1,0 +1,41 @@
+[
+  {
+    "anmeldename": "m.hofmeister",
+    "vorname": "Michael",
+    "nachname": "Hofmeister",
+    "kostensaetze": [
+      {
+        "vor_tagen": 420,
+        "satz": "54.00"
+      },
+      {
+        "vor_tagen": 75,
+        "satz": "58.00",
+        "notiz": "Tarifrunde"
+      }
+    ],
+    "_kommentar": "Zwei Sätze je Person, damit die Lohnrunde in den Zahlen steht: Stunden vor dem Stichtag werden mit dem alten Satz bewertet. Ohne diesen Fall sieht man der Auswertung nicht an, dass sie ihn beherrscht."
+  },
+  {
+    "anmeldename": "s.aigner",
+    "vorname": "Stefan",
+    "nachname": "Aigner",
+    "kostensaetze": [
+      {
+        "vor_tagen": 420,
+        "satz": "43.00"
+      },
+      {
+        "vor_tagen": 75,
+        "satz": "46.00",
+        "notiz": "Tarifrunde"
+      }
+    ]
+  },
+  {
+    "anmeldename": "l.perl",
+    "vorname": "Lukas",
+    "nachname": "Perl",
+    "_kommentar": "Ohne Kostensatz, und das mit Absicht: Die Startseite meldet dann den Vorbehalt \"1 Person ohne Kostensatz\". Das Programm erfindet keine Zahl, es sagt, was ihm fehlt. Dass es der Azubi ist, macht es plausibel - um dessen Kosten hat sich im ersten Jahr noch niemand gekümmert."
+  }
+]

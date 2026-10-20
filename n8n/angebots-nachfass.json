@@ -1,0 +1,382 @@
+{
+  "name": "angebots-nachfass",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 💰 Angebots-Nachfass-Erinnerung (Handwerker)\n\n**Zweck:** Erinnert wöchentlich an rausgeschickte Angebote, auf die seit über `nachfass_tage` (14) keine Reaktion kam.\n\n**Prozess-Konvention:**\n1. Angebot verschickt → in Paperless Tag `angebot-offen` setzen\n2. Auftrag erhalten oder Absage → Tag entfernen (oder durch `angebot-gewonnen`/`angebot-verloren` ersetzen)\n3. Solange der Tag dranbleibt, taucht das Angebot im Wochen-Digest auf, bewusst ohne Extra-Status-Tag, damit nichts durchrutscht.\n\n**Trigger:** Schedule montags 8:30 Uhr, zusätzlich manuell startbar.\n\n**Adressen und URLs** stehen in der Data Table `pw_config` (n8n-Oberfläche → Data Tables), nicht mehr im Node „Konfiguration\". Dort steht nur noch Fachliches.\n\n**Im Node „Konfiguration\" anpassen:** `nachfass_tage`, `tag_angebot`. Der Empfänger ist `mail_betrieb` in `pw_config`.\n\n**⚠️ Zwei URLs, zwei Zwecke**, beide in `pw_config`:\n- `paperless_url` (`http://paperless:8000`): interner Docker-Servicename, NUR für die API-Aufrufe von n8n aus\n- `paperless_url_oeffentlich`: Adresse, unter der Paperless im Browser/Mail-Client erreichbar ist, NUR für die Links in der Mail\n\n**Fehlerverhalten:** Fehlt der Tag `angebot-offen` in Paperless, bricht der Workflow mit klarer Meldung ab. Ohne fällige Angebote wird keine Mail verschickt.\n\n**Hinweis:** Maßstab ist das Dokumentdatum (`created`); beim Import des Angebots also darauf achten, dass das Datum stimmt.",
+        "height": 620,
+        "width": 720
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        -752
+      ],
+      "id": "e9000009-0009-4000-8000-000000000099",
+      "name": "Doku"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 8 * * 1"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        160
+      ],
+      "id": "e9000009-0009-4000-8000-000000000001",
+      "name": "Schedule Mo 8:30 Uhr"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e9000009-0009-4000-8000-000000000002",
+      "name": "Manuell starten"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "pwSubEinstell01",
+          "mode": "list",
+          "cachedResultName": "sub-einstellungen"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        208,
+        80
+      ],
+      "id": "e9000009-0009-4000-8000-0000000000c1",
+      "name": "Einstellungen holen"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Die Instanzwerte kommen aus sub-einstellungen (Knoten davor) und werden\n// in der Data Table pw_config gepflegt (n8n-Oberfläche, \"Data Tables\").\n// HIER stehen nur die FACHLICHEN Einstellungen dieses Workflows: Fristen,\n// Tag-Namen, Feldnamen.\nconst werte = $('Einstellungen holen').first().json;\nconst pw = (key) => {\n  const v = werte[key];\n  if (v === undefined || String(v).trim() === '') {\n    throw new Error('pw_config: \"' + key + '\" fehlt oder ist leer; in der n8n-Oberfläche unter \"Data Tables\" eintragen.');\n  }\n  return v;\n};\nreturn [{\n  json: {\n    // ── aus der Data Table pw_config ──\n    paperless_url:             pw('paperless_url'),\n    paperless_url_oeffentlich: pw('paperless_url_oeffentlich'),\n    empfaenger_email:          pw('mail_betrieb'),\n    absender:                  pw('mail_absender'),\n\n    // ── fachlich, hier zu pflegen ──\n    // tag_angebot:   Der Tag, den ein Mensch beim Verschicken des Angebots setzt.\n    // nachfass_tage: Ab wann ein Angebot ohne Rückmeldung gemeldet wird.\n    tag_angebot: 'angebot-offen',\n    nachfass_tage: 14\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        80
+      ],
+      "id": "e9000009-0009-4000-8000-000000000003",
+      "name": "Konfiguration"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.paperless_url }}/api/tags/?page_size=500",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        624,
+        80
+      ],
+      "id": "e9000009-0009-4000-8000-000000000004",
+      "name": "Tags laden",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Tag-ID auflösen und den Stichtag berechnen: gemeldet wird alles,\n// was älter ist als heute minus nachfass_tage.\nconst cfg = $('Konfiguration').first().json;\nconst tags = $json.results || [];\n\nconst tag = tags.find(t => String(t.name || '').toLowerCase() === cfg.tag_angebot.toLowerCase());\nif (!tag) throw new Error('Tag \"' + cfg.tag_angebot + '\" existiert nicht in Paperless; bitte anlegen und bei jedem verschickten Angebot setzen.');\n\nconst cutoff = new Date(Date.now() - cfg.nachfass_tage * 86400000).toISOString().slice(0, 10);\n\nreturn [{ json: Object.assign({}, cfg, { tag_angebot_id: tag.id, cutoff }) }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        80
+      ],
+      "id": "e9000009-0009-4000-8000-000000000005",
+      "name": "Tag-ID ermitteln"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.paperless_url }}/api/documents/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "tags__id__all",
+              "value": "={{ $json.tag_angebot_id }}"
+            },
+            {
+              "name": "created__date__lt",
+              "value": "={{ $json.cutoff }}"
+            },
+            {
+              "name": "page_size",
+              "value": "250"
+            },
+            {
+              "name": "ordering",
+              "value": "created"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1040,
+        80
+      ],
+      "id": "e9000009-0009-4000-8000-000000000006",
+      "name": "Offene Angebote laden",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-angebot-has-docs",
+              "leftValue": "={{ $json.count }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1248,
+        80
+      ],
+      "id": "e9000009-0009-4000-8000-000000000007",
+      "name": "Angebote fällig?"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Tag-ID ermitteln').first().json.paperless_url }}/api/correspondents/?page_size=500",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1456,
+        -16
+      ],
+      "id": "e9000009-0009-4000-8000-000000000008",
+      "name": "Korrespondenten laden",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// HTML-Mail mit allen nachzufassenden Angeboten aufbauen,\n// älteste (= am längsten offene) zuerst.\nconst cfg = $('Tag-ID ermitteln').first().json;\nconst docs = $('Offene Angebote laden').first().json.results || [];\n\nconst korr = {};\n($input.first().json.results || []).forEach(k => { korr[k.id] = k.name; });\n\nconst esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst fmt = (iso) => iso ? new Date(iso).toLocaleDateString('de-DE') : '-';\nconst tageOffen = (iso) => iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 86400000) : null;\n\nconst rows = docs.map(d => {\n  const docUrl = cfg.paperless_url_oeffentlich + '/documents/' + d.id + '/detail';\n  const tage = tageOffen(d.created);\n  return '<tr>'\n    + '<td style=\"padding:6px 12px;border:1px solid #ddd;\"><a href=\"' + docUrl + '\" style=\"color:#1a73e8;\">' + esc(d.title || '(kein Titel)') + '</a></td>'\n    + '<td style=\"padding:6px 12px;border:1px solid #ddd;\">' + esc(d.correspondent ? (korr[d.correspondent] || '-') : '-') + '</td>'\n    + '<td style=\"padding:6px 12px;border:1px solid #ddd;white-space:nowrap;\">' + fmt(d.created) + '</td>'\n    + '<td style=\"padding:6px 12px;border:1px solid #ddd;color:#c0392b;font-weight:bold;white-space:nowrap;\">' + (tage !== null ? tage + ' Tage' : '-') + '</td>'\n    + '</tr>';\n}).join('\\n');\n\nconst anzahl = docs.length + (docs.length === 1 ? ' Angebot' : ' Angebote');\nconst today = new Date().toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin' });\n\nconst html = '<div style=\"font-family:Arial,sans-serif;max-width:750px;\">'\n  + '<h2 style=\"color:#2c3e50;border-bottom:2px solid #2c3e50;padding-bottom:8px;\">Angebote nachfassen</h2>'\n  + '<p><strong>' + anzahl + '</strong> ohne R\\u00fcckmeldung seit \\u00fcber ' + cfg.nachfass_tage + ' Tagen \\u2014 ein kurzer Anruf lohnt sich:</p>'\n  + '<table cellpadding=\"0\" cellspacing=\"0\" style=\"border-collapse:collapse;font-size:14px;width:100%;margin:16px 0;\">'\n  + '<thead><tr style=\"background:#2c3e50;color:#fff;\">'\n  + '<th style=\"padding:10px 12px;text-align:left;\">Angebot</th>'\n  + '<th style=\"padding:10px 12px;text-align:left;\">Kunde</th>'\n  + '<th style=\"padding:10px 12px;text-align:left;\">Vom</th>'\n  + '<th style=\"padding:10px 12px;text-align:left;\">Offen seit</th>'\n  + '</tr></thead>'\n  + '<tbody>' + rows + '</tbody></table>'\n  + '<p style=\"font-size:13px;color:#555;\">Nach Auftrag oder Absage das Tag \\u201e' + esc(cfg.tag_angebot) + '\\u201c am Dokument entfernen \\u2014 sonst erscheint das Angebot n\\u00e4chste Woche wieder.</p>'\n  + '<p><a href=' + cfg.paperless_url_oeffentlich + ' style=\"background:#2c3e50;color:#fff;padding:8px 16px;text-decoration:none;border-radius:4px;display:inline-block;\">&#8594; Paperless-NGX \\u00f6ffnen</a></p>'\n  + '<p style=\"color:#95a5a6;font-size:12px;margin-top:32px;border-top:1px solid #eee;padding-top:12px;\">Automatisch generiert am ' + today + ' \\u00b7 <a href=\"https://github.com/paper-werk\">Paper-Werk</a></p>'\n  + '</div>';\n\nreturn [{ json: {\n  html,\n  toEmail: cfg.empfaenger_email,\n  fromEmail: cfg.absender,\n  subject: 'Nachfassen: ' + anzahl + ' ohne R\\u00fcckmeldung'\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1664,
+        -16
+      ],
+      "id": "e9000009-0009-4000-8000-000000000009",
+      "name": "E-Mail aufbauen"
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $json.fromEmail }}",
+        "toEmail": "={{ $json.toEmail }}",
+        "subject": "={{ $json.subject }}",
+        "html": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1872,
+        -16
+      ],
+      "id": "e9000009-0009-4000-8000-000000000010",
+      "name": "E-Mail senden",
+      "credentials": {
+        "smtp": {
+          "id": "Xg7X6xVdrbSzUQ4o",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Mo 8:30 Uhr": {
+      "main": [
+        [
+          {
+            "node": "Einstellungen holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manuell starten": {
+      "main": [
+        [
+          {
+            "node": "Einstellungen holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Konfiguration": {
+      "main": [
+        [
+          {
+            "node": "Tags laden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tags laden": {
+      "main": [
+        [
+          {
+            "node": "Tag-ID ermitteln",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag-ID ermitteln": {
+      "main": [
+        [
+          {
+            "node": "Offene Angebote laden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Offene Angebote laden": {
+      "main": [
+        [
+          {
+            "node": "Angebote fällig?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Angebote fällig?": {
+      "main": [
+        [
+          {
+            "node": "Korrespondenten laden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Korrespondenten laden": {
+      "main": [
+        [
+          {
+            "node": "E-Mail aufbauen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "E-Mail aufbauen": {
+      "main": [
+        [
+          {
+            "node": "E-Mail senden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Einstellungen holen": {
+      "main": [
+        [
+          {
+            "node": "Konfiguration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "errorWorkflow": "pwFehlerMelden01"
+  },
+  "tags": [
+    {
+      "id": "Qr4w77Oluq8Hi4TJ",
+      "name": "paperless"
+    }
+  ],
+  "id": "ls4AOBpSezqd1BRA"
+}

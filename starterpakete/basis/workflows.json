@@ -1,0 +1,305 @@
+[
+  {
+    "_kommentar": "DATEIKOPF: steht am ersten Ablauf, weil JSON keine Kommentare kennt. WER DIESEN EINTRAG LÖSCHT, MUSS DEN KOPF VORHER AUF DEN NEUEN ERSTEN HEBEN, sonst verschwindet er mit einem gelöschten Ablauf. --- Tags/Dokumenttypen werden hier per NAME referenziert, apply.sh löst sie vor dem POST in IDs auf. Trigger-Typen: 1=Verarbeitung gestartet, 2=Dokument hinzugefügt, 3=Dokument aktualisiert. Action-Typen: 1=Zuweisung, 2=Entfernung, 4=Webhook. --- SORTIERSCHEMA für 'order' (Paperless arbeitet die Abläufe in dieser Reihenfolge ab): 1-99 = Auslöser Verarbeitung gestartet bzw. Dokument hinzugefügt (Typ 1/2), 100-999 = Dokument aktualisiert (Typ 3), ab 1000 = Sonderfälle wie Tests und manuelle Abläufe. Hat ein Ablauf MEHRERE Auslöser, zählt der KLEINERE Typ; Typ 2+3 landet also im Bereich 1-99. Vergeben wird in 10er-Schritten, damit später ohne Umnummerieren dazwischengeschoben werden kann. --- NAMENSSCHEMA: Abläufe heißen fachlich nach dem, was sie tun; die Technik steht in Klammern, weil der Unterschied lokal/Cloud-KI datenschutzrelevant ist. Die Webhook-Pfade sind identisch mit den n8n-Workflow-Namen; wer einen davon ändert, muss beide anfassen. --- ACHTUNG bei Namen von Tags und Dokumenttypen: resolve-workflow.jq schlägt sie EXAKT nach ($map[.]), NICHT case-insensitiv. 'Geschäftlich' findet den Tag 'geschäftlich' also nicht, sondern bricht apply.sh mit 'Unbekannt (Tag)' ab. Wer tags.json oder document_types.json umbenennt, muss diese Datei mitziehen, sonst bricht eine Neuinstallation mitten im Einspielen ab. --- WEBHOOKS einheitlich per 'Webhook-Parameter verwenden' (use_params) statt Webhook-Inhalt/body; beides landet bei n8n identisch in $json.body. Platzhalter {{doc_url}} = Jinja2, NICHT {doc_url} wie in älterer n8n-Doku, {{doc_id}} existiert nicht. Setzt PAPERLESS_URL auf dem Server voraus, sonst rendert doc_url leer. --- ENDLOSSCHLEIFEN: Ein Typ-3-Auslöser feuert bei JEDER Dokumentänderung erneut. Schreibt der n8n-Workflow anschließend Titel oder Custom Fields zurück, ist das selbst wieder eine Änderung; der Trigger-Tag MUSS also weg. Wer das erledigt, ist von Ablauf zu Ablauf verschieden: bei 'Titel erzeugen', 'Felder erkennen' und 'Vertragsdaten erkennen' entfernt ihn Paperless per Aktion Typ 2, bei 'Handschrift-OCR + Titel' und 'Steuerbeleg senden' der n8n-Workflow selbst, dort erst NACH getaner Arbeit, was sauberer ist, aber nur geht, weil diese beiden ohnehin per API zurückschreiben. --- ZWEI AUSLÖSER (Typ 2 UND Typ 3) bedeuten: greift, egal ob der Tag schon beim Anlegen dranhängt oder erst nachträglich gesetzt wird. Das ist kein theoretischer Fall: PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS=true vergibt Tags nach dem Unterordner im consume-Verzeichnis, und die hängen bereits am fertigen Dokument (consumer.py wendet die Overrides in _store an, erst danach feuert document_consumption_finished). Ein Ablauf, der NUR Typ 3 hat, verpasst diese Dokumente vollständig. --- Alle Mistral-Abläufe sind bewusst tag-gegatet statt an einen Dokumenttyp gehängt: jeder Lauf schickt OCR-Text in die Mistral-Cloud (Kosten + DSGVO), das soll eine bewusste Handlung bleiben. --- Es gibt hier BEWUSST keine Abläufe mehr, die den Dokumenttyp am Dateinamen erkennen: das erledigt Paperless selbst über matching_algorithm 6 ('automatisch'), und eine Dateinamen-Regel würde es sogar unterlaufen: Sie setzt den Typ hart, und der Klassifizierer weist nur dort zu, wo noch nichts steht. --- ZU DIESEM ABLAUF: Erkennt Vertragsdaten (Laufzeit, Kündigungsfrist, …) per Mistral und schreibt sie in Custom Fields. Gegenstück in n8n: vertragsdaten-erkennen-mistral. Nur EIN Auslöser, Typ 3. Ein zweiter Auslöser Typ 2 für den Fall, dass der Tag schon beim Import dranhängt, verdoppelte die Läufe. Anders als bei 'Handschrift-OCR + Titel' gibt es hier keinen Unterordner-Weg, der den Tag beim Anlegen vergibt; wer 'vertrag-erkennen' setzt, ändert das Dokument. --- WARNUNG aus der Praxis: Wird der Tag in filter_has_tags GELÖSCHT, räumt Paperless die Verknüpfung mit ab und der Auslöser steht auf tags=[], also OHNE Filter, feuernd bei jeder Dokumentänderung. Tags, an denen Auslöser hängen, nie einfach löschen, sondern umbenennen.",
+    "name": "Vertragsdaten erkennen (Mistral)",
+    "order": 110,
+    "enabled": true,
+    "triggers": [
+      {
+        "type": 3,
+        "sources": [
+          1,
+          2,
+          3
+        ],
+        "filter_has_tags": [
+          "vertrag-erkennen"
+        ],
+        "filter_has_not_tags": [
+          "wird bearbeitet"
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "type": 4,
+        "webhook": {
+          "url": "http://n8n:5678/webhook/vertragsdaten-erkennen-mistral",
+          "use_params": true,
+          "as_json": false,
+          "params": {
+            "doc_url": "{{doc_url}}"
+          },
+          "include_document": false
+        }
+      }
+    ]
+  },
+  {
+    "_kommentar": "Ersetzt den Tesseract-Text durch Mistral-OCR UND erzeugt daraus einen Titel, für Handschrift und schlechte Scans. --- WIE DER AUFTRAG ENTSTEHT: Am Scanner wählt man als Ziel den Unterordner 'handschrift-scannen' im consume-Verzeichnis. PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS=true macht daraus automatisch den gleichnamigen Tag; der Ordnername IST also der Tagname, beides muss zusammen umbenannt werden. Alternativ setzt ein Mensch den Tag später von Hand. --- DESHALB ZWEI AUSLÖSER, beide auf denselben Tag: Beim Weg über den Unterordner hängt der Tag schon am fertigen Dokument, es gibt also gar keine Änderung, auf die ein Typ-3-Auslöser reagieren könnte (consumer.py wendet die Overrides in _store an, erst danach feuert document_consumption_finished; ein Typ-2-Auslöser mit filter_has_tags sieht sie bereits). Beim Weg über die Hand ist es umgekehrt. Mit nur einem der beiden Auslöser fehlt jeweils ein halber Anwendungsfall. --- MUSTER FÜR ALLE TAG-GETRIGGERTEN ABLÄUFE: Paperless löst nur aus, n8n entscheidet. Es gibt deshalb KEINE 'remove_tags'-Aktion; der n8n-Workflow räumt Kommando- und pending-Tag am Ende in EINEM Aufruf weg. Damit müssen sich nicht mehr zwei Systeme über ein Protokoll einig sein, und ein zusätzlicher Auslöser kann nichts kaputtmachen: n8n prüft selbst, ob das Kommando-Tag dranhängt, und endet sonst ohne Meldung. --- 'filter_has_not_tags' ist reine OPTIMIERUNG: es verhindert, dass das Zurückschreiben von Text und Titel überhaupt einen Aufruf erzeugt. Die GARANTIE gegen die Endlosschleife liegt im n8n-Workflow, der den pending-Tag ohnehin prüft. Wer diesen Filter entfernt, bekommt einen Leerlauf, keine Schleife. --- 'sources' steht nur der Einheitlichkeit halber: Paperless wertet es ausschließlich bei Typ 1 aus (matching.py, consumable_document_matches_workflow); bei Typ 2 und 3 ist das Dokument bereits ein echtes Document und hat gar keine Quelle mehr.",
+    "name": "Handschrift-OCR + Titel (Mistral)",
+    "order": 40,
+    "enabled": true,
+    "triggers": [
+      {
+        "_kommentar": "Auslöser 1: Scan aus dem Unterordner; der Tag hängt beim Anlegen bereits dran.",
+        "type": 2,
+        "sources": [
+          1,
+          2,
+          3
+        ],
+        "filter_has_tags": [
+          "handschrift-scannen"
+        ],
+        "filter_has_not_tags": [
+          "wird bearbeitet"
+        ]
+      },
+      {
+        "_kommentar": "Auslöser 2: ein Mensch hat den Tag nachträglich gesetzt.",
+        "type": 3,
+        "sources": [
+          1,
+          2,
+          3
+        ],
+        "filter_has_tags": [
+          "handschrift-scannen"
+        ],
+        "filter_has_not_tags": [
+          "wird bearbeitet"
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "type": 4,
+        "webhook": {
+          "url": "http://n8n:5678/webhook/handschrift-ocr-titel-mistral",
+          "use_params": true,
+          "as_json": false,
+          "params": {
+            "doc_url": "{{doc_url}}"
+          },
+          "include_document": false
+        }
+      }
+    ]
+  },
+  {
+    "_kommentar": "Erzeugt einen Titel aus dem vorhandenen Text (Tesseract-OCR reicht), im Unterschied zu 'Handschrift-OCR + Titel', das den Text erst per Mistral-OCR neu erzeugt. Gegenstück in n8n: titel-erzeugen-mistral. --- AUSLÖSER 2 IST DER SCANNER-FALL: Ein Dokument, das direkt im consume-Wurzelverzeichnis landet und 'scan*' heißt, kommt vom Scanner und trägt einen nichtssagenden Namen wie scan_00378.pdf. Genau dafür ist dieser Ablauf da. --- 'filter_has_not_tags' schließt zwei Fälle aus: 'handschrift-scannen' verhindert die Doppelarbeit, wenn derselbe Scanner in den Handschrift-Unterordner geschrieben hat; die Datei heißt dann ebenfalls scan_nnn.pdf, und beide Abläufe würden gleichzeitig einen Titel erzeugen. 'wird bearbeitet' hält den Ablauf aus laufenden n8n-Verarbeitungen heraus. --- Anders als bei 'Handschrift-OCR + Titel' entfernt hier PAPERLESS den Kommando-Tag (Aktion Typ 2). Das ist zulässig, weil titel-erzeugen-mistral gar kein Tag prüft: es nimmt doc_url, erzeugt einen Titel und schreibt ihn zurück. Für den Scanner-Fall ist die Entfernung ein Leerlauf, weil der Tag dort nie dranhängt. --- Der Ablauf steht wegen des Typ-2-Auslösers im Bereich 1-99 (Sortierschema im ersten Eintrag), und zwar HINTER 'Handschrift-OCR + Titel', damit dessen Ausschluss greift.",
+    "name": "Titel erzeugen (Mistral)",
+    "order": 50,
+    "enabled": true,
+    "triggers": [
+      {
+        "_kommentar": "Auslöser 1: ein Mensch hat den Tag gesetzt.",
+        "type": 3,
+        "sources": [
+          1,
+          2,
+          3
+        ],
+        "filter_has_tags": [
+          "titel-verbessern"
+        ],
+        "filter_has_not_tags": [
+          "wird bearbeitet"
+        ]
+      },
+      {
+        "_kommentar": "Auslöser 2: frischer Scanner-Auswurf im consume-Wurzelverzeichnis.",
+        "type": 2,
+        "sources": [
+          1,
+          2,
+          3
+        ],
+        "filter_filename": "scan*",
+        "filter_has_not_tags": [
+          "handschrift-scannen",
+          "wird bearbeitet"
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "type": 4,
+        "webhook": {
+          "url": "http://n8n:5678/webhook/titel-erzeugen-mistral",
+          "use_params": true,
+          "as_json": false,
+          "params": {
+            "doc_url": "{{doc_url}}"
+          },
+          "include_document": false
+        }
+      },
+      {
+        "type": 2,
+        "remove_tags": [
+          "titel-verbessern"
+        ]
+      }
+    ]
+  },
+  {
+    "_kommentar": "Füllt Custom Fields (Rechnungsnummer, Versicherungsnummer, …) per Mistral. Gegenstück in n8n: felder-erkennen-mistral.",
+    "name": "Felder erkennen (Mistral)",
+    "order": 120,
+    "enabled": true,
+    "triggers": [
+      {
+        "type": 3,
+        "sources": [
+          1,
+          2,
+          3
+        ],
+        "filter_has_tags": [
+          "entities-extrahieren"
+        ],
+        "filter_has_not_tags": [
+          "wird bearbeitet"
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "type": 4,
+        "webhook": {
+          "url": "http://n8n:5678/webhook/felder-erkennen-mistral",
+          "use_params": true,
+          "as_json": false,
+          "params": {
+            "doc_url": "{{doc_url}}"
+          },
+          "include_document": false
+        }
+      },
+      {
+        "type": 2,
+        "remove_tags": [
+          "entities-extrahieren"
+        ]
+      }
+    ]
+  },
+  {
+    "_kommentar": "Sofortversand eines einzelnen Belegs an den Steuerberater. Der Kommando-Tag heißt bewusst 'Steuer-senden' und nicht 'duo-senden': für den Nutzer gibt es nur EINE Handlung, nämlich 'an den Steuerberater'. Ob der Weg DATEV Unternehmen online oder eine Zip-Mail an die Kanzlei ist, entscheidet der Betreiber im n8n-Workflow steuer-beleg-sofort (Knoten 'Konfiguration' und 'Versand ausführen') und geht den Nutzer nichts an. --- Bewusst 'enabled: false', passend zum ';false' in workflows.list: der n8n-Workflow verschickt eine echte Mail. Erst Empfängeradresse in pw_config und SMTP-Zugang in n8n setzen, dann beide Seiten scharf schalten. --- Wie bei 'Handschrift-OCR + Titel' steht hier KEINE 'remove_tags'-Aktion: Paperless löst aus, n8n entscheidet. Der n8n-Workflow räumt Kommando- und pending-Tag selbst weg, und zwar erst NACH dem Versand, was der entscheidende Unterschied ist. Räumte Paperless den Tag sofort weg, wäre bei einem Fehlschlag der Auftrag verloren; so bleiben die noch getaggten Dokumente die Liste der offenen Fälle. Das Ergebnis-Tag 'Steuer-gesendet' setzt der Versand-Sub, weil nur der weiß, ob die Mail rausging.",
+    "name": "Steuerbeleg senden (sofort)",
+    "order": 130,
+    "enabled": false,
+    "triggers": [
+      {
+        "type": 3,
+        "sources": [
+          1,
+          2,
+          3
+        ],
+        "filter_has_tags": [
+          "Steuer-senden"
+        ],
+        "filter_has_not_tags": [
+          "wird bearbeitet"
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "type": 4,
+        "webhook": {
+          "url": "http://n8n:5678/webhook/steuer-beleg-sofort",
+          "use_params": true,
+          "as_json": false,
+          "params": {
+            "doc_url": "{{doc_url}}"
+          },
+          "include_document": false
+        }
+      }
+    ]
+  },
+  {
+    "_kommentar": "Liest die Rechnungsfelder samt BETRAEGEN; der allgemeine Ablauf \"Felder erkennen (Mistral)\" holt nur Nummern. Gegenstueck in n8n: felder-erkennen-mistral, ueber den Parameter \"felder\" steuerbar. Er steht hier als JSON-ZEICHENKETTE, weil Paperless seine Webhook-Parameter formular-kodiert sendet und ein verschachteltes Objekt dort nicht vorgesehen ist. --- Der Tag wird am Ende entfernt: Die Erkennung ist fertig, was danach kommt, entscheidet der Mensch beim Gegenpruefen in der Inbox.",
+    "name": "Rechnungsfelder erkennen (Mistral)",
+    "order": 125,
+    "enabled": true,
+    "triggers": [
+      {
+        "type": 3,
+        "sources": [
+          1,
+          2,
+          3
+        ],
+        "filter_has_tags": [
+          "rechnung-erkennen"
+        ],
+        "filter_has_not_tags": [
+          "wird bearbeitet"
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "type": 4,
+        "webhook": {
+          "url": "http://n8n:5678/webhook/felder-erkennen-mistral",
+          "use_params": true,
+          "as_json": false,
+          "params": {
+            "doc_url": "{{doc_url}}",
+            "felder": "{\"Nettobetrag\": \"Der Rechnungsbetrag OHNE Umsatzsteuer. Nur die Zahl, mit Punkt als Dezimaltrenner und ohne Tausenderpunkte (also \\\"1758.00\\\").\", \"Gesamtbetrag\": \"Der Rechnungsbetrag MIT Umsatzsteuer, also der Betrag, der zu zahlen ist. Format wie beim Nettobetrag.\", \"Rechnungsnummer\": \"Die Rechnungsnummer des Lieferanten, exakt wie sie auf dem Beleg steht (z. B. \\\"AL-2026-08777\\\").\", \"Rechnungsdatum\": \"Das Rechnungsdatum im Format JJJJ-MM-TT (z. B. \\\"2026-08-28\\\").\", \"Projektnummer\": \"Die Projektnummer bzw. das Projektkennzeichen (z. B. \\\"2026-042\\\"). Steht oft unter \\\"Ihre Referenz\\\" oder \\\"Bauvorhaben\\\".\"}"
+          },
+          "include_document": false
+        }
+      },
+      {
+        "type": 2,
+        "remove_tags": [
+          "rechnung-erkennen"
+        ]
+      }
+    ]
+  },
+  {
+    "_kommentar": "Uebergibt ein GEPRUEFTES Dokument an paper-werk. Gegenstueck in n8n: paper-werk-eingangsrechnung. --- Der Tag \"Paper-Werk senden\" ist die Unterschrift des Menschen unter \"ich habe die erkannten Werte gegengeprueft\"; ein Sprachmodell liest Betraege gut, aber nicht sicher, und was hier durchrutscht, landet in einer Projektkalkulation. --- Wie bei \"Steuerbeleg senden\" steht hier KEINE remove_tags-Aktion: Paperless loest aus, n8n entscheidet. Der n8n-Workflow setzt den Tag erst NACH der Antwort von paper-werk auf \"Paper-Werk gesendet\" um. Raeumte Paperless ihn sofort weg, waere bei einem Fehlschlag der Auftrag verloren; so bleiben die noch getaggten Dokumente die Liste der offenen Faelle.",
+    "name": "Eingangsrechnung an paper-werk",
+    "order": 140,
+    "enabled": true,
+    "triggers": [
+      {
+        "type": 3,
+        "sources": [
+          1,
+          2,
+          3
+        ],
+        "filter_has_tags": [
+          "Paper-Werk senden"
+        ],
+        "filter_has_not_tags": [
+          "Paper-Werk gesendet",
+          "wird bearbeitet"
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "type": 4,
+        "webhook": {
+          "url": "http://n8n:5678/webhook/paper-werk-eingangsrechnung",
+          "use_params": true,
+          "as_json": false,
+          "params": {
+            "doc_url": "{{doc_url}}"
+          },
+          "include_document": false
+        }
+      }
+    ]
+  }
+]

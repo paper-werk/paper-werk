@@ -1,0 +1,32 @@
+[
+  {
+    "_kommentar": "ERGÄNZUNG zum Basispaket, keine Kopie; siehe die Begründung in document_types.json dieses Ordners. Besonders wichtig hier: Die Trigger-Tags des Basispakets (angebot-offen, buchungsrelevant, duo-senden, mistral-ocr, vertrag, titel-verbessern, entities-extrahieren) sind an n8n-Workflows gekoppelt und stehen deshalb NUR dort. Ein zweites Mal aufgeführt wären sie beim nächsten Workflow-Umbau die veraltete der beiden Listen.",
+    "name": "Baustelle",
+    "color": "#e07a5f"
+  },
+  {
+    "_kommentar": "Alles, was zu einer Lieferantenrechnung gehört: Lieferschein, Preisliste, Rückgabe. Das Gegenstück zu 'Baustelle': Dort entsteht der Aufwand, hier der Einkauf.",
+    "name": "Material",
+    "color": "#3a86ff"
+  },
+  {
+    "_kommentar": "Der teuerste Tag im Betrieb. Gewährleistung läuft vier bis fünf Jahre (VOB/BGB); wer nach drei Jahren das Abnahmeprotokoll nicht findet, zahlt die Nacharbeit selbst.",
+    "name": "Gewährleistung",
+    "color": "#c1121f"
+  },
+  {
+    "_kommentar": "Prüfungen wiederholen sich: DGUV V3 je nach Betriebsart jährlich bis vierjährlich, E-Check nach Vereinbarung. Das Datum steht im Custom Field 'Nächste Prüfung'; dieser Tag ist der Griff, an dem man die Wiedervorlage aus der Ablage zieht.",
+    "name": "Prüfung fällig",
+    "color": "#ffb703"
+  },
+  {
+    "_kommentar": "KfW, BAFA, kommunale Programme, bei Ladeinfrastruktur und Photovoltaik der Regelfall. Fördermittel tragen Fristen und Nachweispflichten, und beides trifft Monate nach der Montage ein.",
+    "name": "Förderung",
+    "color": "#2a9d8f"
+  },
+  {
+    "_kommentar": "Der Netzbetreiber ist kein gewöhnlicher Korrespondent: Ohne seine Inbetriebsetzung läuft keine Wallbox und keine PV-Anlage, und der Schriftwechsel zieht sich. Als Tag statt nur als Korrespondent, weil dieselbe Sache über mehrere Absender laufen kann.",
+    "name": "Netzbetreiber",
+    "color": "#457b9d"
+  }
+]

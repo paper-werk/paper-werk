@@ -1,0 +1,20 @@
+# Gilt, wenn dieser Ordner ein eigenes Config-Repo wird.
+
+# Werte dieser Installation; nie committen. Vorlagen *.example bleiben versioniert.
+.env*
+!.env*.example
+
+# Privater Schlüssel für HTTPS (PAPER_WERK_TLS_MODE=datei)
+zertifikate/
+*.pem
+*.key
+
+# Setup-Werte mit Secrets (Paperless-Token, n8n-Zugangsdaten)
+**/setup.conf
+**/n8n/credentials.json
+
+# Persönliche Notizen, etwa mit Zugangsdaten für einen Rechner
+notiz-*.md
+
+# Abweichungen eines einzelnen Rechners
+compose.override.yml

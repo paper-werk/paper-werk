@@ -1,0 +1,34 @@
+[
+  {
+    "_kommentar": "ERGÄNZUNG zum Basispaket, keine Kopie. KUNDENSPEZIFISCH: Diese Einträge sind Platzhalter mit den Namen aus dem Vorführbestand (demodaten/elektro-hofmeister); vor einer echten Installation durch die tatsächlichen Partner des Betriebs ersetzen. Der Rest der Korrespondenten entsteht beim Einlesen ohnehin von selbst. matching_algorithm: 6 = automatisch, Paperless lernt aus bereits zugewiesenen Dokumenten; 1 = beliebiges Wort, dann muss 'match' gefüllt sein.",
+    "name": "Elektro-Großhandel Wittmann KG",
+    "matching_algorithm": 6,
+    "is_insensitive": true
+  },
+  {
+    "name": "Ladetechnik Süd GmbH",
+    "matching_algorithm": 6,
+    "is_insensitive": true
+  },
+  {
+    "_kommentar": "Der Netzbetreiber trägt in Bayern je nach Gebiet einen anderen Namen. Der Abgleich greift deshalb auf das Wort, das in jedem seiner Schreiben steht, und nicht auf die Firmierung.",
+    "name": "Netzbetreiber",
+    "match": "netzbetreiber",
+    "matching_algorithm": 1,
+    "is_insensitive": true
+  },
+  {
+    "_kommentar": "Die Berufsgenossenschaft der Elektrobranche: Beitragsbescheide, Prüfvorgaben, Unfallanzeigen. Sie schreibt selten und dann fristgebunden.",
+    "name": "BG ETEM",
+    "match": "etem",
+    "matching_algorithm": 1,
+    "is_insensitive": true
+  },
+  {
+    "_kommentar": "Innung und Handwerkskammer: Beiträge, Prüfungsangelegenheiten des Azubis, Fortbildung.",
+    "name": "Handwerkskammer",
+    "match": "handwerkskammer",
+    "matching_algorithm": 1,
+    "is_insensitive": true
+  }
+]

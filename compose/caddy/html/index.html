@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>paper-werk</title>
+<link rel="icon" href="/p_icon.svg" type="image/svg+xml">
+<style>
+/* Alles inline und ohne fremde Quellen: Diese Seite muss auch dann stehen,
+   wenn die Installation keinen Weg ins Internet hat - beim Kunden hinter der
+   Firewall ist das der Normalfall. */
+:root {
+  --grund: #f5f4f1;
+  --karte: #ffffff;
+  --text: #1c1b19;
+  --leise: #6b6862;
+  --linie: #dedbd4;
+  --akzent: #3a5a78;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --grund: #1a1a18;
+    --karte: #242422;
+    --text: #eceae5;
+    --leise: #9b968d;
+    --linie: #35342f;
+    --akzent: #7ea5c4;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 3rem 1.5rem;
+  background: var(--grund);
+  color: var(--text);
+  font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+main { max-width: 46rem; margin: 0 auto; }
+h1 { font-size: 1.9rem; font-weight: 600; margin: 0 0 .3rem; letter-spacing: -.01em; }
+.frage { color: var(--leise); margin: 0 0 2.5rem; font-size: 1.05rem; }
+.kacheln { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+a.kachel {
+  display: block;
+  padding: 1.6rem;
+  background: var(--karte);
+  border: 1px solid var(--linie);
+  border-radius: .7rem;
+  text-decoration: none;
+  color: inherit;
+}
+a.kachel:hover { border-color: var(--akzent); }
+a.kachel:focus-visible { outline: 2px solid var(--akzent); outline-offset: 2px; }
+.kachel .name { font-size: 1.2rem; font-weight: 600; margin-bottom: .35rem; }
+.kachel .was { color: var(--leise); font-size: .95rem; }
+.betrieb { margin-top: 3rem; padding-top: 1.2rem; border-top: 1px solid var(--linie); }
+.betrieb h2 {
+  font-size: .8rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--leise); margin: 0 0 .7rem;
+}
+.betrieb ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 1.4rem; }
+.betrieb a { color: var(--leise); text-decoration: none; font-size: .92rem; }
+.betrieb a:hover { color: var(--akzent); }
+</style>
+</head>
+<body>
+<main>
+
+  <h1>paper-werk</h1>
+  <p class="frage">Was möchten Sie tun?</p>
+
+  {{- $host := (splitList ":" .Req.Host) | first -}}
+  {{- /* Das Schema der Seite selbst: Im Betrieb mit HTTPS (compose.https.yml)
+         stehen App und Archiv hinter Caddy und sprechen nur https. Ohne
+         das Zusatzstueck bleibt es http - eine Seite fuer beide Faelle. */ -}}
+  {{- $schema := "http" -}}{{- if .Req.TLS -}}{{- $schema = "https" -}}{{- end -}}
+
+  <div class="kacheln">
+
+    <a class="kachel" href="{{$schema}}://{{$host}}:8000/admin/">
+      <div class="name">Angebote und Rechnungen</div>
+      <div class="was">Belege schreiben, festschreiben und Projekte führen</div>
+    </a>
+
+    <a class="kachel" href="{{$schema}}://{{$host}}:8005/">
+      <div class="name">Archiv</div>
+      <div class="was">Eingegangene und abgelegte Dokumente durchsuchen</div>
+    </a>
+
+  </div>
+
+  <!-- Betrieb und Support. Bewusst klein und ohne Kachel: Das sind Werkzeuge
+       für Admins, nicht für die tägliche Arbeit. Wer eine Installation ohne
+       eine dieser Komponenten ausliefert, etwa ohne Kopia, streicht hier
+       die Zeile. Genau dafür gehört diese Seite zur
+       Installation und nicht in die Anwendung. -->
+  <div class="betrieb">
+    <h2>Betrieb und Support</h2>
+    <ul>
+      <li><a href="http://{{$host}}:5678/">n8n — Automatisierung</a></li>
+      <li><a href="http://{{$host}}:51515/">Kopia — Datensicherung</a></li>
+      {{- /* Nur mit eigener Zertifizierungsstelle (PAPER_WERK_TLS_MODE=intern):
+             das Stammzertifikat, das jeder Rechner einmal installiert. Beim
+             Modus "datei" verteilt der Kunde seins selbst. */ -}}
+      {{- if and .Req.TLS (eq (env "PAPER_WERK_TLS_MODE") "intern") }}
+      <li><a href="/stammzertifikat.crt">Stammzertifikat für diesen Rechner</a></li>
+      {{- end }}
+    </ul>
+  </div>
+
+</main>
+</body>
+</html>

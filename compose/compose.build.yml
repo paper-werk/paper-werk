@@ -1,0 +1,13 @@
+# Baut paper-werk-app aus dem Quelltext, statt das Image zu laden.
+# Dazugenommen von stack.sh, wenn instanz.conf APP_BAUEN=ja setzt.
+#
+# PAPER_WERK_APP_CONTEXT zeigt auf den Klon von paper-werk-app; stack.sh setzt
+# ihn auf ../paper-werk-app neben paper-werk, wenn .env ihn nicht
+# nennt. Das Ergebnis heißt paper-werk-app:latest und überschreibt kein Image
+# aus der Registry.
+
+services:
+  paper-werk-app:
+    build:
+      context: ${PAPER_WERK_APP_CONTEXT:-../paper-werk-app}
+    image: paper-werk-app:latest

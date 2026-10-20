@@ -1,0 +1,103 @@
+{
+  "name": "sub-einstellungen",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## sub-einstellungen\n\nReine Funktion:  (nichts)  ->  { paperless_url, mail_betrieb, ... }\n\nLiest die Data Table `pw_config` und gibt ihre key/value-Zeilen als\nEIN flaches Objekt zurueck. Das ist die einzige Stelle im ganzen\nRepo, die diese Tabelle kennt.\n\n**Warum ein Sub und kein Code-Baustein in jedem Workflow:** Sonst\nstuenden dieselben 25 Zeilen in jedem der Workflows, und eine\nUmbenennung der Tabelle muesste sie alle anfassen.\n\n**Muss veroeffentlicht sein.** Wie jeder `sub-`-Workflow: n8n 2.x holt\nbeim Aufruf die VEROEFFENTLICHTE Fassung und bricht sonst mit\n\"Workflow is not active and cannot be executed\" ab. Subs haben keinen\neigenen Trigger, aktiv heisst hier also nicht erreichbar; sie sind\nBibliothek, nicht Einstiegspunkt.\n\n**Aufruf:** Execute Workflow, ohne Eingaben. Rueckgabe ist ein\neinzelnes Item.\n\n**Gepflegt wird die Tabelle im Browser:** n8n -> Data Tables ->\n`pw_config`. Die Spalte `hint` erklaert dort jeden Wert. Aenderungen\nwirken sofort, ohne Neustart.\n\n**Fehlerfall:** Fehlt die Tabelle ganz, wirft dieser Workflow mit\nklarer Meldung. Ob ein EINZELNER Wert gefuellt sein muss, weiss nur\nder Aufrufer; deshalb prueft er das in seinem Konfigurations-Node.\n\n**Nicht versucht:** `saveDataSuccessExecution: none`, um die\nAusfuehrungsliste ruhig zu halten. Das hinterlaesst in n8n 2.32.7\nhaengende Eintraege im Status \"running\", die nie aufgeraeumt\nwerden. Stattdessen rufen Aufrufer diesen\nSub genau EINMAL pro Lauf auf und reichen die Werte an ihre\neigenen Subs weiter, statt sie dort erneut nachzuschlagen.",
+        "height": 620,
+        "width": 460
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -540,
+        -180
+      ],
+      "id": "e9000030-0030-4000-8000-000000000099",
+      "name": "Doku"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e9000030-0030-4000-8000-000000000001",
+      "name": "Aufruf"
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "pw_config"
+        },
+        "matchType": "anyCondition",
+        "filters": {
+          "conditions": []
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "e9000030-0030-4000-8000-000000000002",
+      "name": "pw_config lesen"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Die key/value-Zeilen zu einem flachen Objekt falten.\n//\n// Leere Werte bleiben leer und werden NICHT bemängelt: mail_duo und\n// mail_stb sind auf Instanzen, die diese Wege nicht nutzen, zu Recht\n// leer. Ob ein bestimmter Wert vorhanden sein MUSS, weiß nur der\n// aufrufende Workflow; er prüft es in seinem Konfigurations-Node.\n\nconst zeilen = $input.all();\nif (zeilen.length === 0) {\n  throw new Error('Die Data Table \"pw_config\" ist leer oder fehlt. Setup erneut laufen lassen (setup.sh --project … n8n) oder die Tabelle in der n8n-Oberfläche unter \"Data Tables\" anlegen.');\n}\n\nconst werte = {};\nfor (const item of zeilen) {\n  const key = item.json.key;\n  if (key) werte[key] = item.json.value ?? '';\n}\n\nreturn [{ json: werte }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "e9000030-0030-4000-8000-000000000003",
+      "name": "Aufbereiten"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Aufruf": {
+      "main": [
+        [
+          {
+            "node": "pw_config lesen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "pw_config lesen": {
+      "main": [
+        [
+          {
+            "node": "Aufbereiten",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Berlin"
+  },
+  "tags": [],
+  "id": "pwSubEinstell01"
+}

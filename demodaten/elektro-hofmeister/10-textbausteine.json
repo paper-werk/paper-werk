@@ -1,0 +1,40 @@
+[
+  {
+    "_kommentar": "Die Bausteine, die ein Elektrobetrieb über die Standardtexte der App hinaus hat. Anrede, Grußformel, die üblichen Einleitungen und die Mail-Anschreiben je Belegart kommen NICHT von hier, sondern aus paper-werk-app (faktura/standardtexte.py) - der Lader legt sie beim Betrieb mit an. Ein Name, den es dort schon gibt, bricht den Lauf ab.\n\nEinleitungen beginnen klein - sie stehen hinter der Anrede. Dieselbe Konvention wie in den Standardtexten.\n\nDerselbe Wortlaut wie der Kopftext der Kleinaufträge in 06-kleinauftraege.json. Wer im Termin eine neue Rechnung schreibt, findet genau den Text in der Liste, der auf den vorhandenen steht.",
+    "name": "Kleinauftrag Einleitung",
+    "belegart": "rechnung",
+    "text": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:"
+  },
+  {
+    "name": "Zahlungsziel 14 Tage",
+    "belegart": "rechnung",
+    "text": "Der Rechnungsbetrag ist zahlbar innerhalb von 14 Tagen nach Rechnungsdatum ohne Abzug."
+  },
+  {
+    "_kommentar": "Für Privatkunden der Satz, nach dem gefragt wird. Die Barzahlungs-Einschränkung gehört dazu: Ohne unbare Zahlung erkennt das Finanzamt die Ermäßigung nicht an.",
+    "name": "Handwerkerleistung nach § 35a EStG",
+    "belegart": "rechnung",
+    "text": "Die in dieser Rechnung enthaltenen Arbeits- und Fahrtkosten können im Rahmen der Steuerermäßigung für Handwerkerleistungen nach § 35a EStG geltend gemacht werden. Voraussetzung ist die unbare Zahlung auf unser Konto."
+  },
+  {
+    "name": "Prüfprotokoll beigefügt",
+    "text": "Das Prüfprotokoll mit den Messwerten liegt diesem Beleg bei. Festgestellte Mängel sind dort einzeln aufgeführt; ihre Beseitigung bieten wir Ihnen gern gesondert an."
+  },
+  {
+    "name": "Angebot Gültigkeit und Materialpreise",
+    "belegart": "angebot",
+    "text": "Dieses Angebot gilt vier Wochen. Materialpreise unterliegen derzeit starken Schwankungen; bei späterer Beauftragung behalten wir uns eine Anpassung vor."
+  },
+  {
+    "name": "Wallbox Anmeldung Netzbetreiber",
+    "belegart": "angebot",
+    "text": "Die Anmeldung der Ladeeinrichtung beim Netzbetreiber übernehmen wir für Sie. Die Inbetriebnahme erfolgt nach dessen Zustimmung; die Bearbeitungszeit dort liegt außerhalb unseres Einflusses."
+  },
+  {
+    "_kommentar": "Ein Anschreiben mit Platzhaltern - die einzige Verwendung, in der {beleg}, {betrag} und {firma} aufgelöst werden. Die zweite Wahl neben dem Standard-Anschreiben 'Rechnung', für E-Check und DGUV-Prüfung.",
+    "name": "Rechnung mit Prüfprotokoll",
+    "verwendung": "mail",
+    "belegart": "rechnung",
+    "text": "Sehr geehrte Damen und Herren,\n\nim Anhang erhalten Sie unsere {beleg} über {betrag} sowie das Prüfprotokoll zur durchgeführten Prüfung.\n\nDen nächsten Prüftermin merken wir vor und melden uns rechtzeitig bei Ihnen.\n\nMit freundlichen Grüßen\n{firma}"
+  }
+]
