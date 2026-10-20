@@ -1,0 +1,98 @@
+{
+  "name": "connection test",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🔌 Verbindungstest\n\n**Zweck:** Reiner Test-Workflow: prüft, ob n8n von außen erreichbar ist (z. B. aus Paperless heraus). `POST /webhook/just-a-test` antwortet mit `{\"answer\": \"Hallo\"}`.\n\nKeine Logik, keine Credentials. Kann gefahrlos aktiv bleiben.",
+        "height": 240,
+        "width": 460
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-32, -288],
+      "id": "d0c00012-0012-4000-8000-000000000001",
+      "name": "Doku"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "just-a-test",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "9f868c02-8ffa-4256-a4a2-f2441e28c78b",
+      "name": "Webhook",
+      "webhookId": "50a68d5c-fa1f-4df0-9b22-24419f1a8c94"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        0
+      ],
+      "id": "5d75b569-f762-4770-946e-6d3093b988ca",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\n\n\nreturn {answer: \"Hallo\"};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "2addb8f0-694e-4365-b4ed-ab40a5e34693",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "aefc2bf1-d067-47c6-a99d-4b96603e2a5f",
+  "meta": {
+    "instanceId": "f765cbaf3bffe0d1d7f07457e9ac2158249b5b7f7a9bcf7b1c5c877b17a8ef1e"
+  },
+  "id": "ocUvDXw02DsHA3kU",
+  "tags": []
+}

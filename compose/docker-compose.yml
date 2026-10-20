@@ -1,0 +1,273 @@
+# paper-werk: der vollständige Stack.
+#
+# paper-werk ist das Produkt. Was darin arbeitet:
+#
+#   paper-werk-app   Angebote, Rechnungen, Projekte (Django)   -> :8000
+#   Paperless-ngx    das Archiv                                -> :8005
+#   n8n              Automatisierung (Admin/Support)           -> :5678
+#   Kopia            Datensicherung (Admin/Support)            -> :51515
+#   Caddy            die Einstiegsseite                        -> :80
+#
+# Diese Datei ist die QUELLE. Die Installationen in config/ und config-repos/
+# werden aus ihr abgeleitet und nicht daneben gepflegt.
+#
+# Einrichtung:
+#   cp .env.example .env
+#   cp .env.paperless.example .env.paperless
+#   cp .env.kopia.example .env.kopia
+#   cp .env.app.example .env.app
+#   # die .env-Dateien ausfüllen (keine Secrets in GitHub committen)
+#   docker compose pull
+#   docker compose up -d
+#
+# Dokumentation: ../../../Kundeninstallation.md
+# Kopia Docker: https://kopia.io/docs/installation/#docker-images
+
+services:
+  broker:
+    image: docker.io/library/redis:8
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+
+  # Die Datenbank von Paperless. Der Stack hat zwei Postgres-Dienste, deshalb
+  # heißt sie nicht "db".
+  # Wer den Namen ändert, muss PAPERLESS_DBHOST in .env.paperless mitziehen.
+  paperless-db:
+    image: docker.io/library/postgres:18
+    restart: unless-stopped
+    volumes:
+      - pgdata:/var/lib/postgresql
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+  paperless:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    restart: unless-stopped
+    depends_on:
+      - paperless-db
+      - broker
+      - gotenberg
+      - tika
+    ports:
+      - 8005:8000
+    volumes:
+      - data:/usr/src/paperless/data
+      - media:/usr/src/paperless/media
+      # Ablage für Scanner. Ein Volume wie alles andere; soll ein Kopierer per
+      # SMB hineinlegen, setzt PAPER_WERK_CONSUME_ORDNER in .env einen Ordner
+      # auf dem Host (compose.consume-ordner.yml, siehe Kundeninstallation.md).
+      # Kein export: document_exporter schreibt dann in den Container, wer den
+      # Export auf dem Host braucht, hängt ihn per compose.override.yml ein.
+      - consume:/usr/src/paperless/consume
+    env_file:
+      - .env.paperless
+    environment:
+      # Aus .env, da auch der paperless-db-Service dieselben Werte braucht (dort
+      # als POSTGRES_DB/USER/PASSWORD), deshalb hier explizit, nicht in
+      # .env.paperless.
+      PAPERLESS_DBNAME: ${POSTGRES_DB}
+      PAPERLESS_DBUSER: ${POSTGRES_USER}
+      PAPERLESS_DBPASS: ${POSTGRES_PASSWORD}
+
+  gotenberg:
+    image: docker.io/gotenberg/gotenberg:8.25
+    restart: unless-stopped
+    command:
+      - "gotenberg"
+      - "--chromium-disable-javascript=true"
+      - "--chromium-allow-list=file:///tmp/.*"
+
+  tika:
+    # Fest auf 3.x: Tika 4 hat /tika/form/text gestrichen, den Paperless zum
+    # Parsen von Office-Dateien braucht (404 beim Import, z. B. xlsx).
+    image: docker.io/apache/tika:3.3.1.0
+    restart: unless-stopped
+
+  # --- paper-werk-app: Angebote, Rechnungen, Projekte --------------------------
+  #
+  # EIGENE Datenbank, eigenes Volume, getrennt von der von Paperless.
+  # Der Grund steht beim kopia-Service: Der Wiederherstellungsweg spielt das
+  # KOMPLETTE Postgres-Volume zurück. Läge die Faktura in derselben Instanz,
+  # setzte ein Paperless-Restore die Rechnungsdaten mit auf den Snapshot-Stand
+  # zurück, und das sind aufbewahrungspflichtige Daten. Zwei Volumes heissen
+  # zwei Wiederherstellungspunkte; der Preis ist ein Container.
+  paper-werk-db:
+    image: docker.io/library/postgres:18
+    restart: unless-stopped
+    volumes:
+      - app-pgdata:/var/lib/postgresql
+    environment:
+      POSTGRES_DB: ${PAPERWERK_POSTGRES_DB}
+      POSTGRES_USER: ${PAPERWERK_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${PAPERWERK_POSTGRES_PASSWORD}
+      # Hält die Sortierung deterministisch, dieselbe Einstellung wie in der
+      # Entwicklungsumgebung des Repos paper-werk-app.
+      POSTGRES_INITDB_ARGS: "--locale-provider=icu --icu-locale=de-DE"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PAPERWERK_POSTGRES_USER} -d ${PAPERWERK_POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  paper-werk-app:
+    # Das fertige Image aus der Registry, festgelegt auf eine Version. Ein
+    # Release von paper-werk-app hebt die Vorgabe hier an; eine Installation
+    # kann sie mit PAPER_WERK_APP_VERSION in .env festhalten.
+    #
+    # Selbst bauen statt laden: APP_BAUEN=ja in instanz.conf nimmt
+    # compose.build.yml dazu (Quelltext aus PAPER_WERK_APP_CONTEXT).
+    image: ${PAPER_WERK_APP_IMAGE:-ghcr.io/paper-werk/paper-werk-app}:${PAPER_WERK_APP_VERSION:-0.1.15}
+    restart: unless-stopped
+    depends_on:
+      paper-werk-db:
+        condition: service_healthy
+    ports:
+      - 8000:8000
+    volumes:
+      # /app/media trägt die festgeschriebenen Beleg-PDFs. OHNE dieses Volume
+      # zeigt die Datenbank nach jedem Neustart auf Dateien, die es nicht mehr
+      # gibt, und zwar nicht sofort sichtbar, sondern erst beim Zugriff auf
+      # einen alten Beleg. Aufbewahrungspflichtige Daten; das Volume ist keine
+      # Bequemlichkeit, sondern Bedingung.
+      - app-media:/app/media
+    env_file:
+      - .env.app
+    environment:
+      DATABASE_URL: postgres://${PAPERWERK_POSTGRES_USER}:${PAPERWERK_POSTGRES_PASSWORD}@paper-werk-db:5432/${PAPERWERK_POSTGRES_DB}
+
+  # --- Der Eingang -------------------------------------------------------------
+  #
+  # Caddy liefert eine kleine statische Seite aus: "Was möchten Sie tun?", mit
+  # Verweisen auf die Komponenten. KEINE Unterpfade.
+  #
+  # Unterpfade sind verworfen:
+  # Paperless will das Präfix durchgereicht bekommen, n8n abgeschnitten, und
+  # Kopia kann es überhaupt nicht (kein Basispfad-Schalter, Verweise absolut ab
+  # der Wurzel). Schlimmer als der Aufwand ist das Fehlerbild: n8n liefert in
+  # der falschen Bauart auf JEDE Datei seine index.html aus, mit Status 200.
+  # Der Stack meldet sich gesund und zeigt eine leere Seite.
+  #
+  # Jede Komponente bleibt deshalb auf ihrer eigenen Wurzel, so wie ihre
+  # Entwickler sie ausliefern. Nichts, was ein Update umwerfen kann.
+  #
+  # Die Seite gehört zur INSTALLATION, nicht zur Anwendung: Welche Komponenten
+  # es gibt, ist je Kunde verschieden. Eine HTML-Datei neben dieser Compose ist
+  # eine Zeile mehr, eine Django-Seite wäre ein Release für alle. Und steht die
+  # App still, ist der Eingang trotzdem da und das Archiv erreichbar.
+  caddy:
+    image: docker.io/library/caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - 80:80
+    volumes:
+      # ACHTUNG: Eine eingehängte Caddyfile wird bei "compose up" NICHT neu
+      # gelesen. Nach einer Änderung ausdrücklich:
+      #   docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
+      # Sonst misst man nach einer Routenänderung den alten Stand.
+      # PAPER_WERK_CADDY_DIR zeigt auf den Ordner mit Caddyfile und html/. Die
+      # Vorgabe ist caddy/ neben DIESER Datei. Eine Installation, die eine
+      # eigene Seite haben soll (andere Komponenten, anderer Text), kopiert
+      # den Ordner und setzt die Variable auf ihre Kopie. Genau dafür gehört
+      # die Seite zur Installation und nicht in die Anwendung.
+      - ${PAPER_WERK_CADDY_DIR:-./caddy}/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ${PAPER_WERK_CADDY_DIR:-./caddy}/html:/srv:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    restart: unless-stopped
+    environment:
+      - N8N_SECURE_COOKIE=false
+      - N8N_COMMUNITY_PACKAGES_ENABLED=true
+      - N8N_REINSTALL_MISSING_PACKAGES=true
+      - N8N_DEFAULT_LOCALE=de-DE
+      - GENERIC_TIMEZONE=Europe/Berlin
+      - WEBHOOK_URL=http://n8n:5678/webhook
+      - N8N_SERVER_URL=http://n8n:5678
+    ports:
+      - 5678:5678
+    volumes:
+      - n8ndata:/home/node/.n8n
+
+  kopia:
+    image: kopia/kopia:latest
+    hostname: ${KOPIA_HOSTNAME:-paper-werk-kopia}
+    restart: unless-stopped
+    ports:
+      - 51515:51515
+    env_file:
+      - .env.kopia
+    command:
+      - server
+      - start
+      - --disable-csrf-token-checks
+      - --insecure
+      - --address=0.0.0.0:51515
+      - --server-username=${KOPIA_SERVER_USERNAME}
+      - --server-password=${KOPIA_SERVER_PASSWORD}
+    volumes:
+      - kopia-config:/app/config
+      - kopia-cache:/app/cache
+      - kopia-repository:/repository
+      # EINE Snapshot-Quelle für den ganzen Stack: /source/paper-werk. Jedes
+      # Volume ist darunter eingehängt, nur lesend, unter seinem eigenen
+      # Namen; dazu die Konfiguration der Installation (config/, mit .env und
+      # Zertifikat). Für Kopia ist das ein gewöhnlicher Ordnerbaum: Die
+      # Ausschlussregeln (einstellungen/kopia/ignore.rules, etwa /data/index)
+      # und der Zeitplan gelten für die eine Quelle.
+      #
+      # Die Liste muss vollständig sein. Ein Volume, das hier fehlt, fehlt im
+      # Backup. tests/test_compose.py prüft das gegen den volumes-Block unten;
+      # bewusst nicht gesichert sind nur die in NICHT_GESICHERT dort.
+      - data:/source/paper-werk/data:ro
+      - media:/source/paper-werk/media:ro
+      - consume:/source/paper-werk/consume:ro
+      - pgdata:/source/paper-werk/pgdata:ro
+      - n8ndata:/source/paper-werk/n8ndata:ro
+      - app-pgdata:/source/paper-werk/app-pgdata:ro
+      - app-media:/source/paper-werk/app-media:ro
+      - caddy-data:/source/paper-werk/caddy-data:ro
+      - caddy-config:/source/paper-werk/caddy-config:ro
+      - ${PAPER_WERK_CONFIG_DIR:-.}:/source/paper-werk/config:ro
+      # Dieselben Volumes beschreibbar als Ziel für einen Restore aus dem
+      # Kopia-Container, z. B.
+      #   kopia restore <snapshot-id>/pgdata /restore/paper-werk/pgdata
+      # Beim Restore müssen die betroffenen Dienste gestoppt sein, für eine
+      # Datenbank also paperless-db bzw. paper-werk-db. Ablauf und Tests:
+      # docs/kopia-backblaze.md. config/ ist hier nicht dabei: zurück auf den
+      # Host über "kopia restore" in einen Ordner unter /tmp und docker cp.
+      - data:/restore/paper-werk/data
+      - media:/restore/paper-werk/media
+      - consume:/restore/paper-werk/consume
+      - pgdata:/restore/paper-werk/pgdata
+      - n8ndata:/restore/paper-werk/n8ndata
+      - app-pgdata:/restore/paper-werk/app-pgdata
+      - app-media:/restore/paper-werk/app-media
+      - caddy-data:/restore/paper-werk/caddy-data
+      - caddy-config:/restore/paper-werk/caddy-config
+
+# Benannte Volumes, von Docker verwaltet (Linux: /var/lib/docker/volumes,
+# Docker Desktop: in der VM). Nicht als Ordner auf dem Host sichtbar, damit
+# niemand an Datenbank oder Ablage vorbei Dateien verschiebt.
+#
+# ACHTUNG: "docker compose down -v" löscht sie samt Inhalt. ./paper-werk down
+# tut das nicht.
+volumes:
+  data:
+  media:
+  consume:
+  pgdata:
+  redisdata:
+  n8ndata:
+  app-pgdata:
+  app-media:
+  caddy-data:
+  caddy-config:
+  kopia-config:
+  kopia-cache:
+  kopia-repository:

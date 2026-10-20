@@ -1,0 +1,17 @@
+{
+  "_kommentar": "Ein Ingenieurbüro für Baugrund, Altlasten und Schadstoffe. Der Bestand zielt auf ein anderes Publikum als elektro-hofmeister: Planer, Architekten, Gutachter - wenige große Vorhaben über Monate statt dreißig Kleinaufträge.",
+  "name": "Ingenieurbüro Muster GmbH",
+  "strasse": "Am Gewerbepark 5",
+  "plz": "84032",
+  "ort": "Musterstadt",
+  "telefon": "08000 12345-0",
+  "email": "info@example.invalid",
+  "steuernummer": "143/123/45678",
+  "ust_id": "DE123456789",
+  "bank": "Sparkasse Musterstadt",
+  "iban": "DE02120300000000202051",
+  "bic": "BYLADEM1001",
+  "geschaeftsfuehrung": "Dipl.-Ing. (FH) M. Muster",
+  "registergericht": "Amtsgericht Musterstadt",
+  "handelsregister": "HRB 3232"
+}

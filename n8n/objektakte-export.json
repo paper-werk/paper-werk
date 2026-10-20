@@ -1,0 +1,556 @@
+{
+  "name": "Objektakte-Export (ZIP + CSV)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🏠 Objektakte-Export (Hausverwaltung)\n\n**Zweck:** Auf Knopfdruck alle Belege einer **Liegenschaft** für ein Jahr als ZIP + CSV-Belegliste per Mail verschicken, als Vorarbeit für Betriebskostenabrechnung und §35a-Bescheinigungen. Wiederholbar: es wird kein Status-Tag gesetzt.\n\n**Aufruf:** `POST /webhook/objekt-export` mit Body:\n```\n{\"objekt\": \"Musterstr-12\", \"jahr\": 2025, \"empfaenger\": \"optional@mail.de\"}\n```\n- `objekt`: Objekt-Tag mit oder ohne Präfix `obj:` (Zuordnung macht der Workflow `objekt-zuordnung`)\n- `jahr`: optional, Standard = aktuelles Jahr\n- `empfaenger`: optional, überschreibt die konfigurierte Adresse\n\n**Antwort:** JSON mit Status (`gesendet`/`leer`), Anzahl und Empfänger; der Aufrufer sieht sofort, was passiert ist.\n\n**Fehlerverhalten:** Unbekanntes Objekt ⇒ Fehlermeldung inkl. Liste der vorhandenen `obj:`-Tags. Downloads haben 120 s Timeout.\n\n⚠️ Mail-Anhänge über 15 bis 20 MB lehnen manche Mailserver ab; bei großen Objektakten ggf. halbjährlich exportieren.",
+        "height": 660,
+        "width": 720
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        -832
+      ],
+      "id": "e7000007-0007-4000-8000-000000000099",
+      "name": "Doku"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "objekt-export",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e7000007-0007-4000-8000-000000000001",
+      "name": "Webhook",
+      "webhookId": "b7000007-0007-4000-8000-000000000001"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "pwSubEinstell01",
+          "mode": "list",
+          "cachedResultName": "sub-einstellungen"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "e7000007-0007-4000-8000-0000000000c1",
+      "name": "Einstellungen holen"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Die Instanzwerte kommen aus sub-einstellungen (Knoten davor) und werden\n// in der Data Table pw_config gepflegt (n8n-Oberfläche, \"Data Tables\").\n// HIER stehen nur die FACHLICHEN Einstellungen dieses Workflows: Fristen,\n// Tag-Namen, Feldnamen.\nconst werte = $('Einstellungen holen').first().json;\nconst pw = (key) => {\n  const v = werte[key];\n  if (v === undefined || String(v).trim() === '') {\n    throw new Error('pw_config: \"' + key + '\" fehlt oder ist leer; in der n8n-Oberfläche unter \"Data Tables\" eintragen.');\n  }\n  return v;\n};\n// Einstellungen + Webhook-Parameter zusammenführen und validieren.\nconst OBJEKT_PREFIX = 'obj:';\n\nconst cfg = {\n  // ── aus der Data Table pw_config ──\n  paperless_url:    pw('paperless_url'),\n  absender:         pw('mail_absender'),\n  empfaenger_email: pw('mail_betrieb')\n};\n\n// Der Aufrufparameter kommt aus dem Webhook, NICHT aus $input: dort liegen\n// seit der Umstellung auf pw_config die Zeilen der Data Table.\nconst body = $('Webhook').first().json.body ?? {};\nconst objektRaw = String(body.objekt ?? '').trim();\nif (!objektRaw) {\n  throw new Error('Kein \"objekt\" im Webhook-Body. Erwartet z. B. {\"objekt\": \"Musterstr-12\", \"jahr\": 2025}');\n}\nconst objekt_tag_name = objektRaw.toLowerCase().startsWith(OBJEKT_PREFIX) ? objektRaw : OBJEKT_PREFIX + objektRaw;\n\nconst jahr = Number(body.jahr) || new Date().getFullYear();\nif (jahr < 2000 || jahr > 2100) throw new Error('Ungültiges Jahr: ' + body.jahr);\n\nconst empfaenger = String(body.empfaenger ?? '').trim() || cfg.empfaenger_email;\nif (empfaenger.indexOf('@') === -1) throw new Error('Ungültige Empfänger-Adresse: ' + empfaenger);\n\nreturn [{ json: Object.assign({}, cfg, {\n  objekt_prefix: OBJEKT_PREFIX,\n  objekt_tag_name,\n  jahr,\n  empfaenger,\n  datum_von: jahr + '-01-01',\n  datum_bis: jahr + '-12-31'\n}) }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "e7000007-0007-4000-8000-000000000002",
+      "name": "Konfiguration"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.paperless_url }}/api/tags/?page_size=500",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        624,
+        0
+      ],
+      "id": "e7000007-0007-4000-8000-000000000003",
+      "name": "Tags laden",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Objekt-Tag auflösen; bei Tippfehlern hilft die Fehlermeldung mit\n// der Liste der vorhandenen Objekt-Tags weiter.\nconst cfg = $('Konfiguration').first().json;\nconst tags = $json.results || [];\n\nconst tag = tags.find(t => String(t.name || '').toLowerCase() === cfg.objekt_tag_name.toLowerCase());\nif (!tag) {\n  const vorhanden = tags\n    .filter(t => String(t.name || '').toLowerCase().startsWith(cfg.objekt_prefix))\n    .map(t => t.name).slice(0, 20);\n  throw new Error('Objekt-Tag \"' + cfg.objekt_tag_name + '\" existiert nicht in Paperless. Vorhandene Objekt-Tags: ' + (vorhanden.length ? vorhanden.join(', ') : '(keine; Tags mit Präfix \"' + cfg.objekt_prefix + '\" anlegen)'));\n}\n\nconst objekt_slug = cfg.objekt_tag_name.slice(cfg.objekt_prefix.length).replace(/[^\\wäöüÄÖÜß.-]+/g, '_');\n\nreturn [{ json: Object.assign({}, cfg, { objekt_tag_id: tag.id, objekt_name: tag.name, objekt_slug }) }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        0
+      ],
+      "id": "e7000007-0007-4000-8000-000000000004",
+      "name": "Objekt-Tag ermitteln"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.paperless_url }}/api/documents/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "tags__id__all",
+              "value": "={{ $json.objekt_tag_id }}"
+            },
+            {
+              "name": "created__date__gte",
+              "value": "={{ $json.datum_von }}"
+            },
+            {
+              "name": "created__date__lte",
+              "value": "={{ $json.datum_bis }}"
+            },
+            {
+              "name": "page_size",
+              "value": "250"
+            },
+            {
+              "name": "ordering",
+              "value": "created"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "e7000007-0007-4000-8000-000000000005",
+      "name": "Dokumente laden",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-objekt-has-docs",
+              "leftValue": "={{ $json.count }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1248,
+        0
+      ],
+      "id": "e7000007-0007-4000-8000-000000000006",
+      "name": "Dokumente vorhanden?"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Objekt-Tag ermitteln').first().json.paperless_url }}/api/correspondents/?page_size=500",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1456,
+        -96
+      ],
+      "id": "e7000007-0007-4000-8000-000000000007",
+      "name": "Korrespondenten laden",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pro Dokument: Download-URL (Original bei PDF/TIF/TIFF, sonst Archiv-PDF),\n// eindeutigen ZIP-Dateinamen und Korrespondent-Namen für die CSV vorbereiten.\nconst cfg = $('Objekt-Tag ermitteln').first().json;\nconst docs = $('Dokumente laden').first().json.results || [];\nconst okExt = ['.pdf', '.tif', '.tiff'];\n\nconst korr = {};\n($input.first().json.results || []).forEach(k => { korr[k.id] = k.name; });\n\nreturn docs.map((d, i) => {\n  const orig = d.original_file_name || '';\n  const name = orig.toLowerCase();\n  const useOriginal = okExt.some(ext => name.endsWith(ext));\n\n  const dotPos = orig.lastIndexOf('.');\n  const ext = (useOriginal && dotPos > 0) ? orig.slice(dotPos).toLowerCase() : '.pdf';\n  let base = d.title || ('Beleg-' + d.id);\n  base = base.replace(/[\\\\/:*?\"<>|\\r\\n\\t]+/g, ' ').replace(/\\s+/g, ' ').trim().slice(0, 120);\n  if (!base) base = 'Beleg-' + d.id;\n\n  return { json: {\n    nr: i + 1,\n    id: d.id,\n    title: d.title || ('Dokument ' + d.id),\n    created: d.created,\n    korrespondent: d.correspondent ? (korr[d.correspondent] || '') : '',\n    original_file_name: orig || null,\n    zip_name: String(i + 1).padStart(3, '0') + '_' + base + ext,\n    download_url: cfg.paperless_url + '/api/documents/' + d.id + '/download/' + (useOriginal ? '?original=true' : '')\n  }};\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1664,
+        -96
+      ],
+      "id": "e7000007-0007-4000-8000-000000000008",
+      "name": "Dokumentliste aufbauen"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.download_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1872,
+        -96
+      ],
+      "id": "e7000007-0007-4000-8000-000000000009",
+      "name": "Belege herunterladen",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Dateiname aus der Dokumentliste auf den Download übernehmen.\nconst doc = $('Dokumentliste aufbauen').item.json;\nconst item = $input.item;\n\nif (!item.binary || !item.binary.data) {\n  throw new Error('Kein Binärinhalt für Dokument ' + doc.id + ': Download fehlgeschlagen?');\n}\n\nitem.binary.data.fileName = doc.zip_name;\nreturn item;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2080,
+        -96
+      ],
+      "id": "e7000007-0007-4000-8000-000000000010",
+      "name": "Dateinamen setzen"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Alle heruntergeladenen Belege in EIN Item bündeln, damit der\n// Compression-Node daraus ein einzelnes ZIP baut.\nconst items = $input.all();\nif (!items.length) throw new Error('Keine Belege zum Packen vorhanden.');\n\nconst binary = {};\nitems.forEach((item, i) => {\n  if (!item.binary || !item.binary.data) {\n    throw new Error('Beleg ohne Binärdaten an Position ' + (i + 1) + ': Download fehlgeschlagen?');\n  }\n  binary['file_' + String(i).padStart(3, '0')] = item.binary.data;\n});\n\nreturn [{ json: { anzahl: items.length }, binary }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2288,
+        -96
+      ],
+      "id": "e7000007-0007-4000-8000-000000000011",
+      "name": "Belege bündeln"
+    },
+    {
+      "parameters": {
+        "operation": "compress",
+        "binaryPropertyName": "={{ Object.keys($binary).join(',') }}",
+        "outputFormat": "zip",
+        "fileName": "=Objektakte-{{ $('Objekt-Tag ermitteln').first().json.objekt_slug }}-{{ $('Objekt-Tag ermitteln').first().json.jahr }}.zip",
+        "binaryPropertyOutput": "zip"
+      },
+      "type": "n8n-nodes-base.compression",
+      "typeVersion": 1.1,
+      "position": [
+        2496,
+        -96
+      ],
+      "id": "e7000007-0007-4000-8000-000000000012",
+      "name": "ZIP erstellen"
+    },
+    {
+      "parameters": {
+        "jsCode": "// CSV-Belegliste erzeugen und als zweiten Anhang an das Item hängen.\n// Semikolon-getrennt + BOM, damit deutsches Excel sie direkt sauber öffnet.\nconst cfg = $('Objekt-Tag ermitteln').first().json;\nconst docs = $('Dokumentliste aufbauen').all().map(i => i.json);\n\nconst esc = (v) => '\"' + String(v ?? '').replace(/\"/g, '\"\"') + '\"';\nconst header = ['Nr', 'Paperless-ID', 'Titel', 'Belegdatum', 'Korrespondent', 'Original-Dateiname', 'Datei im ZIP'].join(';');\nconst lines = docs.map(d => [\n  d.nr,\n  d.id,\n  esc(d.title),\n  d.created ? String(d.created).slice(0, 10) : '',\n  esc(d.korrespondent),\n  esc(d.original_file_name || ''),\n  esc(d.zip_name)\n].join(';'));\nconst csv = '\\ufeff' + header + '\\n' + lines.join('\\n') + '\\n';\n\nconst item = $input.first();\nitem.binary = item.binary || {};\nitem.binary.csv = await this.helpers.prepareBinaryData(\n  Buffer.from(csv, 'utf8'),\n  'Belegliste-' + cfg.objekt_slug + '-' + cfg.jahr + '.csv',\n  'text/csv'\n);\nitem.json.anzahl = docs.length;\nreturn item;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2704,
+        -96
+      ],
+      "id": "e7000007-0007-4000-8000-000000000013",
+      "name": "CSV-Belegliste anhängen"
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $('Objekt-Tag ermitteln').first().json.absender }}",
+        "toEmail": "={{ $('Objekt-Tag ermitteln').first().json.empfaenger }}",
+        "subject": "=Objektakte {{ $('Objekt-Tag ermitteln').first().json.objekt_name }} {{ $('Objekt-Tag ermitteln').first().json.jahr }}: {{ $json.anzahl }} Beleg(e)",
+        "emailFormat": "text",
+        "text": "=Guten Tag,\n\nanbei die Objektakte {{ $('Objekt-Tag ermitteln').first().json.objekt_name }} für {{ $('Objekt-Tag ermitteln').first().json.jahr }}:\n- ZIP mit {{ $json.anzahl }} Beleg(en)\n- CSV-Belegliste (Übersicht, mit Excel zu öffnen)\n\nDiese Mail wurde automatisch aus Paperless erzeugt (Paper-Werk).",
+        "options": {
+          "appendAttribution": false,
+          "attachments": "zip,csv"
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2912,
+        -96
+      ],
+      "id": "e7000007-0007-4000-8000-000000000014",
+      "name": "Objektakte senden",
+      "credentials": {
+        "smtp": {
+          "id": "Xg7X6xVdrbSzUQ4o",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'gesendet', objekt: $('Objekt-Tag ermitteln').first().json.objekt_name, jahr: $('Objekt-Tag ermitteln').first().json.jahr, anzahl: $json.anzahl, empfaenger: $('Objekt-Tag ermitteln').first().json.empfaenger }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        3120,
+        -96
+      ],
+      "id": "e7000007-0007-4000-8000-000000000015",
+      "name": "Antwort: gesendet"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'leer', objekt: $('Objekt-Tag ermitteln').first().json.objekt_name, jahr: $('Objekt-Tag ermitteln').first().json.jahr, hinweis: 'Keine Belege für dieses Objekt und Jahr gefunden.' }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1456,
+        96
+      ],
+      "id": "e7000007-0007-4000-8000-000000000016",
+      "name": "Antwort: leer"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Einstellungen holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Konfiguration": {
+      "main": [
+        [
+          {
+            "node": "Tags laden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tags laden": {
+      "main": [
+        [
+          {
+            "node": "Objekt-Tag ermitteln",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Objekt-Tag ermitteln": {
+      "main": [
+        [
+          {
+            "node": "Dokumente laden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dokumente laden": {
+      "main": [
+        [
+          {
+            "node": "Dokumente vorhanden?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dokumente vorhanden?": {
+      "main": [
+        [
+          {
+            "node": "Korrespondenten laden",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Antwort: leer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Korrespondenten laden": {
+      "main": [
+        [
+          {
+            "node": "Dokumentliste aufbauen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dokumentliste aufbauen": {
+      "main": [
+        [
+          {
+            "node": "Belege herunterladen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Belege herunterladen": {
+      "main": [
+        [
+          {
+            "node": "Dateinamen setzen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dateinamen setzen": {
+      "main": [
+        [
+          {
+            "node": "Belege bündeln",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Belege bündeln": {
+      "main": [
+        [
+          {
+            "node": "ZIP erstellen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ZIP erstellen": {
+      "main": [
+        [
+          {
+            "node": "CSV-Belegliste anhängen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CSV-Belegliste anhängen": {
+      "main": [
+        [
+          {
+            "node": "Objektakte senden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Objektakte senden": {
+      "main": [
+        [
+          {
+            "node": "Antwort: gesendet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Einstellungen holen": {
+      "main": [
+        [
+          {
+            "node": "Konfiguration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "tags": [
+    {
+      "id": "Qr4w77Oluq8Hi4TJ",
+      "name": "paperless"
+    }
+  ],
+  "id": "qYYC1pk96HdCUTU4"
+}

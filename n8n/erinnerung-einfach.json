@@ -1,0 +1,537 @@
+{
+  "id": "yWg0RtcYN0iOD8p4",
+  "name": "erinnerung-einfach",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🔔 Einfache Erinnerung (\"Erinnern am\")\n\n**Zweck:** Die einfache Variante zu `kuendigungsfristen-melden`: EIN generisches Custom Field, KEINE Berechnung, KEINE hartcodierte Benutzerliste. An einem beliebigen Dokument ein Datum setzen genügt.\n\n**Voraussetzung: Custom Field in Paperless anlegen:**\n- **Erinnern am** (Typ Datum)\n\n**Trigger:** Schedule täglich 8 Uhr, zusätzlich manuell startbar.\n\n**Logik:** Gemeldet wird alles mit „Erinnern am\" &le; heute. Die Dokumente werden nach **Eigentümer** gruppiert; pro Eigentümer wird per `/api/users/{id}/` die dort hinterlegte E-Mail-Adresse geholt und eine eigene Mail verschickt, ohne Liste von User-IDs zum Pflegen. Dokumente ohne Eigentümer (oder wenn der Benutzer keine E-Mail hinterlegt hat) gehen an die Betriebsadresse `mail_betrieb`.\n\n**Adressen und URLs** stehen in der Data Table `pw_config` (n8n-Oberfläche → Data Tables). Im Node „Konfiguration\" steht nur Fachliches.\n\n**Im Node „Konfiguration\" anpassen:** den Namen des Custom Fields, ggf. Trigger-Uhrzeit. Die Fallback-Adresse ist `mail_betrieb` in `pw_config`.\n\n**Wichtig:** Nach Erledigung das Feld „Erinnern am\" leeren oder auf ein neues Datum setzen, sonst kommt am nächsten Tag wieder eine Mail (bewusst, wie bei den anderen Digest-Workflows: kein Status-Tag, das vergessen werden kann).\n\n**Fehlerverhalten:** Fehlt das Custom Field „Erinnern am\" in Paperless, bricht der Workflow mit klarer Meldung ab. Ein gelöschter/ungültiger Benutzer (`/api/users/{id}/` liefert 404) fällt fail-soft auf `fallback_email` zurück.",
+        "height": 660,
+        "width": 740
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        -784
+      ],
+      "id": "ea00000a-000a-4000-8000-000000000099",
+      "name": "Doku"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        160
+      ],
+      "id": "ea00000a-000a-4000-8000-000000000001",
+      "name": "Schedule täglich 8 Uhr"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ea00000a-000a-4000-8000-000000000002",
+      "name": "Manuell starten"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "pwSubEinstell01",
+          "mode": "list",
+          "cachedResultName": "sub-einstellungen"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        208,
+        80
+      ],
+      "id": "ea00000a-000a-4000-8000-0000000000c1",
+      "name": "Einstellungen holen"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Die Instanzwerte kommen aus sub-einstellungen (Knoten davor) und werden\n// in der Data Table pw_config gepflegt (n8n-Oberfläche, \"Data Tables\").\n// HIER stehen nur die FACHLICHEN Einstellungen dieses Workflows: Fristen,\n// Tag-Namen, Feldnamen.\nconst werte = $('Einstellungen holen').first().json;\nconst pw = (key) => {\n  const v = werte[key];\n  if (v === undefined || String(v).trim() === '') {\n    throw new Error('pw_config: \"' + key + '\" fehlt oder ist leer; in der n8n-Oberfläche unter \"Data Tables\" eintragen.');\n  }\n  return v;\n};\n// fallback_email: Empfänger für Dokumente ohne Eigentümer oder wenn der\n// Paperless-Benutzer keine E-Mail hinterlegt hat. Das ist genau die\n// Betriebsadresse, deshalb derselbe Schlüssel wie überall sonst.\nreturn [{\n  json: {\n    // ── aus der Data Table pw_config ──\n    paperless_url:             pw('paperless_url'),\n    paperless_url_oeffentlich: pw('paperless_url_oeffentlich'),\n    absender:                  pw('mail_absender'),\n    fallback_email:            pw('mail_betrieb'),\n\n    // ── fachlich, hier zu pflegen ──\n    // feld_erinnerung: Name des Paperless-Custom-Fields mit dem Erinnerungsdatum.\n    feld_erinnerung: 'Erinnern am'\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        80
+      ],
+      "id": "ea00000a-000a-4000-8000-000000000003",
+      "name": "Konfiguration"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.paperless_url }}/api/custom_fields/?page_size=100",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        624,
+        80
+      ],
+      "id": "ea00000a-000a-4000-8000-000000000004",
+      "name": "Custom Fields laden",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Feld-ID auflösen und die Abfrage bauen: fällig ist alles mit\n// \"Erinnern am\" <= heute (auch Überfälliges wird gemeldet).\nconst cfg = $('Konfiguration').first().json;\nconst fields = $json.results || [];\n\nconst feld = fields.find(f => String(f.name).toLowerCase() === cfg.feld_erinnerung.toLowerCase());\nif (!feld) {\n  throw new Error('Custom Field \"' + cfg.feld_erinnerung + '\" existiert nicht in Paperless; bitte anlegen (Typ Datum) oder Konfiguration anpassen.');\n}\n\nconst today = new Date().toISOString().slice(0, 10);\nconst customFieldQuery = JSON.stringify([cfg.feld_erinnerung, 'lte', today]);\n\nreturn [{ json: Object.assign({}, cfg, { feld_erinnerung_id: feld.id, customFieldQuery }) }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        80
+      ],
+      "id": "ea00000a-000a-4000-8000-000000000005",
+      "name": "Feld prüfen"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.paperless_url }}/api/documents/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "custom_field_query",
+              "value": "={{ $json.customFieldQuery }}"
+            },
+            {
+              "name": "page_size",
+              "value": "250"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1040,
+        80
+      ],
+      "id": "ea00000a-000a-4000-8000-000000000006",
+      "name": "Dokumente laden",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-erinnerung-has-docs",
+              "leftValue": "={{ $json.count }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1248,
+        80
+      ],
+      "id": "ea00000a-000a-4000-8000-000000000007",
+      "name": "Fällig?"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Dokumente nach Eigentümer gruppieren, pro Eigentümer eine Mail.\n// Dokumente ohne Eigentümer landen in einer eigenen Gruppe (ownerId: null)\n// und bekommen weiter unten die fallback_email.\nconst docs = $json.results || [];\nconst groups = new Map();\nfor (const doc of docs) {\n  const key = doc.owner ?? 'keiner';\n  if (!groups.has(key)) groups.set(key, []);\n  groups.get(key).push(doc);\n}\n\nreturn Array.from(groups.entries()).map(([key, docs]) => ({\n  json: { ownerId: key === 'keiner' ? null : key, docs }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1456,
+        0
+      ],
+      "id": "ea00000a-000a-4000-8000-000000000008",
+      "name": "Nach Eigentümer gruppieren"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1664,
+        0
+      ],
+      "id": "ea00000a-000a-4000-8000-000000000009",
+      "name": "Loop über Eigentümer"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-owner-known",
+              "leftValue": "={{ $json.ownerId !== null }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "looseTypeValidation": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1872,
+        0
+      ],
+      "id": "ea00000a-000a-4000-8000-00000000000a",
+      "name": "Eigentümer bekannt?"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/users/{{ $json.ownerId }}/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2080,
+        -96
+      ],
+      "id": "ea00000a-000a-4000-8000-00000000000b",
+      "name": "Nutzer laden",
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// E-Mail-Adresse aus dem Paperless-Benutzer lesen. Fail-soft: wurde der\n// Benutzer gelöscht (404) oder hat keine E-Mail hinterlegt, greift die Fallback-Adresse.\nconst cfg = $('Konfiguration').first().json;\nconst group = $('Loop über Eigentümer').item.json;\nconst user = $input.first().json;\n\nconst email = (user && !user.error && typeof user.email === 'string' && user.email.trim()) ? user.email.trim() : null;\nconst toEmail = email || cfg.fallback_email;\nconst toName = (user && !user.error && (user.first_name || user.username))\n  ? (user.first_name ? (user.first_name + (user.last_name ? ' ' + user.last_name : '')) : user.username)\n  : 'Team';\n\nreturn [{ json: { toEmail, toName, docs: group.docs } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2288,
+        -96
+      ],
+      "id": "ea00000a-000a-4000-8000-00000000000c",
+      "name": "Empfänger aus Nutzer"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Dokumente ohne Eigentümer bekommen die Fallback-Adresse aus der Konfiguration.\nconst cfg = $('Konfiguration').first().json;\nconst group = $('Loop über Eigentümer').item.json;\n\nreturn [{ json: { toEmail: cfg.fallback_email, toName: 'Team', docs: group.docs } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2080,
+        96
+      ],
+      "id": "ea00000a-000a-4000-8000-00000000000d",
+      "name": "Empfänger: Fallback"
+    },
+    {
+      "parameters": {
+        "jsCode": "// HTML-Mail für einen Eigentümer (oder die Fallback-Adresse) aufbauen.\nconst cfg = $('Konfiguration').first().json;\nconst { toEmail, toName, docs } = $json;\n\nif (!toEmail || String(toEmail).indexOf('@') === -1) {\n  throw new Error('Keine gültige Empfänger-Adresse ermittelt (weder Benutzer-E-Mail noch fallback_email gesetzt).');\n}\n\nconst esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst fmt = (iso) => iso ? new Date(iso).toLocaleDateString('de-DE') : '-';\nconst valErinnerung = (doc) => {\n  const cf = (doc.custom_fields || []).find(f => f.field === cfg.feld_erinnerung_id);\n  return cf && cf.value ? fmt(cf.value) : '-';\n};\n\nconst rows = docs.map(doc => {\n  const docUrl = cfg.paperless_url_oeffentlich + '/documents/' + doc.id + '/detail';\n  return '<tr>'\n    + '<td style=\"padding:6px 12px;border:1px solid #ddd;\"><a href=\"' + docUrl + '\" style=\"color:#1a73e8;\">' + esc(doc.title || '(kein Titel)') + '</a></td>'\n    + '<td style=\"padding:6px 12px;border:1px solid #ddd;color:#c0392b;font-weight:bold;\">' + valErinnerung(doc) + '</td>'\n    + '</tr>';\n}).join('\\n');\n\nconst today = new Date().toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin' });\nconst anzahl = docs.length + (docs.length === 1 ? ' Dokument' : ' Dokumente');\n\nconst html = '<div style=\"font-family:Arial,sans-serif;max-width:700px;\">'\n  + '<h2 style=\"color:#2c3e50;border-bottom:2px solid #2c3e50;padding-bottom:8px;\">Erinnerung</h2>'\n  + '<p>Hallo ' + esc(toName) + ',</p>'\n  + '<p>f\\u00fcr <strong>' + anzahl + '</strong> ist eine Erinnerung f\\u00e4llig:</p>'\n  + '<table cellpadding=\"0\" cellspacing=\"0\" style=\"border-collapse:collapse;font-size:14px;width:100%;margin:16px 0;\">'\n  + '<thead><tr style=\"background:#2c3e50;color:#fff;\"><th style=\"padding:10px 12px;text-align:left;\">Dokument</th><th style=\"padding:10px 12px;text-align:left;\">Erinnern am</th></tr></thead>'\n  + '<tbody>' + rows + '</tbody></table>'\n  + '<p style=\"font-size:13px;color:#555;\">Nach Erledigung das Feld \\u201eErinnern am\\u201c im Dokument leeren oder auf ein neues Datum setzen \\u2014 sonst kommt morgen wieder eine Erinnerung.</p>'\n  + '<p><a href=' + cfg.paperless_url_oeffentlich + ' style=\"background:#2c3e50;color:#fff;padding:8px 16px;text-decoration:none;border-radius:4px;display:inline-block;\">&#8594; Paperless-NGX \\u00f6ffnen</a></p>'\n  + '<p style=\"color:#95a5a6;font-size:12px;margin-top:32px;border-top:1px solid #eee;padding-top:12px;\">Automatisch generiert am ' + today + ' \\u00b7 <a href=\"https://github.com/paper-werk\">Paper-Werk</a></p>'\n  + '</div>';\n\nreturn [{ json: { html, toEmail, subject: 'Erinnerung: ' + anzahl, absender: cfg.absender } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2496,
+        0
+      ],
+      "id": "ea00000a-000a-4000-8000-00000000000e",
+      "name": "E-Mail aufbauen"
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $json.absender }}",
+        "toEmail": "={{ $json.toEmail }}",
+        "subject": "={{ $json.subject }}",
+        "html": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2704,
+        0
+      ],
+      "id": "ea00000a-000a-4000-8000-00000000000f",
+      "name": "E-Mail senden",
+      "credentials": {
+        "smtp": {
+          "id": "Xg7X6xVdrbSzUQ4o",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule täglich 8 Uhr": {
+      "main": [
+        [
+          {
+            "node": "Einstellungen holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manuell starten": {
+      "main": [
+        [
+          {
+            "node": "Einstellungen holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Konfiguration": {
+      "main": [
+        [
+          {
+            "node": "Custom Fields laden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Custom Fields laden": {
+      "main": [
+        [
+          {
+            "node": "Feld prüfen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Feld prüfen": {
+      "main": [
+        [
+          {
+            "node": "Dokumente laden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dokumente laden": {
+      "main": [
+        [
+          {
+            "node": "Fällig?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fällig?": {
+      "main": [
+        [
+          {
+            "node": "Nach Eigentümer gruppieren",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Nach Eigentümer gruppieren": {
+      "main": [
+        [
+          {
+            "node": "Loop über Eigentümer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop über Eigentümer": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Eigentümer bekannt?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Eigentümer bekannt?": {
+      "main": [
+        [
+          {
+            "node": "Nutzer laden",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Empfänger: Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Nutzer laden": {
+      "main": [
+        [
+          {
+            "node": "Empfänger aus Nutzer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Empfänger aus Nutzer": {
+      "main": [
+        [
+          {
+            "node": "E-Mail aufbauen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Empfänger: Fallback": {
+      "main": [
+        [
+          {
+            "node": "E-Mail aufbauen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "E-Mail aufbauen": {
+      "main": [
+        [
+          {
+            "node": "E-Mail senden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "E-Mail senden": {
+      "main": [
+        [
+          {
+            "node": "Loop über Eigentümer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Einstellungen holen": {
+      "main": [
+        [
+          {
+            "node": "Konfiguration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "errorWorkflow": "pwFehlerMelden01"
+  },
+  "tags": [
+    {
+      "id": "Qr4w77Oluq8Hi4TJ",
+      "name": "paperless"
+    }
+  ]
+}

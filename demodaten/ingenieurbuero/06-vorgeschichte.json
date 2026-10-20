@@ -1,0 +1,963 @@
+[
+  {
+    "nummer": "{jahr}-101",
+    "jahr_vor_tagen": 335,
+    "bezeichnung": "Baugrunduntersuchung Neubau Kindergarten",
+    "kunde": "Stadt Musterstadt",
+    "abgeschlossen": true,
+    "auftrag": {
+      "mit_angebot": true,
+      "beauftragt": true,
+      "angebot_vor_tagen": 431,
+      "auftrag_vor_tagen": 423,
+      "positionen": [
+        {
+          "leistung": "Baugrundgutachten mit Gründungsempfehlung",
+          "menge": "1",
+          "preis": "14800.00",
+          "einheit": "pausch"
+        },
+        {
+          "leistung": "Rammkernsondierungen RKS 1 bis RKS 12",
+          "menge": "12",
+          "preis": "640.00",
+          "einheit": "Stk"
+        },
+        {
+          "leistung": "Ingenieurstunde",
+          "menge": "138",
+          "preis": "95.00",
+          "einheit": "Std"
+        }
+      ]
+    },
+    "rechnungen": [
+      {
+        "vor_tagen": 335,
+        "betreff": "Schlussrechnung {nummer} - Baugrunduntersuchung Neubau Kindergarten",
+        "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+        "positionen_aus_auftrag": true,
+        "leistung_von_tagen": 81,
+        "leistung_bis_tagen": 0
+      }
+    ],
+    "_kommentar": "DIE VORGESCHICHTE - abgeschlossene Vorhaben der letzten zwölf Monate. Wozu ein Betrieb sie braucht, bevor er dem Programm glaubt: Die Startseite zeigt den Fakturaverlauf über zwölf Monate; ohne Vorgeschichte steht dort eine leere Fläche mit einem Balken rechts.\n\nJedes trägt Angebot (nicht immer), Auftrag und Schlussrechnung mit denselben Positionen - deshalb \"positionen_aus_auftrag\" statt sie dreimal zu schreiben. Die Rechnungspositionen zeigen dabei auf ihre Auftragspositionen - ohne den Bezug stand in der Auftragsakte eines voll berechneten Vorhabens \"0 von 120 Std abgerechnet\".\n\nAlle sind abgeschlossen, ganz bezahlt (12-zahlungen.json) und stören damit keine Zahl auf der Startseite. Der Leistungszeitraum jeder Rechnung beginnt eine Woche nach dem Auftrag, nicht vor ihm."
+  },
+  {
+    "nummer": "{jahr}-102",
+    "jahr_vor_tagen": 335,
+    "bezeichnung": "Bodengutachten Wohnbebauung Am Anger",
+    "kunde": "Wohnbau Isartal eG",
+    "abgeschlossen": true,
+    "auftrag": {
+      "mit_angebot": false,
+      "beauftragt": true,
+      "angebot_vor_tagen": 431,
+      "auftrag_vor_tagen": 423,
+      "positionen": [
+        {
+          "leistung": "Baugrundgutachten mit Gründungsempfehlung",
+          "menge": "1",
+          "preis": "9400.00",
+          "einheit": "pausch"
+        },
+        {
+          "leistung": "Technikerstunde",
+          "menge": "96",
+          "preis": "78.00",
+          "einheit": "Std"
+        }
+      ]
+    },
+    "rechnungen": [
+      {
+        "vor_tagen": 335,
+        "betreff": "Schlussrechnung {nummer} - Bodengutachten Wohnbebauung Am Anger",
+        "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+        "positionen_aus_auftrag": true,
+        "leistung_von_tagen": 81,
+        "leistung_bis_tagen": 0
+      }
+    ]
+  },
+  {
+    "nummer": "{jahr}-103",
+    "jahr_vor_tagen": 304,
+    "bezeichnung": "Schadstoffkataster Verwaltungsgebäude",
+    "kunde": "Landratsamt Musterstadt",
+    "abgeschlossen": true,
+    "auftrag": {
+      "mit_angebot": true,
+      "beauftragt": true,
+      "angebot_vor_tagen": 400,
+      "auftrag_vor_tagen": 392,
+      "positionen": [
+        {
+          "leistung": "Schadstofferkundung nach VDI 6202 Blatt 1",
+          "menge": "1",
+          "preis": "28600.00",
+          "einheit": "pausch"
+        },
+        {
+          "leistung": "Asbestanalyse REM",
+          "menge": "134",
+          "preis": "135.00",
+          "einheit": "Stk"
+        },
+        {
+          "leistung": "Probenahme vor Ort",
+          "menge": "186",
+          "preis": "85.00",
+          "einheit": "Std"
+        }
+      ]
+    },
+    "rechnungen": [
+      {
+        "vor_tagen": 304,
+        "betreff": "Schlussrechnung {nummer} - Schadstoffkataster Verwaltungsgebäude",
+        "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+        "positionen_aus_auftrag": true,
+        "leistung_von_tagen": 81,
+        "leistung_bis_tagen": 0
+      }
+    ]
+  },
+  {
+    "nummer": "{jahr}-104",
+    "jahr_vor_tagen": 304,
+    "bezeichnung": "Deklaration Bodenaushub Kreisstraße LA 14",
+    "kunde": "Landratsamt Musterstadt",
+    "abgeschlossen": true,
+    "auftrag": {
+      "mit_angebot": false,
+      "beauftragt": true,
+      "angebot_vor_tagen": 400,
+      "auftrag_vor_tagen": 392,
+      "positionen": [
+        {
+          "leistung": "Deklarationsanalytik Streckenabschnitt",
+          "menge": "1",
+          "preis": "7600.00",
+          "einheit": "pausch"
+        },
+        {
+          "leistung": "Bodenprobe LAGA-Paket",
+          "menge": "48",
+          "preis": "145.00",
+          "einheit": "Stk"
+        }
+      ]
+    },
+    "rechnungen": [
+      {
+        "vor_tagen": 304,
+        "betreff": "Schlussrechnung {nummer} - Deklaration Bodenaushub Kreisstraße LA 14",
+        "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+        "positionen_aus_auftrag": true,
+        "leistung_von_tagen": 81,
+        "leistung_bis_tagen": 0
+      }
+    ]
+  },
+  {
+    "nummer": "{jahr}-105",
+    "jahr_vor_tagen": 274,
+    "bezeichnung": "Beweissicherung Nachbarbebauung Ludwigsplatz",
+    "kunde": "Wohnbau Isartal eG",
+    "abgeschlossen": true,
+    "auftrag": {
+      "mit_angebot": false,
+      "beauftragt": true,
+      "angebot_vor_tagen": 370,
+      "auftrag_vor_tagen": 362,
+      "positionen": [
+        {
+          "leistung": "Beweissicherung vor Baubeginn, 34 Objekte",
+          "menge": "1",
+          "preis": "18600.00",
+          "einheit": "pausch"
+        },
+        {
+          "leistung": "Technikerstunde",
+          "menge": "164",
+          "preis": "78.00",
+          "einheit": "Std"
+        },
+        {
+          "leistung": "Fahrtkosten",
+          "menge": "1480",
+          "preis": "0.80",
+          "einheit": "km"
+        }
+      ]
+    },
+    "rechnungen": [
+      {
+        "vor_tagen": 274,
+        "betreff": "Schlussrechnung {nummer} - Beweissicherung Nachbarbebauung Ludwigsplatz",
+        "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+        "positionen_aus_auftrag": true,
+        "leistung_von_tagen": 81,
+        "leistung_bis_tagen": 0
+      }
+    ]
+  },
+  {
+    "nummer": "{jahr}-106",
+    "jahr_vor_tagen": 274,
+    "bezeichnung": "Altlastenerkundung Bahnhofsareal, Phase I",
+    "kunde": "Landratsamt Musterstadt",
+    "abgeschlossen": true,
+    "auftrag": {
+      "mit_angebot": true,
+      "beauftragt": true,
+      "angebot_vor_tagen": 370,
+      "auftrag_vor_tagen": 362,
+      "positionen": [
+        {
+          "leistung": "Historische Erkundung und Gefährdungsabschätzung",
+          "menge": "1",
+          "preis": "22400.00",
+          "einheit": "pausch"
+        },
+        {
+          "leistung": "Eluatuntersuchung",
+          "menge": "58",
+          "preis": "210.00",
+          "einheit": "Stk"
+        },
+        {
+          "leistung": "Projektleitung",
+          "menge": "96",
+          "preis": "110.00",
+          "einheit": "Std"
+        }
+      ]
+    },
+    "rechnungen": [
+      {
+        "vor_tagen": 274,
+        "betreff": "Schlussrechnung {nummer} - Altlastenerkundung Bahnhofsareal, Phase I",
+        "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+        "positionen_aus_auftrag": true,
+        "leistung_von_tagen": 81,
+        "leistung_bis_tagen": 0
+      }
+    ]
+  },
+  {
+    "nummer": "{jahr}-107",
+    "jahr_vor_tagen": 243,
+    "bezeichnung": "Entsorgungskonzept Aushub Industriestraße",
+    "kunde": "Huber Bau GmbH & Co. KG",
+    "abgeschlossen": true,
+    "auftrag": {
+      "mit_angebot": true,
+      "beauftragt": true,
+      "angebot_vor_tagen": 339,
+      "auftrag_vor_tagen": 331,
+      "positionen": [
+        {
+          "leistung": "Entsorgungskonzept mit Deklarationsanalytik",
+          "menge": "1",
+          "preis": "16200.00",
+          "einheit": "pausch"
+        },
+        {
+          "leistung": "Bodenprobe LAGA-Paket",
+          "menge": "122",
+          "preis": "145.00",
+          "einheit": "Stk"
+        },
+        {
+          "leistung": "Ingenieurstunde",
+          "menge": "131",
+          "preis": "95.00",
+          "einheit": "Std"
+        }
+      ]
+    },
+    "rechnungen": [
+      {
+        "vor_tagen": 243,
+        "betreff": "Schlussrechnung {nummer} - Entsorgungskonzept Aushub Industriestraße",
+        "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+        "positionen_aus_auftrag": true,
+        "leistung_von_tagen": 81,
+        "leistung_bis_tagen": 0
+      }
+    ]
+  },
+  {
+    "nummer": "{jahr}-108",
+    "jahr_vor_tagen": 243,
+    "bezeichnung": "Gründungsgutachten Hallenerweiterung",
+    "kunde": "Huber Bau GmbH & Co. KG",
+    "abgeschlossen": true,
+    "auftrag": {
+      "mit_angebot": false,
+      "beauftragt": true,
+      "angebot_vor_tagen": 339,
+      "auftrag_vor_tagen": 331,
+      "positionen": [
+        {
+          "leistung": "Baugrundgutachten mit Gründungsempfehlung",
+          "menge": "1",
+          "preis": "8200.00",
+          "einheit": "pausch"
+        },
+        {
+          "leistung": "Rammkernsondierungen RKS 1 bis RKS 8",
+          "menge": "8",
+          "preis": "640.00",
+          "einheit": "Stk"
+        }
+      ]
+    },
+    "rechnungen": [
+      {
+        "vor_tagen": 243,
+        "betreff": "Schlussrechnung {nummer} - Gründungsgutachten Hallenerweiterung",
+        "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+        "positionen_aus_auftrag": true,
+        "leistung_von_tagen": 81,
+        "leistung_bis_tagen": 0
+      }
+    ]
+  },
+  {
+    "nummer": "{jahr}-109",
+    "jahr_vor_tagen": 212,
+    "bezeichnung": "Bauüberwachung Erschließung Wohnpark Süd",
+    "kunde": "Wohnbau Isartal eG",
+    "abgeschlossen": true,
+    "auftrag": {
+      "mit_angebot": true,
+      "beauftragt": true,
+      "angebot_vor_tagen": 308,
+      "auftrag_vor_tagen": 300,
+      "positionen": [
+        {
+          "leistung": "Örtliche Bauüberwachung, Abrechnungszeitraum",
+          "menge": "1",
+          "preis": "64800.00",
+          "einheit": "pausch"
+        },
+        {
+          "leistung": "Projektleitung",
+          "menge": "246",
+          "preis": "110.00",
+          "einheit": "Std"
+        }
+      ]
+    },
+    "rechnungen": [
+      {
+        "vor_tagen": 212,
+        "betreff": "Schlussrechnung {nummer} - Bauüberwachung Erschließung Wohnpark Süd",
+        "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+        "positionen_aus_auftrag": true,
+        "leistung_von_tagen": 81,
+        "leistung_bis_tagen": 0
+      }
+    ]
+  },
+  {
+    "nummer": "{jahr}-110",
+    "jahr_vor_tagen": 212,
+    "bezeichnung": "Baugrunderkundung Regenrückhaltebecken",
+    "kunde": "Stadt Musterstadt",
+    "abgeschlossen": true,
+    "auftrag": {
+      "mit_angebot": false,
+      "beauftragt": true,
+      "angebot_vor_tagen": 308,
+      "auftrag_vor_tagen": 300,
+      "positionen": [
+        {
+          "leistung": "Baugrundgutachten mit Gründungsempfehlung",
+          "menge": "1",
+          "preis": "11400.00",
+          "einheit": "pausch"
+        },
+        {
+          "leistung": "Ingenieurstunde",
+          "menge": "74",
+          "preis": "95.00",
+          "einheit": "Std"
+        }
+      ]
+    },
+    "rechnungen": [
+      {
+        "vor_tagen": 212,
+        "betreff": "Schlussrechnung {nummer} - Baugrunderkundung Regenrückhaltebecken",
+        "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+        "positionen_aus_auftrag": true,
+        "leistung_von_tagen": 81,
+        "leistung_bis_tagen": 0
+      }
+    ]
+  },
+  {
+    "nummer": "{jahr}-111",
+    "jahr_vor_tagen": 184,
+    "bezeichnung": "Altlastenerkundung ehemalige Tankstelle",
+    "kunde": "Autohaus Brandmeier GmbH",
+    "abgeschlossen": true,
+    "auftrag": {
+      "mit_angebot": true,
+      "beauftragt": true,
+      "angebot_vor_tagen": 280,
+      "auftrag_vor_tagen": 272,
+      "positionen": [
+        {
+          "leistung": "Historische Erkundung und Gefährdungsabschätzung",
+          "menge": "1",
+          "preis": "19800.00",
+          "einheit": "pausch"
+        },
+        {
+          "leistung": "Eluatuntersuchung",
+          "menge": "76",
+          "preis": "210.00",
+          "einheit": "Stk"
+        },
+        {
+          "leistung": "Probenahme vor Ort",
+          "menge": "134",
+          "preis": "85.00",
+          "einheit": "Std"
+        },
+        {
+          "leistung": "Gutachten und Bericht",
+          "menge": "1",
+          "preis": "1450.00",
+          "einheit": "pausch"
+        }
+      ]
+    },
+    "rechnungen": [
+      {
+        "vor_tagen": 184,
+        "betreff": "Schlussrechnung {nummer} - Altlastenerkundung ehemalige Tankstelle",
+        "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+        "positionen_aus_auftrag": true,
+        "leistung_von_tagen": 81,
+        "leistung_bis_tagen": 0
+      }
+    ]
+  },
+  {
+    "nummer": "{jahr}-112",
+    "jahr_vor_tagen": 184,
+    "bezeichnung": "Untersuchung Bauschutt Rückbau Schulhaus",
+    "kunde": "Stadt Musterstadt",
+    "abgeschlossen": true,
+    "auftrag": {
+      "mit_angebot": false,
+      "beauftragt": true,
+      "angebot_vor_tagen": 280,
+      "auftrag_vor_tagen": 272,
+      "positionen": [
+        {
+          "leistung": "Untersuchung Bauschutt nach ErsatzbaustoffV",
+          "menge": "1",
+          "preis": "12600.00",
+          "einheit": "pausch"
+        },
+        {
+          "leistung": "Asbestanalyse REM",
+          "menge": "46",
+          "preis": "135.00",
+          "einheit": "Stk"
+        }
+      ]
+    },
+    "rechnungen": [
+      {
+        "vor_tagen": 184,
+        "betreff": "Schlussrechnung {nummer} - Untersuchung Bauschutt Rückbau Schulhaus",
+        "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+        "positionen_aus_auftrag": true,
+        "leistung_von_tagen": 81,
+        "leistung_bis_tagen": 0
+      }
+    ]
+  },
+  {
+    "nummer": "{jahr}-113",
+    "jahr_vor_tagen": 153,
+    "bezeichnung": "Bodengutachten Erweiterung Betriebshof",
+    "kunde": "Stadt Musterstadt",
+    "abgeschlossen": true,
+    "auftrag": {
+      "mit_angebot": false,
+      "beauftragt": true,
+      "angebot_vor_tagen": 249,
+      "auftrag_vor_tagen": 241,
+      "positionen": [
+        {
+          "leistung": "Baugrundgutachten mit Gründungsempfehlung",
+          "menge": "1",
+          "preis": "13800.00",
+          "einheit": "pausch"
+        },
+        {
+          "leistung": "Ingenieurstunde",
+          "menge": "124",
+          "preis": "95.00",
+          "einheit": "Std"
+        }
+      ]
+    },
+    "rechnungen": [
+      {
+        "vor_tagen": 153,
+        "betreff": "Schlussrechnung {nummer} - Bodengutachten Erweiterung Betriebshof",
+        "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+        "positionen_aus_auftrag": true,
+        "leistung_von_tagen": 81,
+        "leistung_bis_tagen": 0
+      }
+    ]
+  },
+  {
+    "nummer": "{jahr}-114",
+    "jahr_vor_tagen": 153,
+    "bezeichnung": "Fachbauleitung Bodenaustausch Gewerbepark",
+    "kunde": "Huber Bau GmbH & Co. KG",
+    "abgeschlossen": true,
+    "auftrag": {
+      "mit_angebot": true,
+      "beauftragt": true,
+      "angebot_vor_tagen": 249,
+      "auftrag_vor_tagen": 241,
+      "positionen": [
+        {
+          "leistung": "Fachbauleitung Bodenaustausch",
+          "menge": "1",
+          "preis": "38400.00",
+          "einheit": "pausch"
+        },
+        {
+          "leistung": "Projektleitung",
+          "menge": "148",
+          "preis": "110.00",
+          "einheit": "Std"
+        }
+      ]
+    },
+    "rechnungen": [
+      {
+        "vor_tagen": 153,
+        "betreff": "Schlussrechnung {nummer} - Fachbauleitung Bodenaustausch Gewerbepark",
+        "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+        "positionen_aus_auftrag": true,
+        "leistung_von_tagen": 81,
+        "leistung_bis_tagen": 0
+      }
+    ]
+  },
+  {
+    "nummer": "{jahr}-115",
+    "jahr_vor_tagen": 123,
+    "bezeichnung": "Untersuchung Straßenaufbruch Ortsdurchfahrt",
+    "kunde": "Landratsamt Musterstadt",
+    "abgeschlossen": true,
+    "auftrag": {
+      "mit_angebot": true,
+      "beauftragt": true,
+      "angebot_vor_tagen": 219,
+      "auftrag_vor_tagen": 211,
+      "positionen": [
+        {
+          "leistung": "Untersuchung Straßenaufbruch nach ErsatzbaustoffV",
+          "menge": "1",
+          "preis": "26800.00",
+          "einheit": "pausch"
+        },
+        {
+          "leistung": "Bodenprobe LAGA-Paket",
+          "menge": "128",
+          "preis": "145.00",
+          "einheit": "Stk"
+        },
+        {
+          "leistung": "Technikerstunde",
+          "menge": "186",
+          "preis": "78.00",
+          "einheit": "Std"
+        }
+      ]
+    },
+    "rechnungen": [
+      {
+        "vor_tagen": 123,
+        "betreff": "Schlussrechnung {nummer} - Untersuchung Straßenaufbruch Ortsdurchfahrt",
+        "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+        "positionen_aus_auftrag": true,
+        "leistung_von_tagen": 81,
+        "leistung_bis_tagen": 0
+      }
+    ]
+  },
+  {
+    "nummer": "{jahr}-116",
+    "jahr_vor_tagen": 123,
+    "bezeichnung": "Baugrundberatung Neubau Feuerwehrhaus",
+    "kunde": "Stadt Musterstadt",
+    "abgeschlossen": true,
+    "auftrag": {
+      "mit_angebot": false,
+      "beauftragt": true,
+      "angebot_vor_tagen": 219,
+      "auftrag_vor_tagen": 211,
+      "positionen": [
+        {
+          "leistung": "Baugrundgutachten mit Gründungsempfehlung",
+          "menge": "1",
+          "preis": "9800.00",
+          "einheit": "pausch"
+        },
+        {
+          "leistung": "Rammkernsondierungen RKS 1 bis RKS 7",
+          "menge": "7",
+          "preis": "640.00",
+          "einheit": "Stk"
+        }
+      ]
+    },
+    "rechnungen": [
+      {
+        "vor_tagen": 123,
+        "betreff": "Schlussrechnung {nummer} - Baugrundberatung Neubau Feuerwehrhaus",
+        "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+        "positionen_aus_auftrag": true,
+        "leistung_von_tagen": 81,
+        "leistung_bis_tagen": 0
+      }
+    ]
+  },
+  {
+    "nummer": "{jahr}-117",
+    "jahr_vor_tagen": 92,
+    "bezeichnung": "Baubegleitung Rückbau Werkhalle",
+    "kunde": "Huber Bau GmbH & Co. KG",
+    "abgeschlossen": true,
+    "auftrag": {
+      "mit_angebot": true,
+      "beauftragt": true,
+      "angebot_vor_tagen": 188,
+      "auftrag_vor_tagen": 180,
+      "positionen": [
+        {
+          "leistung": "Fachbauleitung Rückbau nach TRGS 519",
+          "menge": "1",
+          "preis": "46200.00",
+          "einheit": "pausch"
+        },
+        {
+          "leistung": "Asbestanalyse REM",
+          "menge": "119",
+          "preis": "135.00",
+          "einheit": "Stk"
+        },
+        {
+          "leistung": "Projektleitung",
+          "menge": "212",
+          "preis": "110.00",
+          "einheit": "Std"
+        }
+      ]
+    },
+    "rechnungen": [
+      {
+        "vor_tagen": 92,
+        "betreff": "Schlussrechnung {nummer} - Baubegleitung Rückbau Werkhalle",
+        "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+        "positionen_aus_auftrag": true,
+        "leistung_von_tagen": 81,
+        "leistung_bis_tagen": 0
+      }
+    ]
+  },
+  {
+    "nummer": "{jahr}-118",
+    "jahr_vor_tagen": 92,
+    "bezeichnung": "Deklarationsanalytik Kanalsanierung Nord",
+    "kunde": "Wohnbau Isartal eG",
+    "abgeschlossen": true,
+    "auftrag": {
+      "mit_angebot": false,
+      "beauftragt": true,
+      "angebot_vor_tagen": 188,
+      "auftrag_vor_tagen": 180,
+      "positionen": [
+        {
+          "leistung": "Deklarationsanalytik Bauabschnitt Nord",
+          "menge": "1",
+          "preis": "8600.00",
+          "einheit": "pausch"
+        },
+        {
+          "leistung": "Bodenprobe LAGA-Paket",
+          "menge": "52",
+          "preis": "145.00",
+          "einheit": "Stk"
+        }
+      ]
+    },
+    "rechnungen": [
+      {
+        "vor_tagen": 92,
+        "betreff": "Schlussrechnung {nummer} - Deklarationsanalytik Kanalsanierung Nord",
+        "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+        "positionen_aus_auftrag": true,
+        "leistung_von_tagen": 81,
+        "leistung_bis_tagen": 0
+      }
+    ]
+  },
+  {
+    "nummer": "{jahr}-119",
+    "jahr_vor_tagen": 62,
+    "bezeichnung": "Gründungsberatung Erweiterungsbau Autohaus",
+    "kunde": "Autohaus Brandmeier GmbH",
+    "abgeschlossen": true,
+    "auftrag": {
+      "mit_angebot": false,
+      "beauftragt": true,
+      "angebot_vor_tagen": 158,
+      "auftrag_vor_tagen": 150,
+      "positionen": [
+        {
+          "leistung": "Baugrundgutachten mit Gründungsempfehlung",
+          "menge": "1",
+          "preis": "12800.00",
+          "einheit": "pausch"
+        },
+        {
+          "leistung": "Rammkernsondierungen RKS 1 bis RKS 9",
+          "menge": "9",
+          "preis": "640.00",
+          "einheit": "Stk"
+        },
+        {
+          "leistung": "Ingenieurstunde",
+          "menge": "129",
+          "preis": "95.00",
+          "einheit": "Std"
+        }
+      ]
+    },
+    "rechnungen": [
+      {
+        "vor_tagen": 62,
+        "betreff": "Schlussrechnung {nummer} - Gründungsberatung Erweiterungsbau Autohaus",
+        "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+        "positionen_aus_auftrag": true,
+        "leistung_von_tagen": 81,
+        "leistung_bis_tagen": 0
+      }
+    ]
+  },
+  {
+    "nummer": "{jahr}-120",
+    "jahr_vor_tagen": 62,
+    "bezeichnung": "Baugrunduntersuchung Photovoltaik Freifläche",
+    "kunde": "Wohnbau Isartal eG",
+    "abgeschlossen": true,
+    "auftrag": {
+      "mit_angebot": true,
+      "beauftragt": true,
+      "angebot_vor_tagen": 158,
+      "auftrag_vor_tagen": 150,
+      "positionen": [
+        {
+          "leistung": "Baugrundgutachten mit Gründungsempfehlung",
+          "menge": "1",
+          "preis": "21400.00",
+          "einheit": "pausch"
+        },
+        {
+          "leistung": "Probenahme vor Ort",
+          "menge": "96",
+          "preis": "85.00",
+          "einheit": "Std"
+        }
+      ]
+    },
+    "rechnungen": [
+      {
+        "vor_tagen": 62,
+        "betreff": "Schlussrechnung {nummer} - Baugrunduntersuchung Photovoltaik Freifläche",
+        "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+        "positionen_aus_auftrag": true,
+        "leistung_von_tagen": 81,
+        "leistung_bis_tagen": 0
+      }
+    ]
+  },
+  {
+    "nummer": "{jahr}-121",
+    "jahr_vor_tagen": 31,
+    "bezeichnung": "Deklarationsanalytik Baumaßnahme Ringstraße",
+    "kunde": "Stadt Musterstadt",
+    "abgeschlossen": true,
+    "auftrag": {
+      "mit_angebot": true,
+      "beauftragt": true,
+      "angebot_vor_tagen": 127,
+      "auftrag_vor_tagen": 119,
+      "positionen": [
+        {
+          "leistung": "Deklarationsanalytik Bauabschnitt 1 und 2",
+          "menge": "1",
+          "preis": "18300.00",
+          "einheit": "pausch"
+        },
+        {
+          "leistung": "Bodenprobe LAGA-Paket",
+          "menge": "131",
+          "preis": "145.00",
+          "einheit": "Stk"
+        },
+        {
+          "leistung": "Probenahme vor Ort",
+          "menge": "122",
+          "preis": "85.00",
+          "einheit": "Std"
+        }
+      ]
+    },
+    "rechnungen": [
+      {
+        "vor_tagen": 31,
+        "betreff": "Schlussrechnung {nummer} - Deklarationsanalytik Baumaßnahme Ringstraße",
+        "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+        "positionen_aus_auftrag": true,
+        "leistung_von_tagen": 81,
+        "leistung_bis_tagen": 0
+      }
+    ]
+  },
+  {
+    "nummer": "{jahr}-122",
+    "jahr_vor_tagen": 31,
+    "bezeichnung": "Schadstofferkundung Gebäuderiegel West",
+    "kunde": "Landratsamt Musterstadt",
+    "abgeschlossen": true,
+    "auftrag": {
+      "mit_angebot": false,
+      "beauftragt": true,
+      "angebot_vor_tagen": 127,
+      "auftrag_vor_tagen": 119,
+      "positionen": [
+        {
+          "leistung": "Schadstofferkundung nach VDI 6202 Blatt 1",
+          "menge": "1",
+          "preis": "16800.00",
+          "einheit": "pausch"
+        },
+        {
+          "leistung": "Asbestanalyse REM",
+          "menge": "64",
+          "preis": "135.00",
+          "einheit": "Stk"
+        }
+      ]
+    },
+    "rechnungen": [
+      {
+        "vor_tagen": 31,
+        "betreff": "Schlussrechnung {nummer} - Schadstofferkundung Gebäuderiegel West",
+        "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+        "positionen_aus_auftrag": true,
+        "leistung_von_tagen": 81,
+        "leistung_bis_tagen": 0
+      }
+    ]
+  },
+  {
+    "nummer": "{jahr}-123",
+    "jahr_vor_tagen": 20,
+    "bezeichnung": "Baugrundberatung Hallenanbau Ergolding",
+    "kunde": "Huber Bau GmbH & Co. KG",
+    "abgeschlossen": true,
+    "auftrag": {
+      "mit_angebot": true,
+      "beauftragt": true,
+      "angebot_vor_tagen": 96,
+      "auftrag_vor_tagen": 88,
+      "positionen": [
+        {
+          "leistung": "Baugrundgutachten mit Gründungsempfehlung",
+          "menge": "1",
+          "preis": "15600.00",
+          "einheit": "pausch"
+        },
+        {
+          "leistung": "Rammkernsondierungen RKS 1 bis RKS 5",
+          "menge": "5",
+          "preis": "640.00",
+          "einheit": "Stk"
+        },
+        {
+          "leistung": "Technikerstunde",
+          "menge": "134",
+          "preis": "78.00",
+          "einheit": "Std"
+        }
+      ]
+    },
+    "rechnungen": [
+      {
+        "vor_tagen": 20,
+        "betreff": "Schlussrechnung {nummer} - Baugrundberatung Hallenanbau Ergolding",
+        "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+        "positionen_aus_auftrag": true,
+        "leistung_von_tagen": 61,
+        "leistung_bis_tagen": 0
+      }
+    ]
+  },
+  {
+    "nummer": "{jahr}-124",
+    "jahr_vor_tagen": 20,
+    "bezeichnung": "Beweissicherung Ortskanal Bauabschnitt 3",
+    "kunde": "Wohnbau Isartal eG",
+    "abgeschlossen": true,
+    "auftrag": {
+      "mit_angebot": false,
+      "beauftragt": true,
+      "angebot_vor_tagen": 96,
+      "auftrag_vor_tagen": 88,
+      "positionen": [
+        {
+          "leistung": "Beweissicherung vor Baubeginn, 18 Objekte",
+          "menge": "1",
+          "preis": "11200.00",
+          "einheit": "pausch"
+        },
+        {
+          "leistung": "Technikerstunde",
+          "menge": "78",
+          "preis": "78.00",
+          "einheit": "Std"
+        }
+      ]
+    },
+    "rechnungen": [
+      {
+        "vor_tagen": 20,
+        "betreff": "Schlussrechnung {nummer} - Beweissicherung Ortskanal Bauabschnitt 3",
+        "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
+        "positionen_aus_auftrag": true,
+        "leistung_von_tagen": 61,
+        "leistung_bis_tagen": 0
+      }
+    ]
+  }
+]

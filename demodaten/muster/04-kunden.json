@@ -1,0 +1,21 @@
+[
+  {
+    "nummer": "K-100",
+    "name": "Hausverwaltung Brunner",
+    "strasse": "Altstadt 22",
+    "plz": "84028",
+    "ort": "Landshut",
+    "zahlungsziel_tage": 14
+  },
+  {
+    "_kommentar": "Oeffentlicher Auftraggeber: Die Kaeuferreferenz ist hier die Leitweg-ID (BT-10), ohne die eine E-Rechnung abgewiesen wird.",
+    "nummer": "K-110",
+    "name": "Gemeinde Musterdorf",
+    "strasse": "Rathausplatz 1",
+    "plz": "84032",
+    "ort": "Musterdorf",
+    "zahlungsziel_tage": 30,
+    "kaeuferreferenz": "09274-12345-67",
+    "zustellweg": "xrechnung"
+  }
+]

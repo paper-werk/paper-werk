@@ -1,0 +1,375 @@
+{
+  "name": "sub-duo-versand",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## sub-duo-versand\n\nReine Funktion:  Liste von doc_ids  ->  je EINE Mail an DATEV\nUnternehmen online, danach Ergebnis-Tag setzen.\n\nDer KANAL DUO, nichts sonst. Wer die Belege ausgesucht hat und\nwarum, ist ihm egal: `steuer-beleg-sofort` schickt einen, der\nMonatslauf schickt viele. Genau dieselbe Funktion.\n\nKENNT KEINE KOMMANDO-TAGS und keine Ausloeser. `Steuer-senden`\nund `wird bearbeitet` gehoeren dem Aufrufer. `Steuer-gesendet`\ndagegen setzt DIESER Workflow: das ist ein ERGEBNIS, und nur er\nweiss, ob die Mail wirklich rausging.\n\nWARUM EINE LISTE UND NICHT EIN BELEG: Der Schwesterworkflow\n`sub-stb-versand` packt alle Belege in EIN Zip und schickt EINE\nMail. Mit einer Eingabe pro Beleg koennte er das nicht. Beide\nSubs haben deshalb denselben Vertrag; Kanaltausch ist dann eine\ngeaenderte Workflow-Auswahl im Knoten \"Versand ausfuehren\" plus\ndie Empfaengerzeile im Konfigurations-Knoten des Aufrufers, sonst\nnichts.\n\nEINGABE ist definiert, nicht durchgereicht:\n  doc_ids           Liste  Paperless-IDs der zu sendenden Belege\n  paperless_url     Text\n  empfaenger        Text   die Upload-Mail-Adresse aus DUO\n  absender          Text   in DUO bestaetigte Absenderadresse\n  dateiname_quelle  Text   'titel' oder 'original'\n  zeitraum          Text   Label fuer den Mailtext\n  tag_gesendet_id   Zahl   Paperless-ID von `Steuer-gesendet`\n\nDie Instanzwerte kommen vom Aufrufer, der sie ohnehin schon hat.\nEin zweiter Aufruf von sub-einstellungen waere nicht nur unnoetig,\ner erzeugt auch einen weiteren Eintrag in der Ausfuehrungsliste.\n\nMARKIERT PRO BELEG, nicht am Ende: Bricht der Lauf beim fuenften\nvon zehn ab, sind die ersten vier verschickt UND markiert. Ein\nspaeterer Lauf holt nur den Rest nach.\n\nMUSS VEROEFFENTLICHT SEIN, wie jeder sub-Workflow.\n\nKEIN eigener errorWorkflow: sonst meldet jede Stoerung zweimal.",
+        "height": 900,
+        "width": 500
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        -320
+      ],
+      "id": "dv000000-0000-4000-8000-000000000000",
+      "name": "Doku"
+    },
+    {
+      "parameters": {
+        "inputSource": "workflowInputs",
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "doc_ids",
+              "type": "array"
+            },
+            {
+              "name": "paperless_url",
+              "type": "string"
+            },
+            {
+              "name": "empfaenger",
+              "type": "string"
+            },
+            {
+              "name": "absender",
+              "type": "string"
+            },
+            {
+              "name": "dateiname_quelle",
+              "type": "string"
+            },
+            {
+              "name": "zeitraum",
+              "type": "string"
+            },
+            {
+              "name": "tag_gesendet_id",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "dv000000-0000-4000-8000-000000000001",
+      "name": "Aufruf"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Eingabe pruefen, bevor irgendetwas passiert. Der Aufrufer hat\n// vorher entschieden, dass etwas zu senden ist. Kommt hier nichts\n// an, ist das ein Programmierfehler und kein Normalfall. Deshalb\n// wird geworfen und nicht still zurueckgegeben.\nconst a = $('Aufruf').first().json ?? {};\n\nconst ids = (Array.isArray(a.doc_ids) ? a.doc_ids : [a.doc_ids])\n  .filter(v => v !== null && v !== undefined && String(v).trim() !== '')\n  .map(Number);\n\nif (!ids.length) throw new Error('sub-duo-versand ohne Belege aufgerufen: doc_ids ist leer. Der Aufrufer haette gar nicht rufen duerfen.');\nif (ids.some(n => !Number.isFinite(n))) throw new Error('doc_ids enthaelt etwas, das keine Zahl ist: ' + JSON.stringify(a.doc_ids));\nif (String(a.empfaenger ?? '').indexOf('@') === -1) throw new Error('Keine DUO-Empfaengeradresse uebergeben. In der n8n-Oberflaeche unter \"Data Tables\" den Schluessel mail_duo setzen.');\nif (String(a.absender ?? '').indexOf('@') === -1) throw new Error('Keine Absenderadresse uebergeben: pw_config, Schluessel mail_absender. Sie muss in DUO als Absender bestaetigt sein.');\nif (!Number.isFinite(Number(a.tag_gesendet_id))) throw new Error('tag_gesendet_id fehlt; der Aufrufer muss die Paperless-ID von \"Steuer-gesendet\" mitgeben.');\n\nreturn [{ json: {\n  doc_ids: ids,\n  id_liste: ids.join(','),\n  paperless_url: String(a.paperless_url).replace(/\\/+$/, ''),\n  empfaenger: a.empfaenger,\n  absender: a.absender,\n  dateiname_quelle: a.dateiname_quelle || 'titel',\n  zeitraum: a.zeitraum || '',\n  tag_gesendet_id: Number(a.tag_gesendet_id)\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "dv000000-0000-4000-8000-000000000002",
+      "name": "Auftrag prüfen"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.paperless_url }}/api/documents/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id__in",
+              "value": "={{ $json.id_liste }}"
+            },
+            {
+              "name": "page_size",
+              "value": "250"
+            },
+            {
+              "name": "ordering",
+              "value": "created"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "dv000000-0000-4000-8000-000000000003",
+      "name": "Dokumente laden",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pro Beleg entscheiden, ob Original oder Archiv-PDF an DUO geht.\n// Die DUO Upload-Mail akzeptiert PDF/TIF/TIFF. Ist das Original schon\n// eines davon, geht es unveraendert raus, wichtig etwa bei\n// ZUGFeRD-PDFs, deren XML-Anhang beim Umwandeln verloren ginge.\n// Sonst gilt die Archiv-Version, die in Paperless immer PDF ist.\nconst auftrag = $('Auftrag prüfen').first().json;\nconst docs = $json.results || [];\nconst okExt = ['.pdf', '.tif', '.tiff'];\n\n// Stille Datenverluste sichtbar machen: page_size deckelt bei 250, und\n// eine geloeschte ID kaeme hier einfach nicht zurueck. Beides waere\n// ein nicht gesendeter Beleg, den niemand vermisst.\nif (docs.length !== auftrag.doc_ids.length) {\n  const da = docs.map(d => d.id);\n  const fehlt = auftrag.doc_ids.filter(id => !da.includes(id));\n  throw new Error('Paperless lieferte ' + docs.length + ' von ' + auftrag.doc_ids.length + ' angeforderten Belegen. Fehlend: ' + fehlt.join(', ') + '. Entweder wurden sie zwischenzeitlich geloescht, oder es waren mehr als 250 auf einmal.');\n}\n\nreturn docs.map(d => {\n  const name = (d.original_file_name || '').toLowerCase();\n  const useOriginal = okExt.some(ext => name.endsWith(ext));\n  return { json: {\n    id: d.id,\n    title: d.title || ('Dokument ' + d.id),\n    created: d.created,\n    original_file_name: d.original_file_name || null,\n    use_original: useOriginal,\n    download_url: auftrag.paperless_url + '/api/documents/' + d.id + '/download/' + (useOriginal ? '?original=true' : '')\n  }};\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "dv000000-0000-4000-8000-000000000004",
+      "name": "Dokumentliste aufbauen"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        832,
+        0
+      ],
+      "id": "dv000000-0000-4000-8000-000000000005",
+      "name": "Loop über Belege"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.download_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1040,
+        96
+      ],
+      "id": "dv000000-0000-4000-8000-000000000006",
+      "name": "Beleg herunterladen",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Anhangs-Dateiname setzen, sonst hiesse jede Datei 'data.pdf'.\nconst doc = $('Loop über Belege').item.json;\nconst auftrag = $('Auftrag prüfen').first().json;\nconst item = $input.item;\n\nif (!item.binary || !item.binary.data) {\n  throw new Error('Kein Binaerinhalt fuer Dokument ' + doc.id + ': Download fehlgeschlagen?');\n}\n\n// Endung: beim Original vom Originalnamen uebernehmen,\n// die Archiv-Version ist immer PDF.\nconst orig = doc.original_file_name || '';\nconst dotPos = orig.lastIndexOf('.');\nconst ext = (doc.use_original && dotPos > 0) ? orig.slice(dotPos).toLowerCase() : '.pdf';\n\n// Basisname: Paperless-Titel (Standard) oder Original-Dateiname ohne\n// Endung; letzteres sind oft Scanner-Namen wie Scan_00382.pdf.\nlet base;\nif (auftrag.dateiname_quelle === 'original' && orig) {\n  base = dotPos > 0 ? orig.slice(0, dotPos) : orig;\n} else {\n  base = doc.title || ('Beleg-' + doc.id);\n}\n\n// Fuer Datei- und Mailsysteme problematische Zeichen entschaerfen.\nbase = base.replace(/[\\\\/:*?\"<>|\\r\\n\\t]+/g, ' ').replace(/\\s+/g, ' ').trim().slice(0, 120);\nif (!base) base = 'Beleg-' + doc.id;\n\nitem.binary.data.fileName = base + ext;\nreturn item;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        96
+      ],
+      "id": "dv000000-0000-4000-8000-000000000007",
+      "name": "Dateiname setzen"
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $('Auftrag prüfen').first().json.absender }}",
+        "toEmail": "={{ $('Auftrag prüfen').first().json.empfaenger }}",
+        "subject": "=Beleg: {{ $('Loop über Belege').item.json.title }}",
+        "emailFormat": "text",
+        "text": "=Automatischer Belegversand aus Paperless (Paper-Werk), {{ $('Auftrag prüfen').first().json.zeitraum }}.",
+        "options": {
+          "appendAttribution": false,
+          "attachments": "data"
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1456,
+        96
+      ],
+      "id": "dv000000-0000-4000-8000-000000000008",
+      "name": "An DUO senden",
+      "credentials": {
+        "smtp": {
+          "id": "Xg7X6xVdrbSzUQ4o",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Auftrag prüfen').first().json.paperless_url }}/api/documents/bulk_edit/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { documents: [$('Loop über Belege').item.json.id], method: 'modify_tags', parameters: { add_tags: [$('Auftrag prüfen').first().json.tag_gesendet_id], remove_tags: [] } } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1664,
+        96
+      ],
+      "id": "dv000000-0000-4000-8000-000000000009",
+      "name": "Als gesendet markieren",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ergebnis an den Aufrufer. Der Monatslauf baut daraus seinen\n// Bericht, der Sofortversand quittiert danach nur noch das\n// Kommando-Tag. Beide sehen dieselbe Struktur, deshalb ist ihnen\n// egal, welcher Versand-Sub gelaufen ist.\nconst docs = $('Dokumentliste aufbauen').all().map(i => i.json);\nreturn [{ json: {\n  status: 'gesendet',\n  kanal: 'DUO',\n  anzahl: docs.length,\n  doc_ids: docs.map(d => d.id),\n  belege: docs.map(d => ({ id: d.id, titel: d.title, created: d.created, original: d.use_original }))\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        -128
+      ],
+      "id": "dv000000-0000-4000-8000-00000000000a",
+      "name": "Ergebnis"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Aufruf": {
+      "main": [
+        [
+          {
+            "node": "Auftrag prüfen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auftrag prüfen": {
+      "main": [
+        [
+          {
+            "node": "Dokumente laden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dokumente laden": {
+      "main": [
+        [
+          {
+            "node": "Dokumentliste aufbauen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dokumentliste aufbauen": {
+      "main": [
+        [
+          {
+            "node": "Loop über Belege",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop über Belege": {
+      "main": [
+        [
+          {
+            "node": "Ergebnis",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Beleg herunterladen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Beleg herunterladen": {
+      "main": [
+        [
+          {
+            "node": "Dateiname setzen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dateiname setzen": {
+      "main": [
+        [
+          {
+            "node": "An DUO senden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "An DUO senden": {
+      "main": [
+        [
+          {
+            "node": "Als gesendet markieren",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Als gesendet markieren": {
+      "main": [
+        [
+          {
+            "node": "Loop über Belege",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timezone": "Europe/Berlin"
+  },
+  "tags": [
+    {
+      "id": "Qr4w77Oluq8Hi4TJ",
+      "name": "paperless"
+    }
+  ],
+  "id": "pwSubDuoVersand"
+}

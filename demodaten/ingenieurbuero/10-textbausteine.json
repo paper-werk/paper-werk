@@ -1,0 +1,45 @@
+[
+  {
+    "name": "Honorarangebot Einleitung",
+    "belegart": "angebot",
+    "text": "vielen Dank für Ihre Anfrage. Auf Grundlage der uns übermittelten Unterlagen bieten wir Ihnen die nachstehenden Ingenieurleistungen an:",
+    "_kommentar": "Die Bausteine, die ein Ingenieurbüro über die Standardtexte der App hinaus hat. Anrede, Grußformel, die üblichen Einleitungen und die Mail-Anschreiben je Belegart kommen NICHT von hier, sondern aus paper-werk-app (faktura/standardtexte.py) - der Lader legt sie beim Betrieb mit an. Ein Name, den es dort schon gibt, bricht den Lauf ab.\n\nDer Schwerpunkt ist die Abrechnung über Monate: Abschlag nach Leistungsstand, Nachtrag, Schlussrechnung mit Absetzung. Genau das zeigt dieser Bestand, und die Texte dazu sollen im Termin in der Auswahlliste stehen.\n\nEinleitungen beginnen klein - sie stehen hinter der Anrede. Dieselbe Konvention wie in den Standardtexten."
+  },
+  {
+    "name": "Angebot Bindefrist und Nachträge",
+    "belegart": "angebot",
+    "text": "An dieses Angebot halten wir uns acht Wochen gebunden. Grundlage sind die bei Angebotsabgabe vorliegenden Unterlagen. Ergibt sich im Zuge der Untersuchungen ein zusätzlicher Leistungsbedarf, stimmen wir diesen vorab als Nachtrag mit Ihnen ab."
+  },
+  {
+    "_kommentar": "Nachträge legt der Lader als Auftrag an - deshalb steht der Baustein dort und nicht beim Angebot.",
+    "name": "Nachtrag Einleitung",
+    "belegart": "auftrag",
+    "text": "im Zuge der laufenden Untersuchungen hat sich ein zusätzlicher Leistungsbedarf ergeben. Wir bestätigen Ihnen hiermit die folgenden Leistungen als Nachtrag zum bestehenden Auftrag:"
+  },
+  {
+    "name": "Abschlag nach Leistungsstand",
+    "belegart": "rechnung",
+    "text": "entsprechend dem vereinbarten Zahlungsplan berechnen wir Ihnen für die im Abrechnungszeitraum erbrachten Leistungen den folgenden Abschlag. Grundlage ist der Leistungsstand zum Ende des Zeitraums."
+  },
+  {
+    "name": "Schlussrechnung mit Absetzung",
+    "belegart": "rechnung",
+    "text": "nach Abschluss der beauftragten Leistungen berechnen wir Ihnen die Gesamtleistung. Die bereits in Rechnung gestellten Abschläge sind nachstehend abgesetzt."
+  },
+  {
+    "name": "Zahlungsziel 30 Tage",
+    "belegart": "rechnung",
+    "text": "Der Rechnungsbetrag ist zahlbar innerhalb von 30 Tagen nach Rechnungseingang ohne Abzug."
+  },
+  {
+    "name": "Laboranalytik Hinweis",
+    "text": "Die Laboranalytik wurde durch ein akkreditiertes Prüflabor ausgeführt. Die Prüfberichte sind Bestandteil des Gutachtens und werden Ihnen mit diesem übergeben."
+  },
+  {
+    "_kommentar": "Ein Anschreiben mit Platzhaltern - die einzige Verwendung, in der {beleg}, {betrag} und {firma} aufgelöst werden. Neben dem Standard-Anschreiben 'Rechnung' steht es als zweite Wahl für den Abschluss eines Vorhabens.",
+    "name": "Schlussrechnung mit Gutachten",
+    "verwendung": "mail",
+    "belegart": "rechnung",
+    "text": "Sehr geehrte Damen und Herren,\n\nmit Abschluss des Vorhabens erhalten Sie im Anhang unsere {beleg} über {betrag}. Das Gutachten mit allen Prüfberichten ist Ihnen bereits gesondert zugegangen.\n\nFür die gute Zusammenarbeit bedanken wir uns und stehen für Rückfragen zur Bewertung gern zur Verfügung.\n\nMit freundlichen Grüßen\n{firma}"
+  }
+]

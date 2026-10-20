@@ -1,0 +1,88 @@
+[
+  {
+    "_kommentar": "VOLLSTÄNDIG VERTEILT: Die Wallboxen gehören alle zum Autohaus. Technisch derselbe Weg wie beim Ingenieurbüro über Eingangsrechnung und Fremdleistung, fachlich eine andere Sprache - der Großhändler liefert Kabel und Zählerschränke, nicht Analysenpakete.\n\nEinen Verkaufspreis hat die Fremdleistung nicht. Steht \"leistung\" dran, hängt sie an der Auftragsposition dieser Leistung, und beim Übernehmen in die Rechnung gilt deren Preis; ohne sie wird zum Einkauf durchgereicht. Beide Fälle stehen hier absichtlich nebeneinander.",
+    "lieferant": "Ladetechnik Süd GmbH",
+    "nummer": "LS-2026-3318",
+    "vor_tagen": 78,
+    "betrag_netto": "5352.00",
+    "notiz": "Sechs Ladepunkte Autohaus Brandmeier",
+    "fremdleistungen": [
+      {
+        "projekt": "{jahr}-021",
+        "leistung": "Wallbox 11 kW",
+        "bezeichnung": "Wallbox 11 kW, Typ 2",
+        "einheit": "Stk",
+        "menge": "6",
+        "einkaufspreis": "892.00"
+      }
+    ]
+  },
+  {
+    "_kommentar": "DER GROSSE MATERIALBELEG zum Ludwigsplatz. Ohne ihn stünde das Projekt bei 62 Prozent Marge. Das mag ein Ingenieurbüro erreichen, das nur Wissen verkauft; ein Elektrobetrieb kauft die halbe Auftragssumme als Ware ein. Ein Vorführbestand mit unglaubwürdigen Margen redet dem Zuschauer nach dem Mund, statt ihm seine Zahlen zu zeigen.",
+    "lieferant": "Elektro-Großhandel Wittmann KG",
+    "nummer": "WI-874902",
+    "vor_tagen": 96,
+    "betrag_netto": "16480.00",
+    "notiz": "Zählerplatz und Wohnungsverteilungen Ludwigsplatz",
+    "fremdleistungen": [
+      {
+        "projekt": "{jahr}-014",
+        "leistung": "Zählerschrank komplett",
+        "bezeichnung": "Zählerschrank 12 Zählerplätze, TAB-konform",
+        "einheit": "Stk",
+        "menge": "1",
+        "einkaufspreis": "1090.00"
+      },
+      {
+        "projekt": "{jahr}-014",
+        "leistung": "FI/LS-Schalter 16 A",
+        "bezeichnung": "FI/LS-Schalter 16 A/30 mA",
+        "einheit": "Stk",
+        "menge": "48",
+        "einkaufspreis": "41.50"
+      },
+      {
+        "projekt": "{jahr}-014",
+        "leistung": "Steckdose Unterputz",
+        "bezeichnung": "Schalterprogramm reinweiß, Steckdosen",
+        "einheit": "Stk",
+        "menge": "186",
+        "einkaufspreis": "6.80"
+      },
+      {
+        "projekt": "{jahr}-014",
+        "leistung": "Leitung NYM-J 5x2,5",
+        "bezeichnung": "NYM-J 5x2,5, Steigleitungen",
+        "einheit": "m",
+        "menge": "380",
+        "einkaufspreis": "2.90"
+      }
+    ]
+  },
+  {
+    "_kommentar": "ABSICHTLICH UNFERTIG - der Lehrfall. Vom Sammelbeleg des Großhändlers ist erst ein Teil verteilt (1.704 von 4.180 Euro). Er steht damit in der Arbeitsliste 'Nicht abgerechnet' und wartet darauf, dass jemand den Rest verteilt. Ein Bestand, in dem alles sauber zugeordnet ist, zeigt die Liste leer - und damit nicht, wozu sie da ist.",
+    "lieferant": "Elektro-Großhandel Wittmann KG",
+    "nummer": "WI-880214",
+    "vor_tagen": 31,
+    "betrag_netto": "4180.00",
+    "notiz": "Sammelrechnung - noch nicht vollständig zugeordnet",
+    "fremdleistungen": [
+      {
+        "projekt": "{jahr}-014",
+        "leistung": "Leitung NYM-J 3x1,5",
+        "bezeichnung": "NYM-J 3x1,5, 12 Ringe à 100 m",
+        "einheit": "m",
+        "menge": "1200",
+        "einkaufspreis": "1.42"
+      },
+      {
+        "_kommentar": "Kleinkram ohne Auftragsposition: Dosen, Klemmen, Schrauben. Er wird nicht weiterberechnet - Kosten ja, Erlös nein. Das zieht das Ergebnis herunter, und das ist die Wahrheit.",
+        "projekt": "{jahr}-014",
+        "bezeichnung": "Installationskleinmaterial",
+        "einheit": "pausch",
+        "menge": "1",
+        "einkaufspreis": "318.00"
+      }
+    ]
+  }
+]

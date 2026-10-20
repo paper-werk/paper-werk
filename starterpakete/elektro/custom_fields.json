@@ -1,0 +1,17 @@
+[
+  {
+    "_kommentar": "ERGÄNZUNG zum Basispaket, keine Kopie. Die Felder des Basispakets (Gesamtbetrag, Rechnungsnummer, Fällig am, Nettobetrag, Rechnungsdatum, Projekt) werden von n8n-Workflows UND von paper-werk-app gelesen und geschrieben, siehe faktura/archiv.py und manage.py paperless_einrichten. Sie stehen deshalb nur dort. Was hier steht, ergänzt sie um das, was ein Elektrobetrieb zusätzlich am Dokument braucht.",
+    "name": "Nächste Prüfung",
+    "data_type": "date"
+  },
+  {
+    "_kommentar": "Wann die Gewährleistung endet, gerechnet ab Abnahme, vier Jahre nach VOB/B, fünf nach BGB. Als Datum und nicht als Zeitraum: Gefragt wird immer 'läuft das noch', nie 'wie lang war die Frist'.",
+    "name": "Gewährleistung bis",
+    "data_type": "date"
+  },
+  {
+    "_kommentar": "Die Anlagenkennung des Netzbetreibers (Zählernummer, Marktlokations-ID). Sie steht auf jeder Anmeldung und jedem Inbetriebsetzungsprotokoll und ist der Schlüssel, über den der Netzbetreiber selbst sucht; wer sie nicht nennen kann, wartet.",
+    "name": "Zählernummer",
+    "data_type": "string"
+  }
+]

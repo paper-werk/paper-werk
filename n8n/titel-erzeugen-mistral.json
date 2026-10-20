@@ -1,0 +1,302 @@
+{
+  "name": "titel-erzeugen-mistral",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## ✏️ Titel-Verbesserung (Mistral)\n\n**Zweck:** Erzeugt aus OCR-Volltext + altem Titel einen prägnanten neuen Dokumenttitel (1 bis 5 Wörter) per Mistral und schreibt ihn zurück nach Paperless.\n\n**Trigger:** Paperless-Workflow → `POST /webhook/create-title-mistral` mit Body `{\"doc_url\": \"{doc_url}\"}` (alternativ `doc_id`).\n\n**Prompt/Regeln:** im Node „Prepare Input\" (Systemprompt); dort auch Modell (`mistral-small-latest`) und Volltext-Kürzung (6000 Zeichen) anpassen.\n\n**Fehlerverhalten:** Fehlende Dokument-ID oder unbrauchbare Mistral-Antwort ⇒ Abbruch mit klarer Meldung. Mistral-Aufruf hat 60 s Timeout.\n\n⚠️ OCR-Text geht an die Mistral-Cloud (DSGVO/AVV beachten).",
+        "height": 480,
+        "width": 640
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        -544
+      ],
+      "id": "d0c00006-0006-4000-8000-000000000001",
+      "name": "Doku"
+    },
+    {
+      "parameters": {
+        "jsCode": "const doc = $input.first().json;\n\nconst SYSTEM_PROMPT = `Du bist ein Assistent zur Verbesserung von Dokumenttiteln in einem Paperless-Dokumentenmanagementsystem. Aus dem OCR-Volltext eines Dokuments und seinem aktuellen Titel erzeugst du einen prägnanten, sprechenden neuen Titel.\n\nRegeln für den neuen Titel:\n- 1 bis 5 Wörter, idealerweise unter 40 Zeichen\n- Sprache: passend zum Dokumentinhalt (in der Regel Deutsch)\n- Enthält das Wesentliche in dieser Reihenfolge: Absender/Korrespondent · Vorgang/Thema · ggf. eindeutige Referenz (Rechnungs-Nr., Aktenzeichen, Vertragsnummer); ein Datum nur, wenn es für die Wiederfindbarkeit unverzichtbar ist\n- Keine Anführungszeichen, kein Punkt am Ende, keine Dateiendung, keine Aufzählungszeichen\n- Keine generischen Wörter wie „Dokument\", „Schreiben\", „PDF\", „Scan\"\n- Eigennamen, Firmen- und Produktnamen exakt übernehmen (auch Groß-/Kleinschreibung)\n- Wenn der aktuelle Titel bereits gut beschreibend und prägnant ist, gib ihn unverändert zurück\n- Bei unklarem Inhalt: gib den besten möglichen Versuch ab; verweigere nicht und entschuldige dich nicht\n\nAntworte ausschließlich mit gültigem JSON in genau diesem Format und ohne weitere Felder:\n{\"new_title\": \"...\"}`;\n\nconst oldTitle = doc.title ?? '';\n// Titel brauchen selten mehr als die erste Seite; 6000 Zeichen halten die Token-Kosten klein.\nconst contentExcerpt = (doc.content ?? '').slice(0, 6000);\n\nconst userContent = `Aktueller Titel: ${oldTitle || '(leer)'}\n\nOCR-Volltext (Auszug, ggf. gekürzt):\n---\n${contentExcerpt}\n---\n\nErzeuge nun den neuen Titel und antworte als JSON.`;\n\nreturn {\n  id: doc.id,\n  old_title: oldTitle,\n  content_excerpt: contentExcerpt,\n  mistralBody: {\n    model: 'mistral-small-latest',\n    response_format: { type: 'json_object' },\n    temperature: 0.2,\n    max_tokens: 200,\n    messages: [\n      { role: 'system', content: SYSTEM_PROMPT },\n      { role: 'user', content: userContent },\n    ],\n  },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "4a168293-1d2a-4f57-b6bc-390c6e447a1c",
+      "name": "Prepare Input"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mistral.ai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.mistralBody }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1200,
+        0
+      ],
+      "id": "760074e7-5bc0-4f7a-8e47-21276f7b6613",
+      "name": "Mistral",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "OHN0lQXlD0SCttqZ",
+          "name": "Header Auth Mistral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "titel-erzeugen-mistral",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "30f83c67-63c5-49c0-8034-4d05d39d1e02",
+      "name": "Webhook1",
+      "webhookId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "pwSubEinstell01",
+          "mode": "list",
+          "cachedResultName": "sub-einstellungen"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "30f83c67-63c5-49c0-8034-0000000000c1",
+      "name": "Einstellungen holen"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Die Instanzwerte kommen aus sub-einstellungen (Knoten davor) und werden\n// in der Data Table pw_config gepflegt (n8n-Oberfläche, \"Data Tables\").\n// HIER stehen nur die FACHLICHEN Einstellungen dieses Workflows: Fristen,\n// Tag-Namen, Feldnamen.\nconst werte = $('Einstellungen holen').first().json;\nconst pw = (key) => {\n  const v = werte[key];\n  if (v === undefined || String(v).trim() === '') {\n    throw new Error('pw_config: \"' + key + '\" fehlt oder ist leer; in der n8n-Oberfläche unter \"Data Tables\" eintragen.');\n  }\n  return v;\n};\nreturn [{\n  json: {\n    // ── aus der Data Table pw_config ──\n    // Dieser Workflow verschickt keine Mail und braucht deshalb nur die\n    // Paperless-Adresse für seine API-Aufrufe.\n    paperless_url: pw('paperless_url')\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "30f83c67-63c5-49c0-8034-0000000000c2",
+      "name": "Konfiguration"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Dokument-ID aus dem Paperless-Webhook holen.\n// Body kann { doc_id }, { id } oder { doc_url } enthalten.\nconst body = $('Webhook1').first().json.body ?? {};\nlet id = body.doc_id ?? body.id;\nif (!id && body.doc_url) {\n  id = String(body.doc_url).match(/\\/documents\\/(\\d+)/)?.[1];\n}\nif (!id) throw new Error('Keine doc_id/doc_url im Webhook-Body');\nreturn [{ json: { id: Number(id) } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "81e082cc-3772-460b-85b8-b8b215382570",
+      "name": "extract id"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/documents/{{ $json.id }}/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        832,
+        0
+      ],
+      "id": "83dfb844-6d2b-4ac1-a2b9-74fedb9a58d4",
+      "name": "get document",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function extractNewTitle(raw) {\n  if (raw == null) return null;\n\n  if (typeof raw === 'string') {\n    const s = raw.trim();\n    if (s === '') return null;\n    try {\n      const parsed = JSON.parse(s);\n      return extractNewTitle(parsed);\n    } catch {\n      return s;\n    }\n  }\n\n  if (typeof raw !== 'object') return null;\n\n  if (typeof raw.new_title === 'string' && raw.new_title.trim() !== '') {\n    return raw.new_title.trim();\n  }\n\n  if (raw.message && typeof raw.message === 'object') {\n    const t = extractNewTitle(raw.message.content);\n    if (t) return t;\n  }\n\n  if (Array.isArray(raw.choices) && raw.choices.length > 0) {\n    for (const c of raw.choices) {\n      const t = extractNewTitle(c?.message?.content);\n      if (t) return t;\n    }\n  }\n\n  if (typeof raw.content === 'string') {\n    const t = extractNewTitle(raw.content);\n    if (t) return t;\n  }\n\n  return null;\n}\n\nconst id = $('extract id').first().json.id;\nconst aiItem = $input.first().json;\nlet title = extractNewTitle(aiItem);\n\nif (!title) {\n  throw new Error(\n    'Konnte keinen new_title aus Mistral-Antwort extrahieren: ' +\n      JSON.stringify(aiItem).slice(0, 500),\n  );\n}\n\ntitle = title\n  .replace(/[\\r\\n\\t]+/g, ' ')\n  .replace(/\\s{2,}/g, ' ')\n  .replace(/^[\"']|[\"']$/g, '')\n  .replace(/\\.$/g, '')\n  .trim();\n\nif (title.length > 200) title = title.slice(0, 200).trim();\n\nreturn { id, title };\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1488,
+        0
+      ],
+      "id": "7d91c39f-23a4-493d-acf0-6858d313ba0e",
+      "name": "extract new title"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/documents/{{ $json.id }}/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "title",
+              "value": "={{ $json.title }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1696,
+        0
+      ],
+      "id": "bf0e65b5-fe22-465b-b79f-517200683fab",
+      "name": "patch document",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Prepare Input": {
+      "main": [
+        [
+          {
+            "node": "Mistral",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral": {
+      "main": [
+        [
+          {
+            "node": "extract new title",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Einstellungen holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extract id": {
+      "main": [
+        [
+          {
+            "node": "get document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get document": {
+      "main": [
+        [
+          {
+            "node": "Prepare Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extract new title": {
+      "main": [
+        [
+          {
+            "node": "patch document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Konfiguration": {
+      "main": [
+        [
+          {
+            "node": "extract id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Einstellungen holen": {
+      "main": [
+        [
+          {
+            "node": "Konfiguration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "errorWorkflow": "pwFehlerMelden01"
+  },
+  "versionId": "6a1d25b7-b052-4090-a5ec-c218bd6bbdcf",
+  "meta": {
+    "instanceId": "a93f4964e7219af7b95d2af224fbc867bc9bb41a2652bbc50549717373800be7"
+  },
+  "id": "IHZKwnobzwLTdUsA",
+  "tags": [
+    {
+      "updatedAt": "2026-05-09T07:14:32.932Z",
+      "createdAt": "2026-05-09T07:14:32.932Z",
+      "id": "Qr4w77Oluq8Hi4TJ",
+      "name": "paperless"
+    }
+  ]
+}

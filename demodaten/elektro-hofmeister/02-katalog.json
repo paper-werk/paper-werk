@@ -1,0 +1,132 @@
+[
+  {
+    "nummer": "1.10",
+    "bezeichnung": "Meisterstunde",
+    "einheit": "Std",
+    "preis": "78.00",
+    "art": "zeit",
+    "kontierbar": true,
+    "_kommentar": "Die Langtexte sind echt und nicht geschmückt: Wer im Termin einen Elektromeister vor sich hat, muss dort Sätze lesen, die er selbst so schreiben würde - mit Norm und Prüfumfang."
+  },
+  {
+    "nummer": "1.20",
+    "bezeichnung": "Gesellenstunde",
+    "einheit": "Std",
+    "preis": "62.00",
+    "art": "zeit",
+    "kontierbar": true
+  },
+  {
+    "nummer": "1.30",
+    "bezeichnung": "Auszubildendenstunde",
+    "einheit": "Std",
+    "preis": "34.00",
+    "art": "zeit",
+    "kontierbar": true
+  },
+  {
+    "nummer": "1.40",
+    "bezeichnung": "Notdienststunde",
+    "einheit": "Std",
+    "preis": "116.00",
+    "art": "zeit",
+    "kontierbar": true,
+    "langtext": "Einsatz außerhalb der regulären Arbeitszeit einschließlich Anfahrt. Berechnet wird ab Verlassen des Betriebs bis zur Rückkehr, mindestens eine Stunde."
+  },
+  {
+    "nummer": "2.10",
+    "bezeichnung": "Anfahrt",
+    "einheit": "km",
+    "preis": "0.70",
+    "art": "menge",
+    "kontierbar": true
+  },
+  {
+    "nummer": "3.10",
+    "bezeichnung": "Leitung NYM-J 3x1,5",
+    "einheit": "m",
+    "preis": "2.40",
+    "art": "menge",
+    "kontierbar": true
+  },
+  {
+    "nummer": "3.20",
+    "bezeichnung": "Leitung NYM-J 5x2,5",
+    "einheit": "m",
+    "preis": "4.80",
+    "art": "menge",
+    "kontierbar": true
+  },
+  {
+    "nummer": "3.30",
+    "bezeichnung": "Steckdose Unterputz",
+    "einheit": "Stk",
+    "preis": "12.50",
+    "art": "menge",
+    "kontierbar": true,
+    "langtext": "Schutzkontakt-Steckdose Unterputz mit Abdeckrahmen, montiert und angeschlossen. Einschließlich Gerätedose, sofern vorhanden."
+  },
+  {
+    "nummer": "3.40",
+    "bezeichnung": "FI/LS-Schalter 16 A",
+    "einheit": "Stk",
+    "preis": "68.00",
+    "art": "menge",
+    "kontierbar": true,
+    "langtext": "Fehlerstrom-/Leitungsschutzschalter 16 A, Auslösestrom 30 mA, eingebaut in vorhandene Verteilung, angeschlossen und beschriftet. Funktionsprüfung nach DIN VDE 0100-600 enthalten."
+  },
+  {
+    "nummer": "3.50",
+    "bezeichnung": "LED-Einbaustrahler",
+    "einheit": "Stk",
+    "preis": "34.00",
+    "art": "menge",
+    "kontierbar": true
+  },
+  {
+    "nummer": "4.10",
+    "bezeichnung": "Zählerschrank komplett",
+    "einheit": "Stk",
+    "preis": "1480.00",
+    "art": "menge",
+    "kontierbar": false,
+    "langtext": "Zählerschrank nach den Technischen Anschlussbedingungen des Netzbetreibers, mit Zählerfeld, Verteilerfeld und Raum für Kommunikationstechnik. Geliefert, gesetzt, verdrahtet und zur Abnahme durch den Netzbetreiber vorbereitet.",
+    "_kommentar": "Nicht kontierbar: Das entsteht nicht durch Arbeit, sondern durch eine Lieferantenrechnung - taucht in der Erfassungsmaske also gar nicht erst auf."
+  },
+  {
+    "nummer": "4.20",
+    "bezeichnung": "Wallbox 11 kW",
+    "einheit": "Stk",
+    "preis": "1240.00",
+    "art": "menge",
+    "kontierbar": false,
+    "langtext": "Ladeeinrichtung 11 kW mit integriertem Fehlerstromschutz Typ A und DC-Fehlerstromerkennung 6 mA, geliefert und montiert. Anmeldung beim Netzbetreiber nach § 19 NAV ist enthalten."
+  },
+  {
+    "nummer": "9.10",
+    "bezeichnung": "E-Check Wohneinheit",
+    "einheit": "pausch",
+    "preis": "145.00",
+    "art": "pauschale",
+    "kontierbar": true,
+    "langtext": "Prüfung der elektrischen Anlage einer Wohneinheit nach DIN VDE 0105-100 einschließlich Sichtprüfung, Messung von Isolationswiderstand, Schleifenimpedanz und Fehlerstromschutzeinrichtung.\nLieferung des Prüfprotokolls mit Mängelliste und Bewertung. Die Beseitigung festgestellter Mängel ist nicht enthalten."
+  },
+  {
+    "nummer": "9.20",
+    "bezeichnung": "Prüfung ortsveränderlicher Geräte",
+    "einheit": "Stk",
+    "preis": "9.50",
+    "art": "menge",
+    "kontierbar": true,
+    "langtext": "Wiederholungsprüfung nach DGUV Vorschrift 3 in Verbindung mit DIN VDE 0701-0702, einschließlich Prüfplakette und Eintrag ins Prüfbuch."
+  },
+  {
+    "nummer": "9.30",
+    "bezeichnung": "Rauchwarnmelder-Wartung",
+    "einheit": "Stk",
+    "preis": "12.00",
+    "art": "menge",
+    "kontierbar": true,
+    "langtext": "Jährliche Funktionsprüfung nach DIN 14676 mit Sicht- und Funktionskontrolle, Reinigung des Raucheintritts und Dokumentation je Gerät."
+  }
+]

@@ -1,0 +1,91 @@
+# Konfiguration für die Setup-Skripte in setup/: kopieren nach
+# <projektordner>/einstellungen/setup.conf und ausfüllen.
+# setup.conf enthält Secrets (Token, B2-Keys) und darf NICHT committet werden.
+
+# ── Paperless ────────────────────────────────────────────────────────────────
+# Der Container, durch den das Setup Paperless anspricht (docker exec, dann
+# http://localhost:8000 im Container). Der einzige Weg, der auch mit HTTPS
+# geht (compose.https.yml); dort hat Paperless keinen eigenen Port mehr.
+PAPERLESS_CONTAINER="kunde-xyz-paperless-1"
+# Nur noch Rückfallweg, wenn PAPERLESS_CONTAINER fehlt (ältere Installationen).
+PAPERLESS_URL="http://localhost:8005"
+# API-Token erzeugen (einmalig, auf dem Docker-Host, im Projektordner):
+#   docker compose exec paperless python3 manage.py drf_create_token <admin-user>
+PAPERLESS_TOKEN=""
+
+# ── Container-Namen ──────────────────────────────────────────────────────────
+# Docker Compose benennt Container als <projektname>-<service>-1, wobei der
+# Projektname PROJEKT aus instanz.conf ist (also z. B. "kunde-xyz-n8n-1"
+# für PROJEKT=kunde-xyz). Die tatsächlichen Namen ausgeben:
+#   ./paper-werk compose ps --format '{{.Name}}'
+N8N_CONTAINER="kunde-xyz-n8n-1"
+KOPIA_CONTAINER="kunde-xyz-kopia-1"
+APP_CONTAINER="kunde-xyz-paper-werk-app-1"
+
+# ── n8n ──────────────────────────────────────────────────────────────────────
+N8N_URL="http://localhost:5678"
+
+# ── paper-werk-app ───────────────────────────────────────────────────────────
+APP_URL="http://localhost:8000"
+
+# Der erste Benutzer. Django legt von sich aus keinen an; ohne diesen Schritt
+# steht nach "docker compose up" eine Anwendung, in die niemand hineinkommt.
+#
+# Wird NUR beim Anlegen benutzt. Ein zweiter Setup-Lauf lässt einen
+# vorhandenen Benutzer unangetastet und setzt insbesondere sein Passwort nicht
+# zurück, sonst wäre jede Wiederholung eine stille Rücksetzung des
+# Administratorkontos. Passwort später ändern:
+#   docker exec -it <APP_CONTAINER> uv run --no-dev python manage.py changepassword <user>
+APP_ADMIN_USER="admin"
+APP_ADMIN_PASSWORD=""
+APP_ADMIN_EMAIL="admin@example.invalid"
+
+# Dienstzugang für n8n, das Gegenstück zum PAPERLESS_TOKEN oben: ein Konto
+# ohne Passwort und ohne Admin-Zugang, das sich nur über seinen Schlüssel
+# ausweist. Das Setup gibt den Schlüssel aus; er gehört danach in die
+# n8n-Credential. Leer lassen überspringt den Schritt.
+APP_DIENSTZUGANG="n8n"
+
+# ── Kopia ────────────────────────────────────────────────────────────────────
+# Repository-Ziel: "disk" (lokales /repository-Volume, z. B. externe Platte)
+# oder "s3" (Cloud). Leer lassen = Skript fragt interaktiv.
+KOPIA_REPO_TYPE=""
+# /source/paper-werk, weil unter dieser Wurzel der GANZE Stack liegt, nicht nur
+# Paperless. Wer den Pfad falsch stehen lässt, bekommt keine Fehlermeldung von
+# der Policy, sondern einen Snapshot von nichts.
+KOPIA_SOURCE_PATH="/source/paper-werk"
+KOPIA_SNAPSHOT_TIME="23:00"
+
+# Nur bei KOPIA_REPO_TYPE="s3" nötig. Für Backblaze B2 den S3-kompatiblen
+# Endpunkt verwenden; Kopias eigener b2-Provider ist deprecated. Den Endpunkt
+# zeigt das B2-Dashboard beim Bucket an.
+# Diese vier Werte zusätzlich extern sichern, sie stehen sonst nirgends!
+# Siehe docs/kopia-backblaze.md.
+S3_BUCKET=""
+S3_ENDPOINT="s3.eu-central-003.backblazeb2.com"
+S3_ACCESS_KEY=""
+S3_SECRET_KEY=""
+
+# DREI DINGE, DIE MAN BEI BACKBLAZE B2 LEICHT VERGISST. Ablauf, Kosten und
+# Verifikation vollständig in ../../docs/object-lock.md:
+#  1. Object Lock BEIM ANLEGEN des Buckets aktivieren; nachträglich geht es
+#     nicht, das Bucket müsste sonst neu angelegt werden. Danach im Repository
+#     scharf schalten:
+#       kopia repository set-parameters --retention-mode=GOVERNANCE \
+#         --retention-period=7d
+#  2. Bucket -> Lifecycle Settings -> "Keep only the last version of the file".
+#     Default ist "Keep all versions": Backblaze behält dann jeden von Kopia
+#     gelöschten Blob als versteckte Version, für immer und voll berechnet.
+#  3. Application Key auf genau dieses eine Bucket beschränken, Capabilities nur
+#     listBuckets, listFiles, readFiles, writeFiles, deleteFiles,
+#     readFileRetentions, writeFileRetentions, also sieben, und den Key PER
+#     API anlegen. "Read and Write" im Web-UI vergibt 25 Capabilities inklusive
+#     bypassGovernance, und die hebelt Object Lock aus: ein Key damit darf trotz
+#     Sperre löschen. Der Key liegt im Klartext auf dem Docker-Host; ein
+#     unbeschränkter Key gibt damit das komplette Backblaze-Konto preis.
+
+# Nur für Altinstallationen mit KOPIA_REPO_TYPE="b2" (deprecated, Migration
+# siehe docs/kopia-backblaze.md, "Neuverbindung"):
+B2_BUCKET=""
+B2_KEY_ID=""
+B2_KEY=""

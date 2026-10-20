@@ -1,0 +1,15 @@
+[
+  {
+    "_kommentar": "Korrespondenten (Absender/Empfänger). Werden wie Tags über den Namen erkannt; vorhandene werden übersprungen, nie überschrieben. matching_algorithm: 0 = kein Abgleich, 1 = beliebiges Wort, 2 = alle Wörter, 3 = exakt, 4 = regulärer Ausdruck, 5 = unscharf, 6 = automatisch (Paperless lernt aus bereits zugewiesenen Dokumenten). Nur bei 1-5 muss 'match' gefüllt sein, bei 6 wird es ignoriert. KUNDENSPEZIFISCH: Diese beiden Einträge sind Platzhalter; vor der Installation durch die tatsächlichen Hauptkorrespondenten ersetzen. Der Rest entsteht ohnehin beim Einlesen von selbst.",
+    "name": "Muster GmbH",
+    "matching_algorithm": 6,
+    "is_insensitive": true
+  },
+  {
+    "_kommentar": "Beispiel mit explizitem Abgleich: greift, sobald das Wort 'finanzamt' irgendwo im Dokumenttext steht.",
+    "name": "Finanzamt",
+    "match": "finanzamt",
+    "matching_algorithm": 1,
+    "is_insensitive": true
+  }
+]

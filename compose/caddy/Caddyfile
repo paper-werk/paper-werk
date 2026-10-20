@@ -1,0 +1,37 @@
+# Der Eingang von paper-werk.
+#
+# Caddy tut hier genau eine Sache: Es liefert die Einstiegsseite aus. Es
+# vermittelt NICHT an die Komponenten weiter. Die bleiben auf ihren eigenen
+# Ports und damit auf ihrer eigenen Wurzel, so wie ihre Entwickler sie
+# ausliefern.
+#
+# Keine Unterpfade (/archiv/, /technik/), weil sie sich nicht einheitlich
+# betreiben lassen: Paperless will das Präfix durchgereicht bekommen, n8n
+# abgeschnitten, Kopia kann es gar nicht. Und n8n liefert in der falschen
+# Bauart auf jede Datei seine index.html aus, mit Status 200. Ein Stack, der
+# so gebaut ist, meldet sich in jeder Prüfung gesund und zeigt eine leere
+# Seite.
+#
+# Nach jeder Änderung an dieser Datei:
+#   docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
+# Ein "compose up" liest sie NICHT neu.
+
+:80 {
+	root * /srv
+
+	# templates setzt den Hostnamen des Aufrufers in die Seite ein. Damit
+	# funktionieren die Verweise auf die Komponenten unter jeder Adresse, unter
+	# der jemand den Stack erreicht (per Name, per IP, per localhost), ohne
+	# dass die Adresse irgendwo eingetragen werden muss. Und ohne JavaScript:
+	# ersetzt wird beim Ausliefern, nicht im Browser.
+	templates
+
+	file_server
+
+	# Nur http. HTTPS kommt über das Zusatzstück compose.https.yml, das an
+	# Stelle dieser Datei die Caddyfile.https einhängt.
+	log {
+		output stderr
+		format console
+	}
+}

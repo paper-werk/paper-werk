@@ -1,0 +1,53 @@
+[
+  {
+    "nummer": "K-1001",
+    "name": "Wohnbau Isartal eG",
+    "strasse": "Ludwigsplatz 9",
+    "plz": "84034",
+    "ort": "Landshut",
+    "zahlungsziel_tage": 21
+  },
+  {
+    "nummer": "K-1002",
+    "name": "Autohaus Brandmeier GmbH",
+    "strasse": "Am Nordring 3",
+    "plz": "84032",
+    "ort": "Landshut",
+    "zahlungsziel_tage": 14
+  },
+  {
+    "nummer": "K-1003",
+    "name": "Gemeinde Altdorf",
+    "strasse": "Rathausplatz 1",
+    "plz": "84032",
+    "ort": "Altdorf",
+    "zahlungsziel_tage": 30,
+    "kaeuferreferenz": "09274-1000-14",
+    "zustellweg": "xrechnung",
+    "_kommentar": "Der öffentliche Auftraggeber mit Leitweg-ID in der Käuferreferenz (BT-10) - er ist der Grund, warum dieses Programm überhaupt E-Rechnung kann. Er nimmt nur XRechnung an, über sein Rechnungsportal."
+  },
+  {
+    "nummer": "K-1004",
+    "name": "Familie Steinberger",
+    "strasse": "Am Sallerner Weg 8",
+    "plz": "84036",
+    "ort": "Landshut",
+    "zahlungsziel_tage": 14
+  },
+  {
+    "nummer": "K-1005",
+    "name": "Bäckerei Wimmer GmbH",
+    "strasse": "Altstadt 71",
+    "plz": "84028",
+    "ort": "Landshut",
+    "zahlungsziel_tage": 14
+  },
+  {
+    "nummer": "K-1006",
+    "name": "Schreinerei Gruber",
+    "strasse": "Industriestraße 22",
+    "plz": "84030",
+    "ort": "Ergolding",
+    "zahlungsziel_tage": 14
+  }
+]

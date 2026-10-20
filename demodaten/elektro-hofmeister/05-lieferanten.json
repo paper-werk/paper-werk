@@ -1,0 +1,14 @@
+[
+  {
+    "_kommentar": "Zugekauft wird Material, und nicht nur beim einen Großhändler. Ein Bestand mit einem einzigen Lieferanten legt den Gedanken nahe, das Ganze sei eine Schnittstelle zu genau diesem.\n\nACHTUNG beim Umbenennen: Diese Namen stehen zeichengenau auch in den Beispiel-XRechnungen (paper-werk-app/beispiele/e-rechnung/wittmann-880366-material.xml und ladetechnik-3402-wallbox.xml). Weicht ein Umlaut ab, legt das Einlesen einen ZWEITEN Lieferanten an, etwa \"Ladetechnik Süd GmbH\" neben \"Ladetechnik Sued GmbH\".",
+    "name": "Elektro-Großhandel Wittmann KG",
+    "eigene_kundennummer": "41-8802"
+  },
+  {
+    "name": "Ladetechnik Süd GmbH",
+    "eigene_kundennummer": "EH-1174"
+  },
+  {
+    "name": "Gerüstbau Zellner"
+  }
+]

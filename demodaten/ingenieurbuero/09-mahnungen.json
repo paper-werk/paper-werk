@@ -1,0 +1,8 @@
+[
+  {
+    "_kommentar": "Eine Zahlungserinnerung. Ohne sie zeigt die Startseite unter 'Gemahnt' eine Null, und die Kennzahl sieht aus, als könne sie nichts - sie kommt ausdrücklich nicht aus abgelaufenen Fristen, sondern aus tatsächlich erstellten Mahnungen.\n\nGEMAHNT WIRD BEWUSST DIE KLEINSTE PASSENDE RECHNUNG, nicht die größte. Der erste Anlauf des alten Bestands nahm die größte im Fenster: Auf der Startseite standen dann 101.846 EUR unter 'Gemahnt'. Das liest sich nicht als Beispiel, sondern als Betrieb in Schieflage - und lenkt das Gespräch auf eine Frage, um die es nicht geht.\n\nDeshalb steht hier ausdrücklich, welche Rechnung gemeint ist, statt einer Suchregel: Die Schlussrechnung von {vorjahr}-118 ist deutlich überfällig, aber nicht uralt. Das Vorhaben bleibt deshalb offen - abgeschlossen wird erst, wenn das Geld da ist.",
+    "zu_beleg": "Schlussrechnung {vorjahr}-118",
+    "stufe": 1,
+    "vor_tagen": 21
+  }
+]

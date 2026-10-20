@@ -1,0 +1,48 @@
+[
+  {
+    "_kommentar": "ERGÄNZUNG zum Basispaket, keine Kopie. Die Ansichten des Basispakets (Rechnungen, Wichtig und offen, Posteingang) hat jeder Betrieb. Regeltypen und Namensauflösung sind dort im Kommentar erklärt; apply.sh löst Tags, Dokumenttypen und Felder über paperless/resolve-saved-view.jq in die IDs der Zielinstanz auf, hier dürfen also Namen stehen.",
+    "name": "Prüfprotokolle",
+    "show_in_sidebar": true,
+    "sort_field": "created",
+    "sort_reverse": true,
+    "display_mode": "table",
+    "filter_rules": [
+      { "rule_type": 28, "value": "Prüfprotokoll" }
+    ]
+  },
+  {
+    "_kommentar": "Die Wiedervorlage des Betriebs. Zwei Regeln, UND-verknüpft: als prüfungsfällig markiert und noch nicht erledigt. Ein E-Check, der niemandem auffällt, ist ein verlorener Auftrag und im Schadensfall eine Haftungsfrage.",
+    "name": "Prüfungen fällig",
+    "show_in_sidebar": true,
+    "sort_field": "created",
+    "sort_reverse": false,
+    "display_mode": "table",
+    "filter_rules": [
+      { "rule_type": 6,  "value": "Prüfung fällig" },
+      { "rule_type": 17, "value": "erledigt" }
+    ]
+  },
+  {
+    "_kommentar": "Alles zum Einkauf an einer Stelle: Lieferantenrechnungen, Lieferscheine, Preislisten. Der Gegenblick zur Baustelle: Was ist hereingekommen, und steht es schon auf einer Kundenrechnung?",
+    "name": "Material und Lieferanten",
+    "show_in_sidebar": true,
+    "sort_field": "created",
+    "sort_reverse": true,
+    "display_mode": "smallCards",
+    "filter_rules": [
+      { "rule_type": 6, "value": "Material" }
+    ]
+  },
+  {
+    "_kommentar": "Was noch beim Netzbetreiber liegt. Ohne Inbetriebsetzung läuft keine Wallbox und keine PV-Anlage; der Schriftwechsel zieht sich über Wochen, und in der Zwischenzeit fragt der Kunde nach.",
+    "name": "Beim Netzbetreiber",
+    "show_in_sidebar": true,
+    "sort_field": "added",
+    "sort_reverse": true,
+    "display_mode": "table",
+    "filter_rules": [
+      { "rule_type": 6,  "value": "Netzbetreiber" },
+      { "rule_type": 17, "value": "erledigt" }
+    ]
+  }
+]

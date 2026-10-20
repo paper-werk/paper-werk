@@ -1,0 +1,548 @@
+{
+  "name": "Projektakte-Export (ZIP + CSV)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 📐 Projektakte-Export (Ingenieurbüro)\n\n**Zweck:** Auf Knopfdruck alle Dokumente eines **Projekts** als ZIP + CSV-Liste per Mail verschicken, für die Übergabe an den Auftraggeber oder das 10-Jahres-Archiv beim Projektabschluss. Wiederholbar: es wird kein Status-Tag gesetzt.\n\n**Grundlage:** Das Custom Field **Projektnummer**, das der Workflow `entity-extraction-mistral` beim Import automatisch befüllt (dort im `ENTITIES`-Objekt konfiguriert).\n\n**Aufruf:** `POST /webhook/projekt-export` mit Body:\n```\n{\"projekt\": \"P-2026-017\", \"empfaenger\": \"optional@mail.de\"}\n```\n- `projekt`: exakter Wert des Custom Fields Projektnummer\n- `empfaenger`: optional, überschreibt die konfigurierte Adresse\n\nBewusst ohne Jahresfilter, weil Projekte über Jahresgrenzen; exportiert wird immer die komplette Akte.\n\n**Antwort:** JSON mit Status (`gesendet`/`leer`), Anzahl und Empfänger.\n\n**Fehlerverhalten:** Fehlendes Custom Field „Projektnummer\" oder fehlender `projekt`-Parameter ⇒ Abbruch mit klarer Meldung. Downloads haben 120 s Timeout.\n\n⚠️ Mail-Anhänge über 15 bis 20 MB lehnen manche Mailserver ab; große Projektakten ggf. anders übergeben (USB/Cloud).",
+        "height": 700,
+        "width": 720
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        -880
+      ],
+      "id": "e8000008-0008-4000-8000-000000000099",
+      "name": "Doku"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "projekt-export",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e8000008-0008-4000-8000-000000000001",
+      "name": "Webhook",
+      "webhookId": "b8000008-0008-4000-8000-000000000001"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "pwSubEinstell01",
+          "mode": "list",
+          "cachedResultName": "sub-einstellungen"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "e8000008-0008-4000-8000-0000000000c1",
+      "name": "Einstellungen holen"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Die Instanzwerte kommen aus sub-einstellungen (Knoten davor) und werden\n// in der Data Table pw_config gepflegt (n8n-Oberfläche, \"Data Tables\").\n// HIER stehen nur die FACHLICHEN Einstellungen dieses Workflows: Fristen,\n// Tag-Namen, Feldnamen.\nconst werte = $('Einstellungen holen').first().json;\nconst pw = (key) => {\n  const v = werte[key];\n  if (v === undefined || String(v).trim() === '') {\n    throw new Error('pw_config: \"' + key + '\" fehlt oder ist leer; in der n8n-Oberfläche unter \"Data Tables\" eintragen.');\n  }\n  return v;\n};\n// Einstellungen + Webhook-Parameter zusammenführen und validieren.\nconst cfg = {\n  // ── aus der Data Table pw_config ──\n  paperless_url:    pw('paperless_url'),\n  absender:         pw('mail_absender'),\n  empfaenger_email: pw('mail_betrieb'),\n\n  // ── fachlich, hier zu pflegen ──\n  // feld_projekt: Name des Paperless-Custom-Fields mit der Projektnummer.\n  feld_projekt: 'Projektnummer'\n};\n\n// Der Aufrufparameter kommt aus dem Webhook, NICHT aus $input: dort liegen\n// seit der Umstellung auf pw_config die Zeilen der Data Table.\nconst body = $('Webhook').first().json.body ?? {};\nconst projekt = String(body.projekt ?? '').trim();\nif (!projekt) {\n  throw new Error('Kein \"projekt\" im Webhook-Body. Erwartet z. B. {\"projekt\": \"P-2026-017\"}');\n}\n\nconst empfaenger = String(body.empfaenger ?? '').trim() || cfg.empfaenger_email;\nif (empfaenger.indexOf('@') === -1) throw new Error('Ungültige Empfänger-Adresse: ' + empfaenger);\n\nconst projekt_slug = projekt.replace(/[^\\wäöüÄÖÜß.-]+/g, '_');\n\nreturn [{ json: Object.assign({}, cfg, { projekt, projekt_slug, empfaenger }) }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "e8000008-0008-4000-8000-000000000002",
+      "name": "Konfiguration"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.paperless_url }}/api/custom_fields/?page_size=100",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        624,
+        0
+      ],
+      "id": "e8000008-0008-4000-8000-000000000003",
+      "name": "Custom Fields laden",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prüfen, ob das Projektnummer-Feld existiert, und die Abfrage bauen.\nconst cfg = $('Konfiguration').first().json;\nconst fields = $json.results || [];\n\nconst feld = fields.find(f => String(f.name).toLowerCase() === cfg.feld_projekt.toLowerCase());\nif (!feld) {\n  throw new Error('Custom Field \"' + cfg.feld_projekt + '\" existiert nicht in Paperless; bitte anlegen (Typ Text). Befüllt wird es automatisch vom Workflow felder-erkennen-mistral.');\n}\n\nconst customFieldQuery = JSON.stringify([cfg.feld_projekt, 'exact', cfg.projekt]);\n\nreturn [{ json: Object.assign({}, cfg, { projekt_feld_id: feld.id, customFieldQuery }) }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        0
+      ],
+      "id": "e8000008-0008-4000-8000-000000000004",
+      "name": "Feld prüfen"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.paperless_url }}/api/documents/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "custom_field_query",
+              "value": "={{ $json.customFieldQuery }}"
+            },
+            {
+              "name": "page_size",
+              "value": "250"
+            },
+            {
+              "name": "ordering",
+              "value": "created"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "e8000008-0008-4000-8000-000000000005",
+      "name": "Dokumente laden",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-projekt-has-docs",
+              "leftValue": "={{ $json.count }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1248,
+        0
+      ],
+      "id": "e8000008-0008-4000-8000-000000000006",
+      "name": "Dokumente vorhanden?"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Feld prüfen').first().json.paperless_url }}/api/correspondents/?page_size=500",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1456,
+        -96
+      ],
+      "id": "e8000008-0008-4000-8000-000000000007",
+      "name": "Korrespondenten laden",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pro Dokument: Download-URL (Original bei PDF/TIF/TIFF, sonst Archiv-PDF),\n// eindeutigen ZIP-Dateinamen und Korrespondent-Namen für die CSV vorbereiten.\nconst cfg = $('Feld prüfen').first().json;\nconst docs = $('Dokumente laden').first().json.results || [];\nconst okExt = ['.pdf', '.tif', '.tiff'];\n\nconst korr = {};\n($input.first().json.results || []).forEach(k => { korr[k.id] = k.name; });\n\nreturn docs.map((d, i) => {\n  const orig = d.original_file_name || '';\n  const name = orig.toLowerCase();\n  const useOriginal = okExt.some(ext => name.endsWith(ext));\n\n  const dotPos = orig.lastIndexOf('.');\n  const ext = (useOriginal && dotPos > 0) ? orig.slice(dotPos).toLowerCase() : '.pdf';\n  let base = d.title || ('Dokument-' + d.id);\n  base = base.replace(/[\\\\/:*?\"<>|\\r\\n\\t]+/g, ' ').replace(/\\s+/g, ' ').trim().slice(0, 120);\n  if (!base) base = 'Dokument-' + d.id;\n\n  return { json: {\n    nr: i + 1,\n    id: d.id,\n    title: d.title || ('Dokument ' + d.id),\n    created: d.created,\n    korrespondent: d.correspondent ? (korr[d.correspondent] || '') : '',\n    original_file_name: orig || null,\n    zip_name: String(i + 1).padStart(3, '0') + '_' + base + ext,\n    download_url: cfg.paperless_url + '/api/documents/' + d.id + '/download/' + (useOriginal ? '?original=true' : '')\n  }};\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1664,
+        -96
+      ],
+      "id": "e8000008-0008-4000-8000-000000000008",
+      "name": "Dokumentliste aufbauen"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.download_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1872,
+        -96
+      ],
+      "id": "e8000008-0008-4000-8000-000000000009",
+      "name": "Belege herunterladen",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Dateiname aus der Dokumentliste auf den Download übernehmen.\nconst doc = $('Dokumentliste aufbauen').item.json;\nconst item = $input.item;\n\nif (!item.binary || !item.binary.data) {\n  throw new Error('Kein Binärinhalt für Dokument ' + doc.id + ': Download fehlgeschlagen?');\n}\n\nitem.binary.data.fileName = doc.zip_name;\nreturn item;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2080,
+        -96
+      ],
+      "id": "e8000008-0008-4000-8000-000000000010",
+      "name": "Dateinamen setzen"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Alle heruntergeladenen Dokumente in EIN Item bündeln, damit der\n// Compression-Node daraus ein einzelnes ZIP baut.\nconst items = $input.all();\nif (!items.length) throw new Error('Keine Dokumente zum Packen vorhanden.');\n\nconst binary = {};\nitems.forEach((item, i) => {\n  if (!item.binary || !item.binary.data) {\n    throw new Error('Dokument ohne Binärdaten an Position ' + (i + 1) + ': Download fehlgeschlagen?');\n  }\n  binary['file_' + String(i).padStart(3, '0')] = item.binary.data;\n});\n\nreturn [{ json: { anzahl: items.length }, binary }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2288,
+        -96
+      ],
+      "id": "e8000008-0008-4000-8000-000000000011",
+      "name": "Dokumente bündeln"
+    },
+    {
+      "parameters": {
+        "operation": "compress",
+        "binaryPropertyName": "={{ Object.keys($binary).join(',') }}",
+        "outputFormat": "zip",
+        "fileName": "=Projektakte-{{ $('Feld prüfen').first().json.projekt_slug }}.zip",
+        "binaryPropertyOutput": "zip"
+      },
+      "type": "n8n-nodes-base.compression",
+      "typeVersion": 1.1,
+      "position": [
+        2496,
+        -96
+      ],
+      "id": "e8000008-0008-4000-8000-000000000012",
+      "name": "ZIP erstellen"
+    },
+    {
+      "parameters": {
+        "jsCode": "// CSV-Dokumentliste erzeugen und als zweiten Anhang an das Item hängen.\n// Semikolon-getrennt + BOM, damit deutsches Excel sie direkt sauber öffnet.\nconst cfg = $('Feld prüfen').first().json;\nconst docs = $('Dokumentliste aufbauen').all().map(i => i.json);\n\nconst esc = (v) => '\"' + String(v ?? '').replace(/\"/g, '\"\"') + '\"';\nconst header = ['Nr', 'Paperless-ID', 'Titel', 'Datum', 'Korrespondent', 'Original-Dateiname', 'Datei im ZIP'].join(';');\nconst lines = docs.map(d => [\n  d.nr,\n  d.id,\n  esc(d.title),\n  d.created ? String(d.created).slice(0, 10) : '',\n  esc(d.korrespondent),\n  esc(d.original_file_name || ''),\n  esc(d.zip_name)\n].join(';'));\nconst csv = '\\ufeff' + header + '\\n' + lines.join('\\n') + '\\n';\n\nconst item = $input.first();\nitem.binary = item.binary || {};\nitem.binary.csv = await this.helpers.prepareBinaryData(\n  Buffer.from(csv, 'utf8'),\n  'Dokumentliste-' + cfg.projekt_slug + '.csv',\n  'text/csv'\n);\nitem.json.anzahl = docs.length;\nreturn item;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2704,
+        -96
+      ],
+      "id": "e8000008-0008-4000-8000-000000000013",
+      "name": "CSV-Liste anhängen"
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $('Feld prüfen').first().json.absender }}",
+        "toEmail": "={{ $('Feld prüfen').first().json.empfaenger }}",
+        "subject": "=Projektakte {{ $('Feld prüfen').first().json.projekt }}: {{ $json.anzahl }} Dokument(e)",
+        "emailFormat": "text",
+        "text": "=Guten Tag,\n\nanbei die vollständige Projektakte {{ $('Feld prüfen').first().json.projekt }}:\n- ZIP mit {{ $json.anzahl }} Dokument(en)\n- CSV-Dokumentliste (Übersicht, mit Excel zu öffnen)\n\nDiese Mail wurde automatisch aus Paperless erzeugt (Paper-Werk).",
+        "options": {
+          "appendAttribution": false,
+          "attachments": "zip,csv"
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2912,
+        -96
+      ],
+      "id": "e8000008-0008-4000-8000-000000000014",
+      "name": "Projektakte senden",
+      "credentials": {
+        "smtp": {
+          "id": "Xg7X6xVdrbSzUQ4o",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'gesendet', projekt: $('Feld prüfen').first().json.projekt, anzahl: $json.anzahl, empfaenger: $('Feld prüfen').first().json.empfaenger }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        3120,
+        -96
+      ],
+      "id": "e8000008-0008-4000-8000-000000000015",
+      "name": "Antwort: gesendet"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'leer', projekt: $('Feld prüfen').first().json.projekt, hinweis: 'Keine Dokumente mit dieser Projektnummer gefunden.' }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1456,
+        96
+      ],
+      "id": "e8000008-0008-4000-8000-000000000016",
+      "name": "Antwort: leer"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Einstellungen holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Konfiguration": {
+      "main": [
+        [
+          {
+            "node": "Custom Fields laden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Custom Fields laden": {
+      "main": [
+        [
+          {
+            "node": "Feld prüfen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Feld prüfen": {
+      "main": [
+        [
+          {
+            "node": "Dokumente laden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dokumente laden": {
+      "main": [
+        [
+          {
+            "node": "Dokumente vorhanden?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dokumente vorhanden?": {
+      "main": [
+        [
+          {
+            "node": "Korrespondenten laden",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Antwort: leer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Korrespondenten laden": {
+      "main": [
+        [
+          {
+            "node": "Dokumentliste aufbauen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dokumentliste aufbauen": {
+      "main": [
+        [
+          {
+            "node": "Belege herunterladen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Belege herunterladen": {
+      "main": [
+        [
+          {
+            "node": "Dateinamen setzen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dateinamen setzen": {
+      "main": [
+        [
+          {
+            "node": "Dokumente bündeln",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dokumente bündeln": {
+      "main": [
+        [
+          {
+            "node": "ZIP erstellen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ZIP erstellen": {
+      "main": [
+        [
+          {
+            "node": "CSV-Liste anhängen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CSV-Liste anhängen": {
+      "main": [
+        [
+          {
+            "node": "Projektakte senden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Projektakte senden": {
+      "main": [
+        [
+          {
+            "node": "Antwort: gesendet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Einstellungen holen": {
+      "main": [
+        [
+          {
+            "node": "Konfiguration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "tags": [
+    {
+      "id": "Qr4w77Oluq8Hi4TJ",
+      "name": "paperless"
+    }
+  ],
+  "id": "IfeP0gnIT5yo3bIY"
+}

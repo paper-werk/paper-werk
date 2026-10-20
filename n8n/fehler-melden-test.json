@@ -1,0 +1,75 @@
+{
+  "name": "fehler-melden-test",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## fehler-melden-test: Pruefwerkzeug, kein Betriebsteil\n\nWirft absichtlich einen Fehler, um die Strecke zu fehler-melden einmal\nkomplett zu pruefen: Trigger -> Drosselung -> SMTP -> Postfach.\n\nDer Test ist noetig, weil ein Scheitern von fehler-melden selbst (etwa\neine fehlende oder falsche SMTP-Credential) von n8n KOMMENTARLOS\nverschluckt wird. Kein Logeintrag, keine Mail, nichts. Ohne diesen Test\nmerkt man das erst, wenn die erste echte Stoerung nicht gemeldet wird.\n\nSO TESTEN:\n  1. fehler-melden aktivieren (muss aktiv sein, sonst passiert nichts)\n  2. diesen Workflow aktivieren\n  3. aufrufen:  curl http://localhost:5678/webhook/fehler-melden-test\n  4. Mail sollte innerhalb weniger Sekunden ankommen\n  5. beide Workflows danach wieder deaktivieren\n\nWICHTIG: Nur der Produktions-Webhook loest den Error Workflow aus.\nEin \"Test workflow\" im Editor tut es NICHT.\n\nDROSSELUNG MITTESTEN: Ruft man die URL mehrfach auf, kommt nur beim\n1., 10., 100. Aufruf eine Mail; alle Aufrufe erzeugen dieselbe\nSignatur. Genau so soll sich ein Massenimport bei ausgefallener\nCloud-API verhalten.",
+        "height": 560,
+        "width": 480
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -600,
+        -260
+      ],
+      "id": "e2000000-0000-4000-8000-000000000001",
+      "name": "Doku"
+    },
+    {
+      "parameters": {
+        "path": "fehler-melden-test",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -40,
+        0
+      ],
+      "id": "e2000000-0000-4000-8000-000000000002",
+      "name": "Webhook",
+      "webhookId": "e2000000-0000-4000-8000-0000000000ff"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Absichtlicher Fehler. Der Text taucht in der Fehlermail als\n// \"Meldung\" auf; daran erkennt man, dass es der Test war.\nthrow new Error('Testfehler aus fehler-melden-test, keine echte Stoerung');"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "id": "e2000000-0000-4000-8000-000000000003",
+      "name": "Fehler werfen"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Fehler werfen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Berlin",
+    "errorWorkflow": "pwFehlerMelden01"
+  },
+  "id": "pwFehlerMeldTest",
+  "tags": [
+    {
+      "id": "Qr4w77Oluq8Hi4TJ",
+      "name": "paperless"
+    }
+  ]
+}

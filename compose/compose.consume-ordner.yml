@@ -1,0 +1,16 @@
+# Scanner-Ablage als Ordner auf dem Host statt als Volume, etwa für eine
+# SMB-Freigabe. Dazugenommen von stack.sh, wenn .env PAPER_WERK_CONSUME_ORDNER
+# setzt. Compose ersetzt Einträge mit gleichem Zielpfad; Paperless und die
+# Kopia-Quelle sehen also den Ordner statt des Volumes consume.
+#
+# Unter Docker Desktop (Windows, Mac) kommen Dateiereignisse vom Host nicht in
+# der VM an: in .env.paperless PAPERLESS_CONSUMER_POLLING_INTERVAL=10 setzen.
+
+services:
+  paperless:
+    volumes:
+      - ${PAPER_WERK_CONSUME_ORDNER}:/usr/src/paperless/consume
+  kopia:
+    volumes:
+      - ${PAPER_WERK_CONSUME_ORDNER}:/source/paper-werk/consume:ro
+      - ${PAPER_WERK_CONSUME_ORDNER}:/restore/paper-werk/consume

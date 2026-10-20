@@ -1,0 +1,69 @@
+# Zeilenenden. Falsche Zeilenenden verhindern den Betrieb.
+#
+# Hat ein Shell-Skript im Arbeitsbaum CRLF, bricht es unter Git Bash in der
+# zweiten Zeile ab:
+#
+#     setup.sh: line 14: $'\r': command not found
+#     : invalid option name: set: pipefail
+#
+# bash liest das \r als Teil des Befehls. Ein Shebang mit \r macht das
+# Skript sogar ganz unausführbar.
+#
+# Mit core.autocrlf=input normalisiert Git beim Vergleich, `git status`
+# meldet einen Editor, der die Arbeitskopie auf CRLF umstellt, also nicht. Ein Fehler, der weder im Repo noch im Status
+# sichtbar ist und trotzdem jeden Aufruf killt, gehört abgestellt statt
+# gefunden.
+#
+# **Warum diese Datei und nicht core.autocrlf.** Die Git-Einstellung gilt
+# für einen Rechner und einen Benutzer. Diese Datei liegt im Repo und
+# reist mit: Sie gilt für den Windows-Rechner hier, für den Linux-Server
+# beim Kunden und für jeden weiteren Klon, ohne dass jemand etwas
+# einstellt. Das ist die einzige Stelle, an der die Regel stehen kann,
+# wenn "auf Linux muss es ansatzlos klappen" gelten soll.
+
+# ── Erst die Grundregel ─────────────────────────────────────────────────────
+# **Die Reihenfolge ist nicht beliebig.** Git wertet von oben nach unten
+# aus, die LETZTE passende Zeile gewinnt je Attribut. Stünde `* text=auto`
+# unten, überschriebe es das `text` der Zeilen darüber; `git check-attr`
+# meldete dann "text: auto" statt "text: set". Es ginge zufällig trotzdem
+# gut, weil `eol=lf` erhalten bliebe; verlassen sollte man sich darauf
+# nicht.
+#
+# text=auto heißt: Git erkennt selbst, was Text ist, speichert intern mit
+# LF und checkt nach Plattformkonvention aus. Für alles, was nur ein
+# Mensch liest, ist das richtig.
+* text=auto
+
+# ── Dann, was auf LF angewiesen ist ─────────────────────────────────────────
+# Ausführbares bleibt LF, immer, auf jedem System.
+*.sh    text eol=lf
+*.bash  text eol=lf
+
+# Was in einem Container oder von einem Container gelesen wird, ebenso.
+# Ein Dockerfile mit CRLF baut auf Linux Zeilen mit unsichtbarem Anhang;
+# eine .env liefert Werte, die auf \r enden, und die Fehlermeldung nennt
+# dann eine Adresse, die richtig aussieht.
+Dockerfile*     text eol=lf
+*.env           text eol=lf
+.env.*          text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+
+# Die Workflow-Manifeste liest apply.sh zeilenweise ein; ein \r landete
+# sonst im Dateinamen und der Import fände die Datei nicht.
+*.list          text eol=lf
+*.list.example  text eol=lf
+
+# ── Und was Git gar nicht anfassen darf ─────────────────────────────────────
+# Binärdateien: Ohne das versucht text=auto seine Erkennung, und bei einem
+# unglücklichen Byte-Muster wird eine PDF-Datei "normalisiert", also
+# zerstört.
+*.pdf   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.ico   binary
+*.zip   binary
+*.gz    binary
+*.woff  binary
+*.woff2 binary

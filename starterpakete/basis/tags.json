@@ -1,0 +1,86 @@
+[
+  {
+    "name": "neu",
+    "color": "#c1121f",
+    "is_inbox_tag": true
+  },
+  {
+    "name": "Steuer",
+    "color": "#3a86ff"
+  },
+  {
+    "name": "geschäftlich",
+    "color": "#588157"
+  },
+  {
+    "name": "privat",
+    "color": "#bc6c25"
+  },
+  {
+    "name": "wichtig",
+    "color": "#ffb703"
+  },
+  {
+    "name": "erledigt",
+    "color": "#8d99ae"
+  },
+  {
+    "_kommentar": "angebots-nachfass: tag_angebot (Pflicht, so lange dran = im Wochen-Digest); gewonnen/verloren optional laut Workflow-Doku.",
+    "name": "angebot-offen",
+    "color": "#e07a5f"
+  },
+  {
+    "name": "angebot-gewonnen",
+    "color": "#2a9d8f"
+  },
+  {
+    "name": "angebot-verloren",
+    "color": "#6c757d"
+  },
+  {
+    "_kommentar": "Fachliche Bedingung, kein Kommando: markiert, was überhaupt zum Steuerberater gehört. Wird von den Belegexporten als Filter gelesen und bleibt dauerhaft am Dokument.",
+    "name": "buchungsrelevant",
+    "color": "#3a86ff"
+  },
+  {
+    "_kommentar": "ERGEBNIS (Partizip): bleibt dauerhaft am Dokument und verhindert einen zweiten Versand für immer. Anders als bei Titel und OCR ist Wiederholen hier NICHT erwünscht; ein Beleg darf nicht zweimal beim Steuerberater landen. Ersetzt 'duo-gesendet' und 'stb-gesendet'.",
+    "name": "Steuer-gesendet",
+    "color": "#adb5bd"
+  },
+  {
+    "_kommentar": "KOMMANDO (Verb, imperativ): Der Mensch setzt ihn und meint 'an den Steuerberater'. Bewusst KANALNEUTRAL: Ob der Weg DATEV Unternehmen online, sevDesk oder eine ZIP-Mail an die Kanzlei ist, steht in pw_config und geht den Nutzer nichts an. Ersetzt das frühere 'duo-senden'. Wird vom n8n-Workflow entfernt, nicht von Paperless.",
+    "name": "Steuer-senden",
+    "color": "#f4a261"
+  },
+  {
+    "_kommentar": "GLOBALER Sperr- und Statustag, gehört keinem einzelnen Workflow. Solange er an einem Dokument hängt, ruht dort JEDE n8n-Verarbeitung ('ein Dokument, eine Verarbeitung'). Er hat zwei Aufgaben: er verhindert die Endlosschleife (der Workflow schreibt ins Dokument zurück, das ruft ihn erneut auf, und dann sieht er sich selbst arbeiten), und er sagt dem Menschen in der Oberfläche, dass gerade etwas läuft. Bricht ein Lauf ab, bleibt der Tag ABSICHTLICH hängen: ihn zu entfernen wäre wieder eine Dokumentänderung und würde eine Endlos-Wiederholung starten. paperless-health-check meldet, was länger als zwei Stunden so steht.",
+    "name": "wird bearbeitet",
+    "color": "#f77f00"
+  },
+  {
+    "_kommentar": "KOMMANDO für handschrift-ocr-titel-mistral. Kommandos sind Verben und sagen dem Nutzer, was passiert. --- ACHTUNG, DIESER NAME IST ZUGLEICH EIN ORDNERNAME: PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS=true vergibt Tags nach dem Unterordner im consume-Verzeichnis. Der Scanner schreibt Handschrift-Scans nach consume/handschrift-scannen/, und daraus entsteht dieser Tag. Wer ihn umbenennt, muss den Ordner mitbenennen und umgekehrt, sonst legt Paperless beim nächsten Scan still einen zweiten Tag an, und der Ablauf feuert nicht mehr. --- Wird vom n8n-Workflow entfernt, nicht von Paperless, zusammen mit 'wird bearbeitet' in einem einzigen Aufruf, damit der Zustand danach keinen von beiden trägt und der Auslöser nicht erneut greift.",
+    "name": "handschrift-scannen",
+    "color": "#9d4edd"
+  },
+  {
+    "_kommentar": "KOMMANDO für vertragsdaten-erkennen-mistral. Der Name sagt, was passiert. Auslöser ist ausschließlich 'Dokument geändert' mit diesem Tag: bewusst tag-gegatet und NICHT an den Dokumenttyp 'Vertrag' gehängt, denn jeder Lauf schickt OCR-Text in die Mistral-Cloud (Kosten + DSGVO); das soll eine bewusste Handlung bleiben.",
+    "name": "vertrag-erkennen",
+    "color": "#457b9d"
+  },
+  {
+    "_kommentar": "KOMMANDO für titel-erzeugen-mistral. Bewusst tag-gegatet statt für jedes Dokument (Mistral-Cloud-Kosten + DSGVO). --- AUSNAHME: Dokumente, die direkt im consume-Wurzelverzeichnis landen und 'scan*' heißen, kommen vom Scanner und tragen einen nichtssagenden Namen wie scan_00378.pdf. Für die löst der Ablauf 'Titel erzeugen (Mistral)' auch ohne diesen Tag aus; er wird dort nie gesetzt, und die Entfernungs-Aktion läuft ins Leere. Der Tag bleibt für den Fall 'ein Mensch will einen besseren Titel'.",
+    "name": "titel-verbessern",
+    "color": "#e9c46a"
+  },
+  {
+    "name": "entities-extrahieren",
+    "color": "#e9c46a"
+  },
+  {
+    "_kommentar": "Setzen, damit Mistral Betraege, Nummer, Datum und Projektnummer aus der Rechnung liest. Verschwindet von allein, sobald die Erkennung durch ist.",
+    "name": "rechnung-erkennen",
+    "color": "#c98a2b",
+    "is_inbox_tag": false,
+    "matching_algorithm": 0
+  }
+]

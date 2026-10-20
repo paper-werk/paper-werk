@@ -1,0 +1,341 @@
+{
+  "name": "kuendigungsfristen-melden",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## ⏰ Kündigungsfristen melden (Wochen-Digest)\n\n**Zweck:** Erinnert per HTML-Mail an Verträge, deren spätester Kündigungstermin (Custom Field **Kündigen bis**) innerhalb des Vorlaufs liegt oder schon überschritten ist. Die Daten schreibt der Schwester-Workflow `vertrag-extraktion` in die Custom Fields.\n\n**Trigger:** Schedule montags 8 Uhr, zusätzlich manuell startbar.\n\n**Logik:** Wochen-Digest ohne Status-Tags: Ein Vertrag erscheint jede Woche wieder, bis er bearbeitet ist (gekündigt/verlängert und Feld „Kündigen bis\" geleert bzw. aktualisiert). Überfällige Termine werden markiert.\n\n**Adressen und URLs** stehen in der Data Table `pw_config` (n8n-Oberfläche → Data Tables). Im Node „Konfiguration\" steht nur Fachliches.\n\n**Im Node „Konfiguration\" anpassen:**\n- `vorlauf_tage`: wie weit vorausgeschaut wird (Standard 90)\n- die drei Custom-Field-Namen, falls sie in Paperless anders heißen\n\nWer die Erinnerung bekommt, steht als `mail_betrieb` in `pw_config`.\n\n**⚠️ Zwei URLs, zwei Zwecke**, beide in `pw_config`:\n- `paperless_url` (`http://paperless:8000`): interner Docker-Servicename, NUR für die API-Aufrufe von n8n aus\n- `paperless_url_oeffentlich`: Adresse, unter der Paperless im Browser/Mail-Client erreichbar ist, NUR für die Links in der Mail\n\nWerden beide vertauscht oder gleichgesetzt, sind entweder die API-Aufrufe kaputt oder die Links in der Mail führen ins Leere.\n\n**Fehlerverhalten:** Fehlt das Custom Field „Kündigen bis\" in Paperless, bricht der Workflow mit klarer Meldung ab. Ohne fällige Verträge wird keine Mail verschickt.",
+        "height": 560,
+        "width": 700
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        -672
+      ],
+      "id": "e2000002-0002-4000-8000-000000000099",
+      "name": "Doku"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        160
+      ],
+      "id": "e2000002-0002-4000-8000-000000000001",
+      "name": "Schedule Mo 8 Uhr"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e2000002-0002-4000-8000-000000000002",
+      "name": "Manuell starten"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "pwSubEinstell01",
+          "mode": "list",
+          "cachedResultName": "sub-einstellungen"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        208,
+        80
+      ],
+      "id": "e2000002-0002-4000-8000-0000000000c1",
+      "name": "Einstellungen holen"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Die Instanzwerte kommen aus sub-einstellungen (Knoten davor) und werden\n// in der Data Table pw_config gepflegt (n8n-Oberfläche, \"Data Tables\").\n// HIER stehen nur die FACHLICHEN Einstellungen dieses Workflows: Fristen,\n// Tag-Namen, Feldnamen.\nconst werte = $('Einstellungen holen').first().json;\nconst pw = (key) => {\n  const v = werte[key];\n  if (v === undefined || String(v).trim() === '') {\n    throw new Error('pw_config: \"' + key + '\" fehlt oder ist leer; in der n8n-Oberfläche unter \"Data Tables\" eintragen.');\n  }\n  return v;\n};\nreturn [{\n  json: {\n    // ── aus der Data Table pw_config ──\n    paperless_url:             pw('paperless_url'),\n    paperless_url_oeffentlich: pw('paperless_url_oeffentlich'),\n    empfaenger_email:          pw('mail_betrieb'),\n    absender:                  pw('mail_absender'),\n\n    // ── fachlich, hier zu pflegen ──\n    // vorlauf_tage: wie viele Tage im Voraus gewarnt wird.\n    // Die Feldnamen müssen zu den Custom Fields passen, die\n    // vertragsdaten-erkennen-mistral befüllt.\n    vorlauf_tage: 90,\n    feld_kuendigen_bis: 'Kündigen bis',\n    feld_vertragsende: 'Vertragsende',\n    feld_frist: 'Kündigungsfrist'\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        80
+      ],
+      "id": "e2000002-0002-4000-8000-000000000003",
+      "name": "Konfiguration"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.paperless_url }}/api/custom_fields/?page_size=100",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        624,
+        80
+      ],
+      "id": "e2000002-0002-4000-8000-000000000004",
+      "name": "Custom Fields laden",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Feld-IDs auflösen und die Abfrage vorbereiten.\n// \"Kündigen bis\" ist Pflicht (Abfragefeld); Vertragsende/Kündigungsfrist\n// sind nur Anzeige und dürfen fehlen (dann steht '-' in der Mail).\nconst cfg = $('Konfiguration').first().json;\nconst fields = $json.results || [];\nconst find = (name) => fields.find(f => String(f.name).toLowerCase() === name.toLowerCase());\n\nconst kb = find(cfg.feld_kuendigen_bis);\nif (!kb) {\n  throw new Error('Custom Field \"' + cfg.feld_kuendigen_bis + '\" existiert nicht in Paperless; bitte anlegen (Typ Datum) oder Konfiguration anpassen. Ohne dieses Feld kann nichts abgefragt werden.');\n}\nconst ve = find(cfg.feld_vertragsende);\nconst fr = find(cfg.feld_frist);\n\n// Stichtag: heute + Vorlauf. lte deckt auch überfällige Termine ab.\nconst limitDate = new Date(Date.now() + cfg.vorlauf_tage * 86400000).toISOString().slice(0, 10);\nconst customFieldQuery = JSON.stringify([cfg.feld_kuendigen_bis, 'lte', limitDate]);\n\nreturn [{ json: Object.assign({}, cfg, {\n  kuendigen_bis_id: kb.id,\n  vertragsende_id: ve ? ve.id : null,\n  frist_id: fr ? fr.id : null,\n  limitDate,\n  customFieldQuery\n}) }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        80
+      ],
+      "id": "e2000002-0002-4000-8000-000000000005",
+      "name": "Felder prüfen"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.paperless_url }}/api/documents/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "custom_field_query",
+              "value": "={{ $json.customFieldQuery }}"
+            },
+            {
+              "name": "page_size",
+              "value": "250"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1040,
+        80
+      ],
+      "id": "e2000002-0002-4000-8000-000000000006",
+      "name": "Verträge laden",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-kuend-has-docs",
+              "leftValue": "={{ $json.count }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1248,
+        80
+      ],
+      "id": "e2000002-0002-4000-8000-000000000007",
+      "name": "Verträge fällig?"
+    },
+    {
+      "parameters": {
+        "jsCode": "// HTML-Mail mit allen fälligen Verträgen aufbauen, sortiert nach\n// Kündigungstermin (dringendste zuerst), Überfälliges rot markiert.\nconst cfg = $('Felder prüfen').first().json;\nconst docs = $json.results || [];\nconst todayIso = new Date().toISOString().slice(0, 10);\nconst today = new Date().toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin' });\n\nconst val = (doc, fieldId) => {\n  if (fieldId === null) return null;\n  const cf = (doc.custom_fields || []).find(f => f.field === fieldId);\n  return cf && cf.value ? cf.value : null;\n};\nconst fmt = (iso) => iso ? new Date(iso).toLocaleDateString('de-DE') : '-';\n\nconst list = docs.map(doc => ({\n  doc,\n  kuendigenBis: val(doc, cfg.kuendigen_bis_id),\n  vertragsende: val(doc, cfg.vertragsende_id),\n  frist: val(doc, cfg.frist_id),\n})).sort((a, b) => String(a.kuendigenBis || '').localeCompare(String(b.kuendigenBis || '')));\n\nconst rows = list.map(e => {\n  const docUrl = cfg.paperless_url_oeffentlich + '/documents/' + e.doc.id + '/detail';\n  const ueberfaellig = e.kuendigenBis && e.kuendigenBis < todayIso;\n  return '<tr>'\n    + '<td style=\"padding:6px 12px;border:1px solid #ddd;\"><a href=\"' + docUrl + '\" style=\"color:#1a73e8;\">' + (e.doc.title || '(kein Titel)') + '</a></td>'\n    + '<td style=\"padding:6px 12px;border:1px solid #ddd;\">' + fmt(e.vertragsende) + '</td>'\n    + '<td style=\"padding:6px 12px;border:1px solid #ddd;\">' + (e.frist || '-') + '</td>'\n    + '<td style=\"padding:6px 12px;border:1px solid #ddd;color:#c0392b;font-weight:bold;\">' + fmt(e.kuendigenBis) + (ueberfaellig ? ' &#9888;&#65039; &#252;berf&#228;llig' : '') + '</td>'\n    + '</tr>';\n}).join('\\n');\n\nconst anzahl = docs.length + (docs.length === 1 ? ' Vertrag' : ' Vertr\\u00e4ge');\n\nconst html = '<div style=\"font-family:Arial,sans-serif;max-width:750px;\">'\n  + '<h2 style=\"color:#2c3e50;border-bottom:2px solid #2c3e50;padding-bottom:8px;\">K&#252;ndigungsfristen &#8211; jetzt handeln</h2>'\n  + '<p>F&#252;r <strong>' + anzahl + '</strong> l&#228;uft die K&#252;ndigungsfrist innerhalb der n&#228;chsten ' + cfg.vorlauf_tage + ' Tage ab (oder ist bereits &#252;berschritten):</p>'\n  + '<table cellpadding=\"0\" cellspacing=\"0\" style=\"border-collapse:collapse;font-size:14px;width:100%;margin:16px 0;\">'\n  + '<thead><tr style=\"background:#2c3e50;color:#fff;\">'\n  + '<th style=\"padding:10px 12px;text-align:left;\">Vertrag</th>'\n  + '<th style=\"padding:10px 12px;text-align:left;\">Vertragsende</th>'\n  + '<th style=\"padding:10px 12px;text-align:left;\">K&#252;ndigungsfrist</th>'\n  + '<th style=\"padding:10px 12px;text-align:left;\">K&#252;ndigen bis</th>'\n  + '</tr></thead>'\n  + '<tbody>' + rows + '</tbody></table>'\n  + '<p style=\"font-size:13px;color:#555;\">Nach K&#252;ndigung oder Verl&#228;ngerung bitte das Feld &#8222;K&#252;ndigen bis&#8220; im Dokument aktualisieren oder leeren &#8212; sonst erscheint der Vertrag n&#228;chste Woche wieder.</p>'\n  + '<p><a href=' + cfg.paperless_url_oeffentlich + ' style=\"background:#2c3e50;color:#fff;padding:8px 16px;text-decoration:none;border-radius:4px;display:inline-block;\">&#8594; Paperless-NGX &#246;ffnen</a></p>'\n  + '<p style=\"color:#95a5a6;font-size:12px;margin-top:32px;border-top:1px solid #eee;padding-top:12px;\">Automatisch generiert am ' + today + ' &#183; <a href=\"https://github.com/paper-werk\">Paper-Werk</a></p>'\n  + '</div>';\n\nreturn [{ json: {\n  html,\n  toEmail: cfg.empfaenger_email,\n  fromEmail: cfg.absender,\n  subject: 'K\\u00fcndigungsfristen: ' + anzahl + ' zu pr\\u00fcfen'\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1456,
+        -16
+      ],
+      "id": "e2000002-0002-4000-8000-000000000008",
+      "name": "E-Mail aufbauen"
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $json.fromEmail }}",
+        "toEmail": "={{ $json.toEmail }}",
+        "subject": "={{ $json.subject }}",
+        "html": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1664,
+        -16
+      ],
+      "id": "e2000002-0002-4000-8000-000000000009",
+      "name": "E-Mail senden",
+      "credentials": {
+        "smtp": {
+          "id": "Xg7X6xVdrbSzUQ4o",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Mo 8 Uhr": {
+      "main": [
+        [
+          {
+            "node": "Einstellungen holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manuell starten": {
+      "main": [
+        [
+          {
+            "node": "Einstellungen holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Konfiguration": {
+      "main": [
+        [
+          {
+            "node": "Custom Fields laden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Custom Fields laden": {
+      "main": [
+        [
+          {
+            "node": "Felder prüfen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Felder prüfen": {
+      "main": [
+        [
+          {
+            "node": "Verträge laden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verträge laden": {
+      "main": [
+        [
+          {
+            "node": "Verträge fällig?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verträge fällig?": {
+      "main": [
+        [
+          {
+            "node": "E-Mail aufbauen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "E-Mail aufbauen": {
+      "main": [
+        [
+          {
+            "node": "E-Mail senden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Einstellungen holen": {
+      "main": [
+        [
+          {
+            "node": "Konfiguration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "errorWorkflow": "pwFehlerMelden01"
+  },
+  "tags": [
+    {
+      "id": "Qr4w77Oluq8Hi4TJ",
+      "name": "paperless"
+    }
+  ],
+  "id": "OOrhVhz48hI1EA4w"
+}

@@ -1,0 +1,77 @@
+# Zusatzstück: paper-werk mit HTTPS.
+#
+# Wird ZUSÄTZLICH zur Vorlage angegeben, die Reihenfolge zählt:
+#
+#   docker compose -f docker-compose.yml -f compose.https.yml up -d
+#
+# Warum ein Zusatzstück und nicht die Vorlage selbst: Bestehende
+# Installationen laufen ohne Namen und Zertifikat im LAN, und das sollen sie
+# unverändert weiter tun dürfen. Wer HTTPS will, nimmt diese Datei dazu und
+# setzt zwei Werte in .env; sonst ändert sich nichts.
+#
+# Warum überhaupt: Die Anmeldung über Microsoft (Entra ID) nimmt
+# Rückleitadressen mit http:// nur für localhost an. Jede echte
+# Installation braucht dafür einen Namen und HTTPS. Und die Warnungen im
+# Browser verschwinden.
+#
+# In .env:
+#
+#   PAPER_WERK_HOSTNAME=paper-werk.kunde.de   der Name, unter dem der Server im
+#                                         Netz des Kunden erreichbar ist
+#                                         (DNS-Eintrag macht der Kunde)
+#   PAPER_WERK_TLS_MODE=intern | datei         woher das Zertifikat kommt, siehe
+#                                         caddy/Caddyfile.https
+#   PAPER_WERK_CERT_PATH=/pfad          nur bei "datei": Ordner mit
+#                                         zertifikat.pem und schluessel.pem
+#
+# Aus PAPER_WERK_HOSTNAME werden hier alle Adressen abgeleitet, die App und
+# Paperless kennen müssen. Die Werte unter environment: gewinnen gegen die
+# gleichnamigen in .env.app und .env.paperless. Diese Dateien müssen für
+# HTTPS also nicht angefasst werden, und eine vergessene Zeile dort kann
+# nichts verderben.
+
+services:
+  caddy:
+    ports: !override
+      - 80:80
+      - 443:443
+      - 8000:8000
+      - 8005:8005
+    volumes:
+      # Gleicher Zielpfad wie in der Vorlage: Compose ersetzt den Eintrag,
+      # statt einen zweiten danebenzulegen.
+      - ${PAPER_WERK_CADDY_DIR:-./caddy}/Caddyfile.https:/etc/caddy/Caddyfile:ro
+      # Nur für PAPER_WERK_TLS_MODE=datei gebraucht. Ohne Angabe ein leerer
+      # Ordner neben dieser Datei; im Modus "intern" bleibt er unberührt.
+      - ${PAPER_WERK_CERT_PATH:-./zertifikate}:/zertifikate:ro
+    environment:
+      PAPER_WERK_HOSTNAME: ${PAPER_WERK_HOSTNAME:?PAPER_WERK_HOSTNAME fehlt in .env - ohne Namen kein Zertifikat}
+      PAPER_WERK_TLS_MODE: ${PAPER_WERK_TLS_MODE:-intern}
+
+  # Keine eigenen Ports mehr: erreichbar nur noch über Caddy. Sonst bliebe
+  # neben der verschlüsselten Tür eine unverschlüsselte offen.
+  paper-werk-app:
+    ports: !reset []
+    environment:
+      # paper-werk-app bleibt drin: n8n und Paperless sprechen die App im
+      # Compose-Netz unter diesem Namen an, ohne Caddy.
+      DJANGO_ALLOWED_HOSTS: paper-werk-app,${PAPER_WERK_HOSTNAME}
+      DJANGO_CSRF_TRUSTED_ORIGINS: https://${PAPER_WERK_HOSTNAME}:8000
+      DJANGO_COOKIE_SECURE: "True"
+      # Die Rückleitadresse für Microsoft wird mit https gebaut.
+      SSO_HTTP_PROTOKOLL: https
+      # Wohin der Verweis "Archiv" in der Rechnungsliste zeigt.
+      PAPERLESS_ANSICHT_URL: https://${PAPER_WERK_HOSTNAME}:8005
+      # Damit die App das Zertifikat bei Caddy abfragen und die Verwaltung
+      # rechtzeitig vor dem Ablauf warnen kann (core/zertifikat.py), nur im
+      # Modus "datei"; "intern" erneuert Caddy selbst.
+      PAPER_WERK_HOSTNAME: ${PAPER_WERK_HOSTNAME}
+      PAPER_WERK_TLS_MODE: ${PAPER_WERK_TLS_MODE:-intern}
+
+  paperless:
+    ports: !reset []
+    environment:
+      # Setzt zugleich ALLOWED_HOSTS und CSRF_TRUSTED_ORIGINS von Paperless.
+      PAPERLESS_URL: https://${PAPER_WERK_HOSTNAME}:8005
+      PAPERLESS_PROXY_SSL_HEADER: '["HTTP_X_FORWARDED_PROTO", "https"]'
+      PAPERLESS_ACCOUNT_DEFAULT_HTTP_PROTOCOL: https

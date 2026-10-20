@@ -1,0 +1,98 @@
+# Der Eingang von paper-werk mit HTTPS.
+#
+# Eingehängt NUR von compose.https.yml; ohne das Zusatzstück gilt die
+# Caddyfile daneben unverändert. Deshalb eine eigene Datei
+# statt Weichen in der anderen: Installationen ohne HTTPS bleiben davon
+# unberührt.
+#
+# Anders als im http-Betrieb vermittelt Caddy hier WEITER: App und Archiv
+# sind nur noch über Caddy erreichbar, mit Zertifikat. Die Unterpfad-Frage
+# stellt sich dabei nicht; jede Komponente behält ihren
+# eigenen Port und ihre eigene Wurzel, nur verschlüsselt:
+#
+#   https://<name>/        die Einstiegsseite
+#   https://<name>:8000/   paper-werk-app
+#   https://<name>:8005/   Paperless
+#
+# Dieselben Portnummern wie bisher, damit Lesezeichen und Gewohnheit nur das
+# "s" dazubekommen. Die Container von App und Paperless veröffentlichen ihre
+# Ports dann NICHT mehr (compose.https.yml), damit neben der
+# verschlüsselten Verbindung keine unverschlüsselte offen bleibt.
+#
+# n8n und Kopia bleiben außen vor, wie gehabt: Werkzeuge für die Betreuung,
+# nur im Netz des Kunden.
+#
+# Woher das Zertifikat kommt, entscheidet PAPER_WERK_TLS_MODE:
+#
+#   intern  Caddy erzeugt sich eine eigene kleine Zertifizierungsstelle. Deren
+#           Stammzertifikat wird EINMAL je Rechner installiert und gilt dann
+#           für alle drei Adressen. Zum Herunterladen liegt es unter
+#           https://<name>/stammzertifikat.crt. Es steckt in caddy-data und
+#           damit in der Kopia-Sicherung. Geht es verloren, muss jeder Rechner
+#           neu installieren.
+#   datei   Das Zertifikat kommt vom Kunden, etwa aus der Zertifizierungsstelle
+#           seiner Windows-Domäne. Es liegt als zertifikat.pem und
+#           schluessel.pem im Ordner PAPER_WERK_CERT_PATH. Die Erneuerung ist
+#           Sache des Kunden. Läuft es ab, steht alles.
+#
+# Nach einer Änderung an dieser Datei:
+#   docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
+
+{
+	# Nur für "intern" von Bedeutung: Caddy versuchte sonst, sein
+	# Stammzertifikat im System des Containers zu installieren. Dort nützt es
+	# niemandem; installiert wird es auf den Rechnern der Anwender.
+	skip_install_trust
+}
+
+(tls_intern) {
+	tls internal
+}
+
+(tls_datei) {
+	tls /zertifikate/zertifikat.pem /zertifikate/schluessel.pem
+}
+
+# Die Einstiegsseite. http://<name> leitet Caddy von selbst hierher um.
+{$PAPER_WERK_HOSTNAME} {
+	import tls_{$PAPER_WERK_TLS_MODE:intern}
+
+	# Das Stammzertifikat der internen Zertifizierungsstelle, nur sinnvoll im
+	# Modus "intern". Im Modus "datei" gibt es die Datei nicht, dann 404.
+	handle /stammzertifikat.crt {
+		root * /data/caddy/pki/authorities/local
+		rewrite * /root.crt
+		header Content-Type application/x-x509-ca-cert
+		header Content-Disposition "attachment; filename=paper-werk-stammzertifikat.crt"
+		file_server
+	}
+
+	handle {
+		root * /srv
+		templates
+		file_server
+	}
+
+	log {
+		output stderr
+		format console
+	}
+}
+
+# paper-werk-app. Caddy setzt X-Forwarded-Proto; die App wertet ihn aus
+# (SECURE_PROXY_SSL_HEADER in paperwerk/settings/prod.py) und weiß damit,
+# dass der Besucher HTTPS spricht.
+{$PAPER_WERK_HOSTNAME}:8000 {
+	import tls_{$PAPER_WERK_TLS_MODE:intern}
+	reverse_proxy paper-werk-app:8000
+}
+
+# Paperless, gleiches Prinzip; ausgewertet wird der Kopf dort über
+# PAPERLESS_PROXY_SSL_HEADER (gesetzt in compose.https.yml).
+{$PAPER_WERK_HOSTNAME}:8005 {
+	import tls_{$PAPER_WERK_TLS_MODE:intern}
+	# Große Sammelscans: Caddy begrenzt den Anfragekörper nicht, Paperless
+	# selbst auch nicht, deshalb steht hier nichts. (Anders als bei
+	# Cloudflare, siehe docs/zugang-und-authentifizierung.md.)
+	reverse_proxy paperless:8000
+}

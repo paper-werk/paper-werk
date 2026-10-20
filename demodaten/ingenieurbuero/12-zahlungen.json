@@ -1,0 +1,188 @@
+[
+  {
+    "_kommentar": "WARUM ES DIESE DATEI GIBT. Ohne Zahlungen steht in den offenen Posten jede jemals gestellte Rechnung - ein Betrieb, der seit einem Jahr kein Geld bekommen hat. Das ist keine Vorführung, das ist ein Warnschild. Bezahlt wird deshalb, was zu abgeschlossenen Vorhaben gehört - ausnahmslos; offen bleiben Rechnungen laufender Vorhaben, darunter die gemahnte Schlussrechnung von {vorjahr}-118.\n\nTeilzahlung und unverteilter Rest hängen an Stellen, an denen sie im Betrieb auch vorkommen; die Abschläge von {vorjahr}-118 sind bezahlt, weil die Schlussrechnung sie absetzt.",
+    "kunde": "Stadt Musterstadt",
+    "zahlername": "Stadt Musterstadt, Stadtkasse",
+    "vor_tagen": 310,
+    "verwendungszweck": "Schlussrechnung Kindergarten",
+    "zuordnungen": [
+      { "rechnung": "Schlussrechnung {jahr}-101 - Baugrunduntersuchung Neubau Kindergarten" }
+    ]
+  },
+  {
+    "kunde": "Wohnbau Isartal eG",
+    "zahlername": "Wohnbau Isartal eG",
+    "vor_tagen": 312,
+    "zuordnungen": [
+      { "rechnung": "Schlussrechnung {jahr}-102 - Bodengutachten Wohnbebauung Am Anger" }
+    ]
+  },
+  {
+    "_kommentar": "DIE SAMMELÜBERWEISUNG - der Fall, für den es die Zwischentabelle überhaupt gibt. Eine Zahlung, zwei Rechnungen. Wer so etwas nur als 'bezahlt-Häkchen' an der Rechnung abbildet, kann den Kontoauszug nicht mehr nachvollziehen.",
+    "kunde": "Landratsamt Musterstadt",
+    "zahlername": "Landratsamt Musterstadt, Kreiskasse",
+    "vor_tagen": 280,
+    "verwendungszweck": "Sammelüberweisung 2 Rechnungen",
+    "zuordnungen": [
+      { "rechnung": "Schlussrechnung {jahr}-103 - Schadstoffkataster Verwaltungsgebäude" },
+      { "rechnung": "Schlussrechnung {jahr}-104 - Deklaration Bodenaushub Kreisstraße LA 14" }
+    ]
+  },
+  {
+    "kunde": "Wohnbau Isartal eG",
+    "vor_tagen": 250,
+    "zuordnungen": [
+      { "rechnung": "Schlussrechnung {jahr}-105 - Beweissicherung Nachbarbebauung Ludwigsplatz" }
+    ]
+  },
+  {
+    "kunde": "Landratsamt Musterstadt",
+    "vor_tagen": 248,
+    "zuordnungen": [
+      { "rechnung": "Schlussrechnung {jahr}-106 - Altlastenerkundung Bahnhofsareal, Phase I" }
+    ]
+  },
+  {
+    "_kommentar": "MIT SKONTO. Huber Bau hat zwei Prozent gezogen; die Rechnung ist damit ausgeglichen, obwohl weniger Geld kam. Genau dafür trägt die Zuordnung zwei Felder - was überwiesen wurde und was zusätzlich als Abzug gilt. Das Programm rechnet das nicht selbst aus: Ob eine Unterzahlung Skonto ist oder ein Abzug wegen Mängeln, weiß nur der Betrieb.",
+    "kunde": "Huber Bau GmbH & Co. KG",
+    "zahlername": "Huber Bau GmbH & Co. KG",
+    "vor_tagen": 235,
+    "verwendungszweck": "abzgl. 2 % Skonto",
+    "zuordnungen": [
+      { "_kommentar": "2 % vom Brutto 55.138,65 EUR.",
+        "rechnung": "Schlussrechnung {jahr}-107 - Entsorgungskonzept Aushub Industriestraße", "skonto": "1102.77" }
+    ]
+  },
+  {
+    "kunde": "Huber Bau GmbH & Co. KG",
+    "vor_tagen": 230,
+    "zuordnungen": [
+      { "rechnung": "Schlussrechnung {jahr}-108 - Gründungsgutachten Hallenerweiterung" }
+    ]
+  },
+  {
+    "kunde": "Wohnbau Isartal eG",
+    "vor_tagen": 190,
+    "zuordnungen": [
+      { "rechnung": "Schlussrechnung {jahr}-109 - Bauüberwachung Erschließung Wohnpark Süd" }
+    ]
+  },
+  {
+    "kunde": "Stadt Musterstadt",
+    "vor_tagen": 188,
+    "zuordnungen": [
+      { "rechnung": "Schlussrechnung {jahr}-110 - Baugrunderkundung Regenrückhaltebecken" }
+    ]
+  },
+  {
+    "kunde": "Autohaus Brandmeier GmbH",
+    "vor_tagen": 160,
+    "zuordnungen": [
+      { "rechnung": "Schlussrechnung {jahr}-111 - Altlastenerkundung ehemalige Tankstelle" }
+    ]
+  },
+  {
+    "kunde": "Stadt Musterstadt",
+    "vor_tagen": 158,
+    "zuordnungen": [
+      { "rechnung": "Schlussrechnung {jahr}-112 - Untersuchung Bauschutt Rückbau Schulhaus" }
+    ]
+  },
+  {
+    "kunde": "Stadt Musterstadt",
+    "vor_tagen": 130,
+    "zuordnungen": [
+      { "rechnung": "Schlussrechnung {jahr}-113 - Bodengutachten Erweiterung Betriebshof" }
+    ]
+  },
+  {
+    "kunde": "Huber Bau GmbH & Co. KG",
+    "vor_tagen": 128,
+    "zuordnungen": [
+      { "rechnung": "Schlussrechnung {jahr}-114 - Fachbauleitung Bodenaustausch Gewerbepark" }
+    ]
+  },
+  {
+    "kunde": "Landratsamt Musterstadt",
+    "vor_tagen": 100,
+    "zuordnungen": [
+      { "rechnung": "Schlussrechnung {jahr}-115 - Untersuchung Straßenaufbruch Ortsdurchfahrt" }
+    ]
+  },
+  {
+    "kunde": "Stadt Musterstadt",
+    "vor_tagen": 98,
+    "zuordnungen": [
+      { "rechnung": "Schlussrechnung {jahr}-116 - Baugrundberatung Neubau Feuerwehrhaus" }
+    ]
+  },
+  {
+    "kunde": "Huber Bau GmbH & Co. KG",
+    "vor_tagen": 60,
+    "zuordnungen": [
+      { "rechnung": "Schlussrechnung {jahr}-117 - Baubegleitung Rückbau Werkhalle" }
+    ]
+  },
+  {
+    "kunde": "Wohnbau Isartal eG",
+    "vor_tagen": 58,
+    "zuordnungen": [
+      { "rechnung": "Schlussrechnung {jahr}-118 - Deklarationsanalytik Kanalsanierung Nord" }
+    ]
+  },
+  {
+    "kunde": "Autohaus Brandmeier GmbH",
+    "vor_tagen": 30,
+    "zuordnungen": [
+      { "rechnung": "Schlussrechnung {jahr}-119 - Gründungsberatung Erweiterungsbau Autohaus" }
+    ]
+  },
+  {
+    "_kommentar": "DIE UNVERTEILTE ZAHLUNG - der zweite Grund für die Zwischentabelle. 36.000 EUR sind da, die Rechnung über 35.176,40 EUR ist damit ausgeglichen; die 823,60 EUR darüber stehen am Kopf der Zahlung und warten. Genau dort geht im Betrieb Geld verloren: nicht durch falsche Zuordnung, sondern dadurch, dass niemand mehr weiß, wofür der Rest war - erstatten oder mit der nächsten Rechnung verrechnen?",
+    "kunde": "Wohnbau Isartal eG",
+    "betrag": "36000.00",
+    "vor_tagen": 25,
+    "verwendungszweck": "PV Freifläche",
+    "zuordnungen": [
+      { "rechnung": "Schlussrechnung {jahr}-120 - Baugrunduntersuchung Photovoltaik Freifläche" }
+    ]
+  },
+  {
+    "kunde": "Stadt Musterstadt",
+    "vor_tagen": 3,
+    "zuordnungen": [
+      { "rechnung": "Schlussrechnung {jahr}-121 - Deklarationsanalytik Baumaßnahme Ringstraße" }
+    ]
+  },
+  {
+    "kunde": "Landratsamt Musterstadt",
+    "vor_tagen": 6,
+    "zuordnungen": [
+      { "rechnung": "Schlussrechnung {jahr}-122 - Schadstofferkundung Gebäuderiegel West" }
+    ]
+  },
+  {
+    "kunde": "Huber Bau GmbH & Co. KG",
+    "vor_tagen": 9,
+    "zuordnungen": [
+      { "rechnung": "Schlussrechnung {jahr}-123 - Baugrundberatung Hallenanbau Ergolding" }
+    ]
+  },
+  {
+    "kunde": "Wohnbau Isartal eG",
+    "vor_tagen": 4,
+    "zuordnungen": [
+      { "rechnung": "Schlussrechnung {jahr}-124 - Beweissicherung Ortskanal Bauabschnitt 3" }
+    ]
+  },
+  {
+    "_kommentar": "DIE TEILZAHLUNG. 1.000 EUR auf die erste Rechnung des Nachvollzugsprojekts, nach Ablauf der Frist - der Rest steht überfällig in den offenen Posten und wird kleiner, sobald der zweite Teil kommt. Ein Häkchen 'bezahlt' könnte das nicht: Es kennt nur ganz oder gar nicht.",
+    "kunde": "Huber Bau GmbH & Co. KG",
+    "betrag": "1000.00",
+    "vor_tagen": 2,
+    "verwendungszweck": "Teilzahlung Stützmauer",
+    "zuordnungen": [
+      { "rechnung": "Gutachten Stützmauer Nord - 1. Rechnung", "betrag": "1000.00" }
+    ]
+  }
+]

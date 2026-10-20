@@ -1,0 +1,24 @@
+[
+  {
+    "_kommentar": "ERGÄNZUNG zum Basispaket, keine Kopie. Was hier steht, kommt zu starterpakete/basis/document_types.json hinzu; zusammengestellt wird beides von setup/paperless/starterpaket-zusammenstellen.sh. Der Grund für die Trennung: Rechnung, Angebot, Vertrag und Kontoauszug hat jeder Betrieb, und mehrere davon hängen an n8n-Workflows. Stünden sie hier ein zweites Mal, liefen die beiden Listen beim nächsten Workflow auseinander, und niemand wüsste, welche gilt.",
+    "name": "Prüfprotokoll"
+  },
+  {
+    "_kommentar": "Der Dokumenttyp, der einen Elektrobetrieb von den anderen unterscheidet. E-Check nach DIN VDE 0105-100, Wiederholungsprüfung nach DGUV Vorschrift 3; beides erzeugt Papier, das jahrelang auffindbar bleiben muss, weil es im Schadensfall die Haftungsfrage beantwortet.",
+    "name": "Aufmaß"
+  },
+  {
+    "name": "Abnahmeprotokoll"
+  },
+  {
+    "_kommentar": "Anmeldung und Inbetriebsetzung beim Netzbetreiber (§ 19 NAV), fällt bei jeder Wallbox, jeder PV-Anlage und jedem neuen Zählerplatz an.",
+    "name": "Netzanmeldung"
+  },
+  {
+    "name": "Datenblatt"
+  },
+  {
+    "_kommentar": "Förderbescheide (KfW, BAFA, kommunale Programme) sind bei Ladeinfrastruktur und Photovoltaik der Regelfall und tragen Fristen. Der Basistyp 'Bescheid' deckt das mit ab; ein eigener Typ lohnt erst, wenn danach gesucht wird.",
+    "name": "Förderbescheid"
+  }
+]

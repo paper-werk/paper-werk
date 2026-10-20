@@ -1,0 +1,424 @@
+{
+  "name": "felder-erkennen-mistral",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🏷️ Entity-Extraction (Mistral, Cloud)\n\n**Zweck:** Extrahiert Entitäten (Rechnungs-, Versicherungs-, Projektnummer, Beträge …) per Mistral-LLM aus dem OCR-Volltext und schreibt sie in Paperless-Custom-Fields.\n\n**Trigger:** Paperless-Workflow → `POST /webhook/felder-erkennen-mistral` mit Body `{\"doc_url\": \"{doc_url}\"}` (alternativ `doc_id`).\n\n**Welche Felder, bestimmt der Aufrufer.** Optional im Body:\n\n```json\n{\n  \"doc_url\": \"{doc_url}\",\n  \"felder\": {\n    \"Nettobetrag\": \"Der Rechnungsbetrag OHNE Umsatzsteuer, als Zahl mit Punkt.\",\n    \"Gesamtbetrag\": \"Der Bruttobetrag inklusive Umsatzsteuer.\",\n    \"Projektnummer\": \"Die Projektnummer, z. B. 2026-042.\"\n  }\n}\n```\n\nAus einem **Paperless-Arbeitsablauf** heraus geht das nur als Zeichenkette, weil dessen Parameter sind formular-kodiert, ein verschachteltes Objekt gibt es dort nicht:\n`\"felder\": \"{\\\"Nettobetrag\\\": \\\"Der Betrag ohne USt\\\"}\"`\n\nOhne `felder` gelten die Vorgaben im Node „Prepare extraction\" (Rechnungs-, Versicherungs-, Projektnummer); bestehende Paperless-Workflows laufen unverändert weiter. Ein Arbeitsablauf für Laborrechnungen braucht andere Felder als einer für Versicherungspost, ohne dass der Workflow kopiert wird.\n\n**Jedes Feld muss als Custom Field in Paperless existieren**; `manage.py paperless_einrichten` in paper-werk legt die an, die der Belegweg braucht.\n\n**Fehlerverhalten:** Fehlende ID, leerer OCR-Text, ungültige Mistral-Antwort, fehlendes Custom Field oder ein `felder`-Objekt ohne Beschreibungen ⇒ Abbruch mit deutscher Fehlermeldung. Mistral-Aufruf hat 60 s Timeout.\n\n⚠️ OCR-Text geht an die Mistral-Cloud (DSGVO/AVV beachten).",
+        "height": 700,
+        "width": 660
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1408,
+        -832
+      ],
+      "id": "d0c00002-0002-4000-8000-000000000001",
+      "name": "Doku"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "felder-erkennen-mistral",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1328,
+        -256
+      ],
+      "id": "d4000004-0004-4000-8000-000000000001",
+      "name": "Webhook",
+      "webhookId": "b4000004-0004-4000-8000-000000000001"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "pwSubEinstell01",
+          "mode": "list",
+          "cachedResultName": "sub-einstellungen"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -1120,
+        -256
+      ],
+      "id": "d4000004-0004-4000-8000-0000000000c1",
+      "name": "Einstellungen holen"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Die Instanzwerte kommen aus sub-einstellungen (Knoten davor) und werden\n// in der Data Table pw_config gepflegt (n8n-Oberfläche, \"Data Tables\").\n// HIER stehen nur die FACHLICHEN Einstellungen dieses Workflows: Fristen,\n// Tag-Namen, Feldnamen.\nconst werte = $('Einstellungen holen').first().json;\nconst pw = (key) => {\n  const v = werte[key];\n  if (v === undefined || String(v).trim() === '') {\n    throw new Error('pw_config: \"' + key + '\" fehlt oder ist leer; in der n8n-Oberfläche unter \"Data Tables\" eintragen.');\n  }\n  return v;\n};\nreturn [{\n  json: {\n    // ── aus der Data Table pw_config ──\n    // Dieser Workflow verschickt keine Mail und braucht deshalb nur die\n    // Paperless-Adresse für seine API-Aufrufe.\n    paperless_url: pw('paperless_url')\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -912,
+        -256
+      ],
+      "id": "d4000004-0004-4000-8000-0000000000c2",
+      "name": "Konfiguration"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Dokument-ID aus dem Paperless-Webhook holen.\n// Body kann { doc_id }, { id } oder { doc_url } enthalten.\nconst body = $('Webhook').first().json.body ?? {};\nlet id = body.doc_id ?? body.id;\nif (!id && body.doc_url) {\n  id = String(body.doc_url).match(/\\/documents\\/(\\d+)/)?.[1];\n}\nif (!id) throw new Error('Keine doc_id/doc_url im Webhook-Body');\nreturn [{ json: { id: Number(id) } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        -256
+      ],
+      "id": "d4000004-0004-4000-8000-000000000002",
+      "name": "Extract ID"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/documents/{{ $('Extract ID').first().json.id }}/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -512,
+        -256
+      ],
+      "id": "d4000004-0004-4000-8000-000000000003",
+      "name": "Get Document",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const doc = $input.first().json;\nconst content = (doc.content ?? '').trim();\nif (!content) throw new Error('Dokument hat keinen Text (content leer)');\nreturn [{ json: { id: doc.id, content, existingCustomFields: doc.custom_fields ?? [] } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        -256
+      ],
+      "id": "d4000004-0004-4000-8000-000000000004",
+      "name": "Extract content"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// WELCHE FELDER extrahiert werden: zwei Wege, und der erste gewinnt.\n//\n// 1. Aus dem Webhook-Body: { \"felder\": { \"Nettobetrag\": \"Beschreibung\", ... } }\n//    Damit entscheidet der AUFRUFER, was er braucht. Ein Paperless-Workflow\n//    fuer Laborrechnungen fragt nach anderen Feldern als einer fuer\n//    Versicherungspost, ohne dass dieser Workflow dafuer angefasst wird.\n//\n// 2. Ohne Angabe gelten die VORGABEN unten. Sie sind der Regelfall einer\n//    frischen Installation und halten die bestehenden Paperless-Workflows\n//    am Laufen, die nur { doc_url } schicken.\n//\n// Schluessel  = Name des Custom Fields in Paperless (Suche case-insensitive).\n// Wert        = Beschreibung fuer das Modell (was ist gemeint, welches Format).\n// Das Custom Field muss in Paperless existieren.\n// ============================================================\nconst VORGABEN = {\n  'Rechnungsnummer': 'Die Rechnungsnummer des Dokuments (z. B. \"RE-2026-0042\", \"4711/2026\"). Nur bei Rechnungen/Gutschriften vorhanden.',\n  'Versicherungsnummer': 'Die Versicherungsschein- bzw. Versicherungsnummer (z. B. \"VS 123.456.789\"). Nur bei Versicherungsdokumenten vorhanden.',\n  'Projektnummer': 'Die Projektnummer bzw. das Projektkennzeichen (z. B. \"P-2026-017\", \"Projekt 4302\").',\n};\nconst MISTRAL_MODEL = 'mistral-small-latest';\nconst MAX_CONTENT_CHARS = 15000;\n// ============================================================\n\nconst body = $('Webhook').first().json.body ?? {};\nlet gewuenscht = body.felder;\n\n// **Auch als JSON-String, und das ist kein Luxus.** Ein\n// Paperless-Arbeitsablauf sendet seine Parameter formular-kodiert; ein\n// verschachteltes Objekt gibt es dort nicht. Wer aus Paperless heraus\n// eigene Felder will, schickt sie deshalb als Zeichenkette:\n//   params: { \"felder\": \"{\\\"Nettobetrag\\\": \\\"Der Betrag ohne USt\\\"}\" }\nif (typeof gewuenscht === 'string' && gewuenscht.trim() !== '') {\n  try {\n    gewuenscht = JSON.parse(gewuenscht);\n  } catch (e) {\n    throw new Error('\"felder\" ist ein Text, aber kein gueltiges JSON: ' + e.message\n      + '; erwartet wird {\"Feldname\": \"Beschreibung\", ...}');\n  }\n}\n\nlet ENTITIES;\nif (gewuenscht === undefined || gewuenscht === null) {\n  ENTITIES = VORGABEN;\n} else {\n  // Streng pruefen statt still auf die Vorgaben zurueckfallen: Wer \"felder\"\n  // mitschickt, meint es; ein Tippfehler im Schluesselnamen soll auffallen\n  // und nicht dazu fuehren, dass etwas ganz anderes extrahiert wird.\n  if (typeof gewuenscht !== 'object' || Array.isArray(gewuenscht)) {\n    throw new Error('\"felder\" muss ein Objekt sein: {\"Feldname\": \"Beschreibung fuer das Modell\", ...}');\n  }\n  const namen = Object.keys(gewuenscht);\n  if (namen.length === 0) {\n    throw new Error('\"felder\" ist leer, dann gibt es nichts zu extrahieren. Feld weglassen, um die Vorgaben zu benutzen.');\n  }\n  for (const name of namen) {\n    const beschreibung = gewuenscht[name];\n    if (typeof beschreibung !== 'string' || beschreibung.trim() === '') {\n      throw new Error('Feld \"' + name + '\" braucht eine Beschreibung fuer das Modell (ein nicht-leerer Text). Ohne sie raet Mistral, was gemeint ist.');\n    }\n  }\n  ENTITIES = gewuenscht;\n}\n\nconst src = $('Extract content').first().json;\nconst entityNames = Object.keys(ENTITIES);\n\nconst fieldList = entityNames\n  .map((name) => `- \"${name}\": ${ENTITIES[name]}`)\n  .join('\\n');\n\nconst jsonSkeleton = '{' + entityNames.map((n) => `\"${n}\": \"...\"`).join(', ') + '}';\n\nconst SYSTEM_PROMPT = `Du bist ein Assistent zur Datenextraktion aus Dokumenten in einem Paperless-Dokumentenmanagementsystem. Du bekommst den OCR-Volltext eines Dokuments und extrahierst daraus definierte Felder.\n\nZu extrahierende Felder:\n${fieldList}\n\nRegeln:\n- Übernimm den Wert exakt so, wie er im Dokument steht (gleiche Schreibweise, Bindestriche, Schrägstriche)\n- Gib nur den Wert selbst zurück, ohne Beschriftung davor (also \"RE-2026-0042\", nicht \"Rechnungsnummer: RE-2026-0042\")\n- Ist ein Feld im Dokument nicht vorhanden oder bist du unsicher, gib null zurück; erfinde niemals Werte\n- Kommt ein Feld mehrfach vor, nimm den Wert, der sich auf das Dokument selbst bezieht (z. B. die eigene Rechnungsnummer, nicht eine referenzierte fremde)\n- Beträge ohne Währungszeichen und ohne Tausendertrennung, mit Punkt als Dezimaltrenner (also \"1758.00\", nicht \"1.758,00 €\")\n\nAntworte ausschließlich mit gültigem JSON in genau diesem Format, mit genau diesen Schlüsseln und ohne weitere Felder:\n${jsonSkeleton}\n(Wert jeweils ein String oder null)`;\n\nconst contentExcerpt = src.content.slice(0, MAX_CONTENT_CHARS);\n\nconst userContent = `OCR-Volltext des Dokuments (Auszug, ggf. gekürzt):\\n---\\n${contentExcerpt}\\n---\\n\\nExtrahiere nun die Felder und antworte als JSON.`;\n\nreturn [{\n  json: {\n    id: src.id,\n    existingCustomFields: src.existingCustomFields,\n    entityNames,\n    mistralBody: {\n      model: MISTRAL_MODEL,\n      response_format: { type: 'json_object' },\n      temperature: 0,\n      max_tokens: 300,\n      messages: [\n        { role: 'system', content: SYSTEM_PROMPT },\n        { role: 'user', content: userContent },\n      ],\n    },\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -112,
+        -256
+      ],
+      "id": "d4000004-0004-4000-8000-000000000005",
+      "name": "Prepare extraction"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mistral.ai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.mistralBody }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        80,
+        -256
+      ],
+      "id": "d4000004-0004-4000-8000-000000000006",
+      "name": "Mistral extract",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "OHN0lQXlD0SCttqZ",
+          "name": "Header Auth Mistral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Mistral-Antwort parsen und auf die konfigurierten Entitäten normalisieren.\nconst src = $('Prepare extraction').first().json;\nconst aiItem = $input.first().json;\n\nlet raw = aiItem?.choices?.[0]?.message?.content;\nif (typeof raw !== 'string' || raw.trim() === '') {\n  throw new Error('Keine Antwort von Mistral erhalten: ' + JSON.stringify(aiItem).slice(0, 500));\n}\n\n// Eventuelle Markdown-Zäune entfernen, dann JSON parsen.\nraw = raw.trim().replace(/^```(?:json)?\\s*/i, '').replace(/```\\s*$/, '').trim();\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch {\n  throw new Error('Mistral-Antwort ist kein gültiges JSON: ' + raw.slice(0, 500));\n}\n\n// Schlüssel case-insensitive zuordnen, Werte säubern.\nconst lowerMap = {};\nfor (const [k, v] of Object.entries(parsed)) lowerMap[k.toLowerCase()] = v;\n\nconst entities = {};\nfor (const name of src.entityNames) {\n  let v = parsed[name] ?? lowerMap[name.toLowerCase()] ?? null;\n  if (typeof v === 'number') v = String(v);\n  if (typeof v === 'string') {\n    v = v.trim();\n    if (v === '' || v.toLowerCase() === 'null') v = null;\n  } else if (v !== null) {\n    v = null;\n  }\n  entities[name] = v;\n}\n\nconst has_entity = Object.values(entities).some((v) => v !== null);\n\nreturn [{\n  json: {\n    id: src.id,\n    existingCustomFields: src.existingCustomFields,\n    entityNames: src.entityNames,\n    entities,\n    has_entity,\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        288,
+        -256
+      ],
+      "id": "d4000004-0004-4000-8000-000000000007",
+      "name": "Extract entities"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c4nd0004-0004-4000-8000-000000000001",
+              "leftValue": "={{ $json.has_entity }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "looseTypeValidation": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        496,
+        -256
+      ],
+      "id": "d4000004-0004-4000-8000-000000000008",
+      "name": "Entity gefunden?"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/custom_fields/?page_size=100",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        704,
+        -256
+      ],
+      "id": "d4000004-0004-4000-8000-000000000009",
+      "name": "Find custom fields",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const entityData = $('Extract entities').first().json;\nconst allFields = $input.first().json.results ?? [];\n\nfunction findFieldId(name) {\n  const field = allFields.find(f => String(f.name).toLowerCase() === name.toLowerCase());\n  return field ? field.id : null;\n}\n\n// Für jede gefundene Entität das passende Custom Field ermitteln.\nconst updates = [];\nfor (const name of entityData.entityNames) {\n  const value = entityData.entities[name];\n  if (value === null) continue;\n  const fieldId = findFieldId(name);\n  if (!fieldId) {\n    throw new Error('Custom field \"' + name + '\" nicht in Paperless gefunden. Bitte unter Einstellungen > Benutzerdefinierte Felder anlegen (Typ Text).');\n  }\n  updates.push({ fieldId, value });\n}\n\n// Vorhandene Custom-Field-Werte behalten, nur die extrahierten überschreiben.\nconst updateIds = new Set(updates.map(u => u.fieldId));\nconst existingFields = entityData.existingCustomFields ?? [];\nconst otherFields = existingFields.filter(f => !updateIds.has(f.field));\nconst customFields = [\n  ...otherFields,\n  ...updates.map(u => ({ field: u.fieldId, value: u.value })),\n];\n\nreturn [{ json: { id: entityData.id, customFields, entities: entityData.entities } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        -256
+      ],
+      "id": "d4000004-0004-4000-8000-000000000010",
+      "name": "Build PATCH body"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/documents/{{ $json.id }}/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { custom_fields: $json.customFields } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1104,
+        -256
+      ],
+      "id": "d4000004-0004-4000-8000-000000000011",
+      "name": "PATCH custom fields",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Einstellungen holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract ID": {
+      "main": [
+        [
+          {
+            "node": "Get Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Document": {
+      "main": [
+        [
+          {
+            "node": "Extract content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract content": {
+      "main": [
+        [
+          {
+            "node": "Prepare extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare extraction": {
+      "main": [
+        [
+          {
+            "node": "Mistral extract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral extract": {
+      "main": [
+        [
+          {
+            "node": "Extract entities",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract entities": {
+      "main": [
+        [
+          {
+            "node": "Entity gefunden?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Entity gefunden?": {
+      "main": [
+        [
+          {
+            "node": "Find custom fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find custom fields": {
+      "main": [
+        [
+          {
+            "node": "Build PATCH body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build PATCH body": {
+      "main": [
+        [
+          {
+            "node": "PATCH custom fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Konfiguration": {
+      "main": [
+        [
+          {
+            "node": "Extract ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Einstellungen holen": {
+      "main": [
+        [
+          {
+            "node": "Konfiguration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "errorWorkflow": "pwFehlerMelden01"
+  },
+  "versionId": "d4000004-0004-4000-8000-00000000000f",
+  "meta": {
+    "instanceId": "a93f4964e7219af7b95d2af224fbc867bc9bb41a2652bbc50549717373800be7"
+  },
+  "nodeGroups": [],
+  "tags": [
+    {
+      "updatedAt": "2026-05-09T07:14:32.932Z",
+      "createdAt": "2026-05-09T07:14:32.932Z",
+      "id": "Qr4w77Oluq8Hi4TJ",
+      "name": "paperless"
+    }
+  ],
+  "id": "YtG145y4vk4dXtgw"
+}

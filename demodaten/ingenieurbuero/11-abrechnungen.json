@@ -1,0 +1,25 @@
+[
+  {
+    "_kommentar": "1. Rechnung aus erfassten Leistungen: der erste Stundenblock und die erste Laborcharge. Anders als 'rechnungen' im Projekt entsteht sie über 'Erbrachte Leistungen hinzufügen' - die Zeiten und Proben hängen danach an ihren Positionen.",
+    "projekt": "{jahr}-070",
+    "stunden_vor_tagen": [30, 19],
+    "einkauf": ["AL-2026-09117"],
+    "betreff": "Gutachten Stützmauer Nord - 1. Rechnung",
+    "vor_tagen": 18
+  },
+  {
+    "_kommentar": "2. Rechnung: dieselben Positionen noch einmal - so steht unter 'Abgerechnet' mehr als eine Rechnungsnummer.",
+    "projekt": "{jahr}-070",
+    "stunden_vor_tagen": [18, 12],
+    "einkauf": ["AL-2026-09240"],
+    "betreff": "Gutachten Stützmauer Nord - 2. Rechnung",
+    "vor_tagen": 11
+  },
+  {
+    "_kommentar": "Ein Entwurf: Die Stunden sind reserviert ('auf Entwurf'), zählen aber noch nicht als abgerechnet.",
+    "projekt": "{jahr}-070",
+    "stunden_vor_tagen": [11, 7],
+    "betreff": "Gutachten Stützmauer Nord - 3. Rechnung",
+    "entwurf": true
+  }
+]

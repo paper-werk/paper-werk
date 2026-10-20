@@ -1,0 +1,81 @@
+[
+  {
+    "nummer": "1.10",
+    "bezeichnung": "Projektleitung",
+    "einheit": "Std",
+    "preis": "110.00",
+    "art": "zeit",
+    "kontierbar": true,
+    "_kommentar": "Die Langtexte sind echt und nicht geschmückt - mit Norm und Prüfumfang. Ein Vorführangebot mit \"Lorem ipsum\" beweist nichts."
+  },
+  {
+    "nummer": "1.20",
+    "bezeichnung": "Ingenieurstunde",
+    "einheit": "Std",
+    "preis": "95.00",
+    "art": "zeit",
+    "kontierbar": true
+  },
+  {
+    "nummer": "1.30",
+    "bezeichnung": "Technikerstunde",
+    "einheit": "Std",
+    "preis": "78.00",
+    "art": "zeit",
+    "kontierbar": true
+  },
+  {
+    "nummer": "2.10",
+    "bezeichnung": "Probenahme vor Ort",
+    "einheit": "Std",
+    "preis": "85.00",
+    "art": "zeit",
+    "kontierbar": true,
+    "langtext": "Entnahme von Boden-, Bausubstanz- oder Wasserproben durch fachkundiges Personal einschliesslich Probenahmeprotokoll nach DIN ISO 10381-1, Kennzeichnung, Kuehlung und Transport ins akkreditierte Labor.\nEnthaelt Geraetevorhaltung (Rammkernsonde, Handbohrer, Probenbehaelter) sowie die Dokumentation der Entnahmestellen mit Lageplan und Foto."
+  },
+  {
+    "nummer": "2.90",
+    "bezeichnung": "Fahrtkosten",
+    "einheit": "km",
+    "preis": "0.80",
+    "art": "menge",
+    "kontierbar": true
+  },
+  {
+    "nummer": "9.10",
+    "bezeichnung": "Gutachten und Bericht",
+    "einheit": "pausch",
+    "preis": "1450.00",
+    "art": "pauschale",
+    "kontierbar": true,
+    "langtext": "Erstellung des zusammenfassenden Untersuchungsberichts mit Bewertung der Analysenergebnisse nach LAGA M 20 bzw. Ersatzbaustoffverordnung, Einstufung der Materialien, Massenermittlung und Entsorgungsempfehlung.\nLieferung als PDF und in zweifacher Ausfertigung in Papierform. Eine Eroerterung der Ergebnisse vor Ort ist enthalten."
+  },
+  {
+    "nummer": "3.10",
+    "bezeichnung": "Bodenprobe LAGA-Paket",
+    "einheit": "Stk",
+    "preis": "145.00",
+    "art": "menge",
+    "kontierbar": false,
+    "langtext": "Analysenpaket Boden nach LAGA M 20: Trockenrueckstand, pH-Wert, elektrische Leitfaehigkeit, EOX, Kohlenwasserstoffe (C10-C40), BTEX, PAK nach EPA (16 Einzelsubstanzen), PCB (6 Kongenere) sowie Schwermetalle im Koenigswasseraufschluss.",
+    "_kommentar": "Nicht kontierbar: Was aus einer ISARTAL-Position ein eigener Verkaufsartikel wird, entsteht nicht durch Arbeit, sondern durch eine Laborrechnung - es taucht in der Erfassungsmaske also gar nicht erst auf."
+  },
+  {
+    "nummer": "3.20",
+    "bezeichnung": "Asbestanalyse REM",
+    "einheit": "Stk",
+    "preis": "135.00",
+    "art": "menge",
+    "kontierbar": false,
+    "langtext": "Qualitativer Nachweis von Asbestfasern im Rasterelektronenmikroskop mit energiedispersiver Roentgenanalyse (REM/EDX) nach VDI 3866 Blatt 5."
+  },
+  {
+    "nummer": "3.30",
+    "bezeichnung": "Eluatuntersuchung",
+    "einheit": "Stk",
+    "preis": "210.00",
+    "art": "menge",
+    "kontierbar": false,
+    "langtext": "Elution nach DIN 19529 (Schuettelverfahren, W/F = 2 l/kg) mit anschliessender Analytik des Eluats auf die Parameter der Ersatzbaustoffverordnung, Anlage 1."
+  }
+]

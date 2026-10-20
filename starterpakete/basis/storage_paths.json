@@ -1,0 +1,12 @@
+[
+  {
+    "name": "Buchführung",
+    "path": "Buchführung/{{ created_year }}/{{ title }}",
+    "matching_algorithm": 6
+  },
+  {
+    "name": "Projekte",
+    "path": "Projekte/{{ custom_fields | get_cf_value('Projekt', 'M000') }}/{{ document_type }}/{{ created_year }}/{{ title }}",
+    "matching_algorithm": 6
+  }
+]

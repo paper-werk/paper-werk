@@ -1,0 +1,208 @@
+{
+  "name": "fehler-melden",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## fehler-melden: globale Fehlermeldung\n\nWird von n8n aufgerufen, wenn ein ueberwachter Workflow abbricht.\nVerdrahtung im jeweiligen Workflow unter Settings -> Error Workflow,\nim JSON also:  \"settings\": { \"errorWorkflow\": \"pwFehlerMelden01\" }\n\nZWEI STOLPERFALLEN:\n\n1. DIESER Workflow muss selbst aktiv sein. Sonst steht im n8n-Log nur\n   \"Workflow ... is not active and cannot be executed\"; alles sieht\n   verdrahtet aus, es passiert nichts.\n2. Nur Produktionslaeufe loesen aus. Ein manuelles \"Test workflow\" im\n   Editor ruft den Error Workflow NICHT auf.\n\nWAS HIER NICHT ANKOMMT: die Item-Daten des gescheiterten Laufs. Der\nPayload enthaelt Workflow, Node, Fehlermeldung, Stack und Execution-URL,\naber keine doc_url. Welches DOKUMENT betroffen war, kann nur der\nWorkflow selbst festhalten, siehe \"Fehlerbehandlung in zwei Ebenen\"\nin setup/README.md.\n\nEMPFAENGER UND INSTANZNAME stehen in der Data Table pw_config\n(n8n-Oberflaeche -> Data Tables), als mail_betrieb, mail_absender und\ninstanz. Ohne diese Tabelle bricht dieser Workflow ab, und zwar\nlautlos, siehe ACHTUNG unten. Deshalb der Test mit fehler-melden-test.\n\nDROSSELUNG: Mail beim 1., 10., 100., 1000. gleichartigen Fehler pro\nStunde, plus harte Obergrenze ueber alle Fehlerarten hinweg. Werte im\nKonfigurations-Node.\n\nACHTUNG: Scheitert dieser Workflow selbst (fehlende SMTP-Credential\netwa), verschluckt n8n das kommentarlos, um Fehlerschleifen zu\nvermeiden. Kein Logeintrag, keine Mail. Deshalb nach dem Einrichten\neinmal mit fehler-melden-test.json pruefen.",
+        "height": 640,
+        "width": 480
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -600,
+        -140
+      ],
+      "id": "e1000000-0000-4000-8000-000000000001",
+      "name": "Doku"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        0
+      ],
+      "id": "e1000000-0000-4000-8000-000000000002",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "pwSubEinstell01",
+          "mode": "list",
+          "cachedResultName": "sub-einstellungen"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        180,
+        0
+      ],
+      "id": "e1000000-0000-4000-8000-0000000000c1",
+      "name": "Einstellungen holen"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Die Instanzwerte kommen aus sub-einstellungen (Knoten davor) und werden\n// in der Data Table pw_config gepflegt (n8n-Oberfläche, \"Data Tables\").\n// HIER stehen nur die FACHLICHEN Einstellungen dieses Workflows: Fristen,\n// Tag-Namen, Feldnamen.\nconst werte = $('Einstellungen holen').first().json;\nconst pw = (key) => {\n  const v = werte[key];\n  if (v === undefined || String(v).trim() === '') {\n    throw new Error('pw_config: \"' + key + '\" fehlt oder ist leer; in der n8n-Oberfläche unter \"Data Tables\" eintragen.');\n  }\n  return v;\n};\n// admin_email: Alle Meldungen gehen an EINE Betreiber-Adresse, nicht an den\n//   Besitzer des betroffenen Dokuments. Das ist keine Bequemlichkeit: der\n//   n8n-Error-Trigger bekommt die Item-Daten des gescheiterten Laufs gar\n//   nicht, er weiß also\n//   nicht, um welches Dokument es ging, und damit auch nicht, wem es\n//   gehört. Inhaltlich passt es ohnehin: hier stehen Stack Traces, nichts\n//   Fachliches.\n//\n// instanz: steht im Mailbetreff. Ohne ihn sieht man einer Störungsmail nicht\n//   an, von welcher Anlage sie kommt. Kommt aus pw_config, weil pro\n//   Installation verschieden.\n//\n// DROSSELUNG: Logik im Node \"Auswerten\". Ohne sie erzeugt ein Massenimport\n// bei ausgefallener Cloud-API eine Mail pro Dokument. Das ist fachliche\n// Mechanik dieses Workflows und bleibt deshalb hier stehen:\n//   schwellen: Beim wievielten gleichartigen Fehler innerhalb des Fensters\n//     eine Mail rausgeht. [1,10,100,1000] heißt: 300 gleichartige Fehler\n//     ergeben 3 Mails statt 300, die erste kommt sofort. Bewusst\n//     logarithmisch statt \"erste Mail, dann Ruhe\": so transportiert die\n//     Meldung auch die Schwere (\"inzwischen 100x\"), ohne dass es einen\n//     zweiten Workflow mit Zeitplan bräuchte, der Zusammenfassungen\n//     nachreicht.\n//   max_mails_pro_fenster: harte Obergrenze über ALLE Signaturen hinweg,\n//     falls viele verschiedene Fehler gleichzeitig auftreten. Danach kommt\n//     eine \"Fehlerflut\"-Meldung und dann Ruhe bis zum Fensterende.\n//   aufbewahrung_stunden: ab wann ein Vorfall aus dem Zustand fliegt. Ohne\n//     das wüchse staticData unbegrenzt.\nreturn [{\n  json: {\n    // ── aus der Data Table pw_config ──\n    admin_email: pw('mail_betrieb'),\n    absender:    pw('mail_absender'),\n    instanz:     pw('instanz'),\n\n    // ── fachlich, hier zu pflegen ──\n    fenster_minuten: 60,\n    schwellen: [1, 10, 100, 1000],\n    max_mails_pro_fenster: 20,\n    aufbewahrung_stunden: 24\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        388,
+        0
+      ],
+      "id": "e1000000-0000-4000-8000-000000000003",
+      "name": "Konfiguration"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalisiert den Payload des Error Triggers und entscheidet, ob eine Mail\n// rausgeht. Der Zustand für die Drosselung liegt in den Static Data dieses\n// Workflows; das überlebt Läufe und braucht keinen externen Speicher.\nconst cfg = $json;\nconst roh = $('Error Trigger').first().json;\n\n// ── 1. Zwei Payload-Formen auf dieselben Felder bringen ──────────────────\n// Scheitert ein Trigger-Node beim AKTIVIEREN des Workflows, liefert n8n eine\n// andere Struktur als bei einem Fehler während der Ausführung, unter\n// anderem ohne Execution-ID und ohne URL.\nconst istTriggerFehler = !!roh.trigger;\nconst t = roh.trigger || {};\nconst e = roh.execution || {};\n\nconst d = istTriggerFehler\n  ? {\n      workflowName: roh.workflow?.name || 'Unbekannt',\n      workflowId:   roh.workflow?.id   || 'Unbekannt',\n      executionUrl: null,\n      modus:        t.mode || 'trigger',\n      node:         t.error?.node?.name || 'Trigger-Node',\n      meldung:      t.error?.message || 'Keine Fehlermeldung verfügbar',\n      stack:        t.error?.cause?.stack || t.error?.stack || 'Kein Stack Trace verfügbar',\n      art:          'Trigger-Fehler (Workflow konnte nicht aktiviert werden)'\n    }\n  : {\n      workflowName: roh.workflow?.name || 'Unbekannt',\n      workflowId:   roh.workflow?.id   || 'Unbekannt',\n      executionUrl: e.url || null,\n      modus:        e.mode || 'unbekannt',\n      node:         e.lastNodeExecuted || 'Unbekannt',\n      meldung:      e.error?.message || 'Keine Fehlermeldung verfügbar',\n      stack:        e.error?.stack || 'Kein Stack Trace verfügbar',\n      art:          'Ausführungsfehler'\n    };\n\n// ── 2. Signatur ──────────────────────────────────────────────────────────\n// Ziffern werden maskiert, weil Fehlermeldungen Dokument-IDs, Zeitstempel und\n// Zeilennummern tragen. Ohne Maskierung wäre jeder Fehler eines Massenimports\n// eine eigene Signatur und die Drosselung liefe ins Leere.\nconst signatur = [\n  d.workflowId,\n  d.node,\n  String(d.meldung).replace(/\\d+/g, '#').slice(0, 120)\n].join(' | ');\n\n// ── 3. Drosselung ────────────────────────────────────────────────────────\nconst s = $getWorkflowStaticData('global');\nconst jetzt = Date.now();\nconst fenster = cfg.fenster_minuten * 60 * 1000;\ns.vorfaelle = s.vorfaelle || {};\n\nfor (const [k, alt] of Object.entries(s.vorfaelle)) {\n  if (jetzt - (alt.zuletzt || 0) > cfg.aufbewahrung_stunden * 3600 * 1000) {\n    delete s.vorfaelle[k];\n  }\n}\n\nlet v = s.vorfaelle[signatur];\nif (!v || jetzt - v.beginn > fenster) {\n  v = s.vorfaelle[signatur] = { beginn: jetzt, anzahl: 0 };\n}\nv.anzahl += 1;\nv.zuletzt = jetzt;\n\nif (!s.gesamt || jetzt - s.gesamt.beginn > fenster) {\n  s.gesamt = { beginn: jetzt, mails: 0, unterdrueckt: 0, flutGemeldet: false };\n}\n\nlet senden = false;\nlet grund = 'unterhalb der naechsten Schwelle';\n\nif (cfg.schwellen.includes(v.anzahl)) {\n  if (s.gesamt.mails < cfg.max_mails_pro_fenster) {\n    senden = true;\n    grund = 'schwelle';\n    s.gesamt.mails += 1;\n  } else if (!s.gesamt.flutGemeldet) {\n    senden = true;\n    grund = 'flut';\n    s.gesamt.flutGemeldet = true;\n    s.gesamt.mails += 1;\n  }\n}\nif (!senden) s.gesamt.unterdrueckt += 1;\n\n// ── 4. Mail bauen ────────────────────────────────────────────────────────\nconst zeit = new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' });\nconst esc = (x) => String(x ?? '')\n  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n\nlet betreff;\nif (grund === 'flut') {\n  betreff = '[' + cfg.instanz + '] Fehlerflut, weitere Meldungen werden unterdrückt';\n} else if (v.anzahl === 1) {\n  betreff = '[' + cfg.instanz + '] Störung: ' + d.workflowName;\n} else {\n  betreff = '[' + cfg.instanz + '] Störung (inzwischen ' + v.anzahl + 'x): ' + d.workflowName;\n}\n\nlet hinweis = '';\nif (grund === 'flut') {\n  hinweis = '<p style=\"margin:0;font-size:14px;color:#8a3b00;\">In diesem Zeitfenster wurden '\n    + 'bereits ' + cfg.max_mails_pro_fenster + ' Fehlermails verschickt. Weitere Meldungen '\n    + 'werden unterdrückt; der vollständige Umfang ist in n8n unter \"Executions\" sichtbar.</p>';\n} else if (v.anzahl > 1) {\n  const seit = new Date(v.beginn).toLocaleTimeString('de-DE', { timeZone: 'Europe/Berlin' });\n  hinweis = '<p style=\"margin:0;font-size:14px;color:#8a3b00;\">Dieser Fehler ist seit ' + seit\n    + ' bereits <strong>' + v.anzahl + '-mal</strong> aufgetreten. Gemeldet wird beim '\n    + cfg.schwellen.join('., ') + '. Vorkommen.</p>';\n}\n\nconst zeile = (k, wert) =>\n  '<tr><td style=\"padding:8px 12px;border-bottom:1px solid #e2e8f0;color:#718096;'\n  + 'font-weight:600;width:150px;vertical-align:top;\">' + k + '</td>'\n  + '<td style=\"padding:8px 12px;border-bottom:1px solid #e2e8f0;color:#2d3748;\">'\n  + wert + '</td></tr>';\n\nconst html = '<!DOCTYPE html><html><head><meta charset=\"utf-8\"></head>'\n  + '<body style=\"margin:0;padding:24px;background:#f4f5f7;'\n  + 'font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;\">'\n  + '<table role=\"presentation\" width=\"640\" cellpadding=\"0\" cellspacing=\"0\" '\n  + 'style=\"background:#fff;border-radius:10px;overflow:hidden;\">'\n  + '<tr><td style=\"background:#1a1a2e;padding:20px 24px;color:#fff;font-size:18px;font-weight:700;\">'\n  + 'Automatische Fehlermeldung'\n  + '<div style=\"color:#a0aec0;font-size:13px;font-weight:400;padding-top:4px;\">'\n  + esc(cfg.instanz) + ' &middot; ' + zeit + '</div></td></tr>'\n  + '<tr><td style=\"padding:24px;\">'\n  + '<div style=\"background:#fff8f0;border-left:4px solid #ed8936;padding:16px 20px;'\n  + 'border-radius:0 6px 6px 0;margin-bottom:20px;\">'\n  + '<p style=\"margin:0 0 8px 0;font-size:15px;font-weight:700;color:#c05621;\">Was ist passiert?</p>'\n  + '<p style=\"margin:0 0 8px 0;font-size:14px;color:#4a5568;line-height:1.6;\">Der Ablauf '\n  + '<strong>' + esc(d.workflowName) + '</strong> ist abgebrochen. Bereits abgelegte Dokumente '\n  + 'sind dadurch nicht beschädigt, die betroffene Verarbeitung wurde aber nicht zu Ende '\n  + 'geführt.</p>' + hinweis + '</div>'\n  + '<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" '\n  + 'style=\"background:#f7fafc;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;\">'\n  + zeile('Ablauf', esc(d.workflowName))\n  + zeile('Fehlerhafter Node', '<strong>' + esc(d.node) + '</strong>')\n  + zeile('Fehlerart', esc(d.art))\n  + zeile('Meldung', '<span style=\"color:#c53030;font-family:monospace;\">' + esc(d.meldung) + '</span>')\n  + zeile('Auslöser', esc(d.modus))\n  + zeile('Workflow-ID', '<code>' + esc(d.workflowId) + '</code>')\n  + zeile('Execution', d.executionUrl\n      ? '<a href=\"' + esc(d.executionUrl) + '\" style=\"color:#3182ce;\">In n8n öffnen &rarr;</a>'\n      : '<span style=\"color:#a0aec0;\">nicht verfügbar (Trigger-Fehler)</span>')\n  + '</table>'\n  + '<p style=\"font-size:12px;color:#718096;margin:16px 0 6px 0;font-weight:600;\">Stack Trace</p>'\n  + '<pre style=\"margin:0;padding:12px;background:#1a1a2e;color:#a0aec0;border-radius:6px;'\n  + 'font-size:11px;line-height:1.5;white-space:pre-wrap;word-break:break-all;\">'\n  + esc(d.stack) + '</pre>'\n  + '</td></tr>'\n  + '<tr><td style=\"padding:14px 24px;background:#f7fafc;border-top:1px solid #e2e8f0;'\n  + 'font-size:11px;color:#a0aec0;\">Erzeugt von <strong>fehler-melden</strong>. Empfänger ist '\n  + 'die Betreiber-Adresse aus dem Konfigurations-Node, nicht der Besitzer des Dokuments.'\n  + '</td></tr></table></body></html>';\n\nreturn [{\n  json: {\n    senden,\n    grund,\n    signatur,\n    anzahl: v.anzahl,\n    unterdrueckt_im_fenster: s.gesamt.unterdrueckt,\n    toEmail: cfg.admin_email,\n    fromEmail: cfg.absender,\n    subject: betreff,\n    html\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        608,
+        0
+      ],
+      "id": "e1000000-0000-4000-8000-000000000004",
+      "name": "Auswerten"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-fehler-send",
+              "leftValue": "={{ $json.senden }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        828,
+        0
+      ],
+      "id": "e1000000-0000-4000-8000-000000000005",
+      "name": "Mail nötig?"
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $json.fromEmail }}",
+        "toEmail": "={{ $json.toEmail }}",
+        "subject": "={{ $json.subject }}",
+        "html": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1068,
+        -80
+      ],
+      "id": "e1000000-0000-4000-8000-000000000006",
+      "name": "E-Mail senden",
+      "credentials": {
+        "smtp": {
+          "id": "Xg7X6xVdrbSzUQ4o",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Einstellungen holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Konfiguration": {
+      "main": [
+        [
+          {
+            "node": "Auswerten",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auswerten": {
+      "main": [
+        [
+          {
+            "node": "Mail nötig?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mail nötig?": {
+      "main": [
+        [
+          {
+            "node": "E-Mail senden",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Einstellungen holen": {
+      "main": [
+        [
+          {
+            "node": "Konfiguration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Berlin"
+  },
+  "id": "pwFehlerMelden01",
+  "tags": [
+    {
+      "id": "Qr4w77Oluq8Hi4TJ",
+      "name": "paperless"
+    }
+  ]
+}

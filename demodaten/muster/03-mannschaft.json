@@ -1,0 +1,18 @@
+[
+  {
+    "_kommentar": "Zwei Kostensaetze mit Gueltigkeitsdatum: Die Nachkalkulation rechnet mit dem Satz, der am Tag der Erfassung galt.",
+    "anmeldename": "m.muster",
+    "vorname": "Maria",
+    "nachname": "Muster",
+    "kostensaetze": [
+      { "vor_tagen": 420, "satz": "44.00" },
+      { "vor_tagen": 75, "satz": "48.00", "notiz": "Tarifrunde" }
+    ]
+  },
+  {
+    "_kommentar": "Ohne Kostensatz - das gibt es im Betrieb (Azubi), und die Auswertung meldet es als Vorbehalt statt es zu verschweigen.",
+    "anmeldename": "a.lehrling",
+    "vorname": "Anton",
+    "nachname": "Lehrling"
+  }
+]

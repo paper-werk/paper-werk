@@ -1,0 +1,502 @@
+{
+  "name": "handschrift-ocr-titel-mistral",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## handschrift-ocr-titel-mistral: Auftragsannahme\n\nVon Paperless aufgerufen (Ablauf \"Handschrift-OCR + Titel (Mistral)\").\nMacht die Arbeit nicht selbst: Er prueft, ob er zustaendig ist,\nmarkiert das Dokument als in Bearbeitung, laesst\n`sub-handschrift-ocr-titel` arbeiten und raeumt danach auf.\n\n**EIN AUFTRAG IST EIN TAG.** Dieser Workflow kennt genau eine\nBedingung: haengt `handschrift-scannen` am Dokument? Er weiss NICHT,\nwie es dorthin kam, und das ist Absicht. Es gibt zwei Wege:\n\n  1. **Ueber den Scanner.** Am Geraet waehlt man als Ziel den\n     Unterordner `handschrift-scannen` im consume-Verzeichnis.\n     `PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS=true` macht aus dem\n     Ordnernamen den gleichnamigen Tag. **Ordnername = Tagname** -\n     wer den einen umbenennt, muss den anderen mitbenennen.\n  2. **Von Hand.** Ein Mensch setzt den Tag an einem vorhandenen\n     Dokument.\n\nBeide enden im selben Zustand, also braucht es hier keine\nFallunterscheidung. In Paperless braucht es dafuer aber ZWEI\nAusloeser auf demselben Tag: beim Scanner-Weg haengt der Tag schon\nam fertig angelegten Dokument (Typ 2), von Hand gesetzt ist es eine\nAenderung (Typ 3). Mit nur einem der beiden fehlt ein halber\nAnwendungsfall.\n\n**Paperless loest aus, n8n entscheidet.** Paperless ruft nur den\nWebhook mit `doc_url`, ohne `remove_tags`-Aktion und ohne Mitwirkung\nan einem Protokoll. Alles Weitere entscheidet dieser Workflow anhand\ndes Dokumentzustands, den er ohnehin liest.\n\n**Zwei Waechter, beide enden OHNE MELDUNG**, ohne Fehler und ohne Mail:\n1. *Keine Dokument-ID im Aufruf.* Ein Consumption-Ausloeser (Typ 1)\n   ruft ohne `doc_url` auf, weil das Dokument noch nicht existiert.\n   Fuer den\n   Scanner-Weg ist deshalb Typ 2 richtig und Typ 1 falsch.\n2. *Kommando-Tag haengt nicht dran.* Dann rief uns ein fremder\n   Ausloeser. Ein Kunde darf Ausloeser hinzufuegen, ohne dass etwas\n   kaputtgeht; schlimmstenfalls entstehen Leerlaeufe. Wer einen\n   neuen Ausloeser baut, der wirklich arbeiten soll, laesst ihn den\n   Tag setzen (Zuweisungs-Aktion VOR dem Webhook) statt hier eine\n   zweite Bedingung einzubauen.\n\n**Das pending-Tag `wird bearbeitet` verhindert die Schleife.** Der Sub\nschreibt Text und Titel zurueck; diese Aenderung ruft uns erneut auf.\nWaechter 2 sieht dann das pending-Tag und steigt aus. Der\nPaperless-Ausloeser filtert zusaetzlich per `filter_has_not_tags`\ndarauf; das ist nur Optimierung, die Garantie liegt hier.\nDer Tag steht rund eine Sekunde am Dokument, dann sind Kommando und\npending gemeinsam weg.\n\n**KEIN Ergebnis-Tag.** Anders als beim Belegversand ist Wiederholen\nhier erwuenscht: wem der Titel nicht gefaellt, der setzt\n`handschrift-scannen` erneut. Eine dauerhafte Sperre waere falsch.\n\n**NICHT ZU VERWECHSELN mit `titel-erzeugen-mistral`.** Der erzeugt\nnur einen Titel aus dem vorhandenen Tesseract-Text und laeuft\nautomatisch fuer alles, was `scan*` heisst und im\nconsume-WURZELverzeichnis landet. Dieser hier ersetzt zusaetzlich\nden Text durch Mistral-OCR, teurer und nur fuer Handschrift und\nschlechte Scans gedacht. Deshalb schliesst der andere Ablauf\nDokumente mit `handschrift-scannen` ausdruecklich aus: ein\nScanner-Auswurf heisst in beiden Faellen `scan_nnn.pdf`, und ohne\nden Ausschluss wuerden beide gleichzeitig einen Titel erzeugen.\n\n**FEHLERFALL: `wird bearbeitet` bleibt absichtlich haengen.** Wuerde\nder Workflow es beim Abbruch entfernen, waere das wieder eine\nDokumentaenderung, und weil das Kommando-Tag noch dranhaengt, entstuende\neine Endlos-Wiederholung. Das Dokument steht also sichtbar\nauf \"wird bearbeitet\", `fehler-melden` schickt eine Mail, und\n`paperless-health-check` meldet taeglich, was laenger als zwei Stunden\nso haengt. Aufraeumen ist eine Menschenentscheidung.",
+        "height": 1180,
+        "width": 520
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        -300
+      ],
+      "id": "ha000000-0000-4000-8000-000000000000",
+      "name": "Doku"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "handschrift-ocr-titel-mistral",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a1000001-0001-4000-8000-000000000001",
+      "name": "Webhook",
+      "webhookId": "a1000001-0001-4000-8000-0000000000aa"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "pwSubEinstell01",
+          "mode": "list",
+          "cachedResultName": "sub-einstellungen"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "ha000000-0000-4000-8000-0000000000c1",
+      "name": "Einstellungen holen"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Die Instanzwerte kommen aus sub-einstellungen (Knoten davor) und\n// werden in der Data Table pw_config gepflegt (n8n-Oberfläche,\n// \"Data Tables\"). HIER stehen nur die FACHLICHEN Werte dieses Workflows.\nconst werte = $('Einstellungen holen').first().json;\nconst pw = (key) => {\n  const v = werte[key];\n  if (v === undefined || String(v).trim() === '') {\n    throw new Error('pw_config: \"' + key + '\" fehlt oder ist leer; in der n8n-Oberfläche unter \"Data Tables\" eintragen.');\n  }\n  return v;\n};\n\nreturn [{\n  json: {\n    // ── aus pw_config ──\n    paperless_url: pw('paperless_url'),\n\n    // ── fachlich, hier zu pflegen ──\n    // tag_kommando: der Auftrag. Er entsteht auf zwei Wegen: Der\n    //   Scanner schreibt nach consume/handschrift-scannen/ (Paperless macht\n    //   aus dem Unterordner einen Tag), oder ein Mensch setzt ihn von Hand.\n    //   DER NAME IST ZUGLEICH EIN ORDNERNAME auf dem Scanner-Ziel: wer ihn\n    //   ändert, muss den Ordner mitbenennen.\n    // tag_pending:  global, nicht workflow-spezifisch. Solange er hängt,\n    //   ruht JEDE Verarbeitung dieses Dokuments (\"ein Dokument, eine\n    //   Verarbeitung\").\n    tag_kommando: 'handschrift-scannen',\n    tag_pending: 'wird bearbeitet'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "a1000001-0001-4000-8000-0000000000c2",
+      "name": "Konfiguration"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Dokument-ID aus dem Paperless-Aufruf holen.\n//\n// WIRFT BEWUSST NICHT, wenn keine dabei ist: Ein Auslöser vom Typ\n// \"Consumption\" ruft ohne doc_url auf, weil das Dokument zu dem\n// Zeitpunkt noch gar nicht existiert; Paperless setzt den Platzhalter\n// dann auf einen leeren String. Ein Kunde darf so einen Auslöser\n// anlegen, ohne dass Fehlermails entstehen. Der Workflow endet dann ohne Meldung.\nconst body = $('Webhook').first().json.body ?? {};\nlet id = body.doc_id ?? body.id;\nif (!id && body.doc_url) {\n  id = String(body.doc_url).match(/\\/documents\\/(\\d+)/)?.[1];\n}\n\nreturn [{\n  json: Object.assign({}, $('Konfiguration').first().json, {\n    doc_id: id ? Number(id) : null,\n    grund: id ? null : 'Aufruf ohne Dokument-ID, vermutlich ein Auslöser, der schon beim Einzug feuert. Nichts zu tun.'\n  })\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "ha000000-0000-4000-8000-000000000002",
+      "name": "Auftrag lesen"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-hat-doc-id",
+              "leftValue": "={{ $json.doc_id !== null }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        832,
+        0
+      ],
+      "id": "ha000000-0000-4000-8000-000000000003",
+      "name": "Dokument-ID dabei?"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/tags/?page_size=500",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1040,
+        -96
+      ],
+      "id": "a1000001-0001-4000-8000-000000000011",
+      "name": "Tags laden",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/documents/{{ $('Auftrag lesen').first().json.doc_id }}/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1248,
+        -96
+      ],
+      "id": "ha000000-0000-4000-8000-000000000004",
+      "name": "Dokument laden",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Wächter 2: Ist dieser Workflow für den Aufruf überhaupt zuständig?\n//\n// Beide Prüfungen schauen auf den ECHTEN Dokumentzustand, nicht auf\n// eine Absprache mit Paperless. Damit kann eine geänderte\n// Auslöser-Konfiguration nichts kaputtmachen; sie erzeugt höchstens\n// Leerläufe.\nconst cfg = $('Konfiguration').first().json;\nconst doc_id = $('Auftrag lesen').first().json.doc_id;\nconst alleTags = $('Tags laden').first().json.results || [];\nconst doc = $input.first().json;\n\nconst finde = (name) => alleTags.find(t => String(t.name).toLowerCase() === String(name).toLowerCase());\nconst kommando = finde(cfg.tag_kommando);\nconst pending = finde(cfg.tag_pending);\n\n// Fehlende Tags sind ein echter Einrichtungsfehler und keine\n// Zuständigkeitsfrage; hier wird geworfen.\nif (!kommando) throw new Error('Tag \"' + cfg.tag_kommando + '\" existiert nicht in Paperless; bitte anlegen.');\nif (!pending) throw new Error('Tag \"' + cfg.tag_pending + '\" existiert nicht in Paperless; bitte anlegen (das globale \"wird bearbeitet\").');\n\nconst hat = (t) => (doc.tags || []).includes(t.id);\n\nlet grund = null;\nif (!hat(kommando)) {\n  grund = 'Dokument trägt \"' + cfg.tag_kommando + '\" nicht; der Aufruf kam von einem anderen Auslöser. Nichts zu tun.';\n} else if (hat(pending)) {\n  grund = 'Dokument ist als \"' + cfg.tag_pending + '\" markiert; es läuft bereits eine Verarbeitung. Nichts zu tun.';\n}\n\nreturn [{\n  json: Object.assign({}, cfg, {\n    doc_id,\n    tag_kommando_id: kommando.id,\n    tag_pending_id: pending.id,\n    zustaendig: grund === null,\n    grund\n  })\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1456,
+        -96
+      ],
+      "id": "ha000000-0000-4000-8000-000000000005",
+      "name": "Zuständigkeit prüfen"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-zustaendig",
+              "leftValue": "={{ $json.zustaendig }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1664,
+        -96
+      ],
+      "id": "ha000000-0000-4000-8000-000000000006",
+      "name": "Zuständig?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/documents/bulk_edit/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { documents: [$json.doc_id], method: 'modify_tags', parameters: { add_tags: [$json.tag_pending_id], remove_tags: [] } } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1872,
+        -192
+      ],
+      "id": "ha000000-0000-4000-8000-000000000007",
+      "name": "Als \"wird bearbeitet\" markieren",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "pwHandschrKern01",
+          "mode": "list",
+          "cachedResultName": "sub-handschrift-ocr-titel"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "doc_id": "={{ $('Zuständigkeit prüfen').first().json.doc_id }}",
+            "paperless_url": "={{ $('Konfiguration').first().json.paperless_url }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "doc_id",
+              "displayName": "doc_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number"
+            },
+            {
+              "id": "paperless_url",
+              "displayName": "paperless_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        2080,
+        -192
+      ],
+      "id": "ha000000-0000-4000-8000-000000000008",
+      "name": "Arbeit ausführen"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Konfiguration').first().json.paperless_url }}/api/documents/bulk_edit/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { documents: [$('Zuständigkeit prüfen').first().json.doc_id], method: 'modify_tags', parameters: { add_tags: [], remove_tags: [$('Zuständigkeit prüfen').first().json.tag_kommando_id, $('Zuständigkeit prüfen').first().json.tag_pending_id] } } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2288,
+        -192
+      ],
+      "id": "ha000000-0000-4000-8000-000000000009",
+      "name": "Abschließen: beide Tags weg",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Kommando- und pending-Tag sind in EINEM Aufruf weggeräumt. Der\n// Zustand danach trägt keinen der beiden; der Paperless-Auslöser\n// greift also nicht erneut, und der Lauf ist zu Ende.\nreturn [{ json: {\n  status: 'erledigt',\n  doc_id: $('Zuständigkeit prüfen').first().json.doc_id\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2496,
+        -192
+      ],
+      "id": "ha000000-0000-4000-8000-00000000000a",
+      "name": "Fertig"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ende ohne Meldung: kein Fehler, keine Mail. Der Aufruf war schlicht\n// nicht für uns. Er taucht in der n8n-Liste als erfolgreicher Lauf auf,\n// und der Grund steht im Ergebnis; damit ist nachvollziehbar, WARUM\n// nichts passiert ist, ohne dass jemand aufgeschreckt wird.\nreturn [{ json: {\n  status: 'übersprungen',\n  grund: $json.grund ?? 'unbekannt',\n  doc_id: $json.doc_id ?? null\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1872,
+        96
+      ],
+      "id": "ha000000-0000-4000-8000-00000000000b",
+      "name": "Nichts zu tun"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Einstellungen holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Einstellungen holen": {
+      "main": [
+        [
+          {
+            "node": "Konfiguration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Konfiguration": {
+      "main": [
+        [
+          {
+            "node": "Auftrag lesen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auftrag lesen": {
+      "main": [
+        [
+          {
+            "node": "Dokument-ID dabei?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dokument-ID dabei?": {
+      "main": [
+        [
+          {
+            "node": "Tags laden",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Nichts zu tun",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tags laden": {
+      "main": [
+        [
+          {
+            "node": "Dokument laden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dokument laden": {
+      "main": [
+        [
+          {
+            "node": "Zuständigkeit prüfen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zuständigkeit prüfen": {
+      "main": [
+        [
+          {
+            "node": "Zuständig?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zuständig?": {
+      "main": [
+        [
+          {
+            "node": "Als \"wird bearbeitet\" markieren",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Nichts zu tun",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Als \"wird bearbeitet\" markieren": {
+      "main": [
+        [
+          {
+            "node": "Arbeit ausführen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Arbeit ausführen": {
+      "main": [
+        [
+          {
+            "node": "Abschließen: beide Tags weg",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Abschließen: beide Tags weg": {
+      "main": [
+        [
+          {
+            "node": "Fertig",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "errorWorkflow": "pwFehlerMelden01"
+  },
+  "tags": [
+    {
+      "id": "Qr4w77Oluq8Hi4TJ",
+      "name": "paperless"
+    }
+  ],
+  "id": "mDZK9QYMEmXcZbnn"
+}

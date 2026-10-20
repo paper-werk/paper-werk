@@ -1,0 +1,359 @@
+{
+  "name": "sub-handschrift-ocr-titel",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## sub-handschrift-ocr-titel\n\nReine Funktion:  doc_id  ->  (neuer OCR-Text, neuer Titel)\n\nErsetzt den Tesseract-Text durch Mistral-OCR und erzeugt daraus\neinen Titel. Fuer Handschrift und schlechte Scans.\n\nKENNT KEINE TAGS und keine Ausloeser. Wer ihn ruft, wann quittiert\nwird und was bei einem Fehlschlag passiert, ist Sache des\nAufrufers handschrift-ocr-titel-mistral.\n\nEINGABE ist definiert, nicht durchgereicht: doc_id (Zahl) und\npaperless_url (Text). Damit haengt der Sub nicht davon ab, was im\nDatenstrom des Aufrufers zufaellig oben liegt.\n\nWARUM paperless_url UEBERGEBEN und nicht selbst nachschlagen: Der\nAufrufer hat die Einstellungen ohnehin schon geholt. Ein zweiter\nAufruf von sub-einstellungen waere nicht nur unnoetig, er erzeugt\nauch einen zweiten Eintrag in der Ausfuehrungsliste, vier statt\nzwei pro Lauf. Konfiguration wird nach unten durchgereicht, nicht\nauf jeder Ebene neu beschafft.\n\nMUSS VEROEFFENTLICHT SEIN, wie jeder sub-Workflow. n8n 2.x holt\nbeim Aufruf die veroeffentlichte Fassung und bricht sonst mit\n\"Workflow is not active and cannot be executed\" ab. Aktiv heisst\nhier nicht erreichbar: ohne eigenen Trigger ist er nur ueber\nseinen Aufrufer zu erreichen.\n\nFEHLERFALL: Wirft einfach. Der Aufrufer laesst das pending-Tag\ndann stehen, das Dokument bleibt sichtbar in Bearbeitung.\n\nKEIN eigener errorWorkflow: sonst meldet jede Stoerung zweimal -\neinmal aus dem Sub, einmal aus dem Aufrufer. n8n reicht die Meldung ohnehin durch.",
+        "height": 520,
+        "width": 460
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -700,
+        -220
+      ],
+      "id": "hk000000-0000-4000-8000-000000000000",
+      "name": "Doku"
+    },
+    {
+      "parameters": {
+        "inputSource": "workflowInputs",
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "doc_id",
+              "type": "number"
+            },
+            {
+              "name": "paperless_url",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -220,
+        0
+      ],
+      "id": "hk000000-0000-4000-8000-000000000001",
+      "name": "Aufruf"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Der Aufrufer uebergibt doc_id als DEFINIERTE Eingabe (siehe Trigger),\n// nicht als beliebigen Datenstrom ('passthrough'). Sonst haengt es davon\n// ab, was zufaellig im Strom liegt, und ein Umbau im Aufrufer bricht\n// den Sub.\n//\n// Die Fallbacks bleiben fuer den Handtest im Editor: dort kann man ein\n// Item mit doc_url oder id pinnen.\nconst inp = $('Aufruf').first().json ?? {};\nconst src = inp.body ?? inp;\nlet id = src.doc_id ?? src.id;\nif (!id && src.doc_url) {\n  id = String(src.doc_url).match(/\\/documents\\/(\\d+)/)?.[1];\n}\nif (!id) throw new Error('Keine doc_id im Aufruf. Erwartet wird die Eingabe doc_id (Zahl).');\nreturn [{ json: { id: Number(id) } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        616,
+        0
+      ],
+      "id": "a1000001-0001-4000-8000-000000000002",
+      "name": "Extract ID"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Aufruf').first().json.paperless_url }}/api/documents/{{ $('Extract ID').first().json.id }}/download/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        816,
+        0
+      ],
+      "id": "a1000001-0001-4000-8000-000000000003",
+      "name": "Download",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Datei als Base64-Data-URL fuer Mistral OCR aufbereiten.\n// PDFs -> document_url, Bilder -> image_url (Mistral akzeptiert beides als Base64).\nconst id = $('Extract ID').first().json.id;\nconst binaryKey = Object.keys($input.first().binary ?? {})[0];\nif (!binaryKey) throw new Error('Kein Binary vom Download erhalten');\nconst meta = $input.first().binary[binaryKey];\nconst buffer = await this.helpers.getBinaryDataBuffer(0, binaryKey);\nconst mime = meta.mimeType || 'application/octet-stream';\nconst isPdf = mime === 'application/pdf' || (meta.fileName || '').toLowerCase().endsWith('.pdf');\nconst dataUrl = `data:${mime};base64,${buffer.toString('base64')}`;\nconst document = isPdf\n  ? { type: 'document_url', document_url: dataUrl }\n  : { type: 'image_url', image_url: dataUrl };\nreturn [{ json: { id, mistralOcrBody: { model: 'mistral-ocr-latest', document } } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1016,
+        0
+      ],
+      "id": "a1000001-0001-4000-8000-000000000004",
+      "name": "Build OCR request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mistral.ai/v1/ocr",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.mistralOcrBody }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1216,
+        0
+      ],
+      "id": "a1000001-0001-4000-8000-000000000005",
+      "name": "Mistral OCR",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "OHN0lQXlD0SCttqZ",
+          "name": "Header Auth Mistral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Markdown aller Seiten zu einem Text zusammenfuegen.\nconst id = $('Extract ID').first().json.id;\nconst pages = $json.pages ?? [];\nconst content = pages.map((p) => (p.markdown || '').trim()).filter(Boolean).join('\\n\\n');\nif (!content) throw new Error('Mistral OCR lieferte keinen Text: ' + JSON.stringify($json).slice(0, 300));\nreturn [{ json: { id, content, pages_processed: pages.length } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1416,
+        0
+      ],
+      "id": "a1000001-0001-4000-8000-000000000006",
+      "name": "Extract text"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Titel-Prompt aus dem neuen OCR-content bauen (wie create-title-mistral).\nconst doc = $('Extract text').first().json;\n\nconst SYSTEM_PROMPT = `Du bist ein Assistent zur Verbesserung von Dokumenttiteln in einem Paperless-Dokumentenmanagementsystem. Aus dem OCR-Volltext eines Dokuments und seinem aktuellen Titel erzeugst du einen prägnanten, sprechenden neuen Titel.\n\nRegeln für den neuen Titel:\n- 1 bis 5 Wörter, idealerweise unter 40 Zeichen\n- Sprache: passend zum Dokumentinhalt (in der Regel Deutsch)\n- Enthält das Wesentliche in dieser Reihenfolge: Absender/Korrespondent · Vorgang/Thema · ggf. eindeutige Referenz (Rechnungs-Nr., Aktenzeichen, Vertragsnummer); ein Datum nur, wenn es für die Wiederfindbarkeit unverzichtbar ist\n- Keine Anführungszeichen, kein Punkt am Ende, keine Dateiendung, keine Aufzählungszeichen\n- Keine generischen Wörter wie „Dokument\", „Schreiben\", „PDF\", „Scan\"\n- Eigennamen, Firmen- und Produktnamen exakt übernehmen (auch Groß-/Kleinschreibung)\n- Wenn der aktuelle Titel bereits gut beschreibend und prägnant ist, gib ihn unverändert zurück\n- Bei unklarem Inhalt: gib den besten möglichen Versuch ab; verweigere nicht und entschuldige dich nicht\n\nAntworte ausschließlich mit gültigem JSON in genau diesem Format und ohne weitere Felder:\n{\"new_title\": \"...\"}`;\n\nconst contentExcerpt = (doc.content ?? '').slice(0, 6000);\n\nconst userContent = `Aktueller Titel: (leer)\n\nOCR-Volltext (Auszug, ggf. gekürzt):\n---\n${contentExcerpt}\n---\n\nErzeuge nun den neuen Titel und antworte als JSON.`;\n\nreturn [{\n  json: {\n    id: doc.id,\n    mistralBody: {\n      model: 'mistral-small-latest',\n      response_format: { type: 'json_object' },\n      temperature: 0.2,\n      max_tokens: 200,\n      messages: [\n        { role: 'system', content: SYSTEM_PROMPT },\n        { role: 'user', content: userContent },\n      ],\n    },\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1616,
+        0
+      ],
+      "id": "a1000001-0001-4000-8000-000000000007",
+      "name": "Prepare title"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mistral.ai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.mistralBody }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1816,
+        0
+      ],
+      "id": "a1000001-0001-4000-8000-000000000008",
+      "name": "Mistral title",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "OHN0lQXlD0SCttqZ",
+          "name": "Header Auth Mistral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function extractNewTitle(raw) {\n  if (raw == null) return null;\n\n  if (typeof raw === 'string') {\n    const s = raw.trim();\n    if (s === '') return null;\n    try {\n      const parsed = JSON.parse(s);\n      return extractNewTitle(parsed);\n    } catch {\n      return s;\n    }\n  }\n\n  if (typeof raw !== 'object') return null;\n\n  if (typeof raw.new_title === 'string' && raw.new_title.trim() !== '') {\n    return raw.new_title.trim();\n  }\n\n  if (raw.message && typeof raw.message === 'object') {\n    const t = extractNewTitle(raw.message.content);\n    if (t) return t;\n  }\n\n  if (Array.isArray(raw.choices) && raw.choices.length > 0) {\n    for (const c of raw.choices) {\n      const t = extractNewTitle(c?.message?.content);\n      if (t) return t;\n    }\n  }\n\n  if (typeof raw.content === 'string') {\n    const t = extractNewTitle(raw.content);\n    if (t) return t;\n  }\n\n  return null;\n}\n\nconst src = $('Extract text').first().json;\nconst aiItem = $input.first().json;\nlet title = extractNewTitle(aiItem);\n\nif (!title) {\n  throw new Error('Konnte keinen new_title aus Mistral-Antwort extrahieren: ' + JSON.stringify(aiItem).slice(0, 500));\n}\n\ntitle = title\n  .replace(/[\\r\\n\\t]+/g, ' ')\n  .replace(/\\s{2,}/g, ' ')\n  .replace(/^[\"']|[\"']$/g, '')\n  .replace(/\\.$/g, '')\n  .trim();\n\nif (title.length > 200) title = title.slice(0, 200).trim();\n\nreturn [{ json: { id: src.id, content: src.content, title } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        0
+      ],
+      "id": "a1000001-0001-4000-8000-000000000009",
+      "name": "Extract new title"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $('Aufruf').first().json.paperless_url }}/api/documents/{{ $json.id }}/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { content: $json.content, title: $json.title } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2216,
+        0
+      ],
+      "id": "a1000001-0001-4000-8000-000000000010",
+      "name": "PATCH content + title",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0paJTBFFPS9HhU1N",
+          "name": "Header Auth paperless"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ergebnis an den aufrufenden Protokoll-Workflow. Bewusst ohne jeden\n// Tag-Bezug; dieser Workflow weiss nicht, dass es Auslöser-Tags gibt.\nconst t = $('Extract new title').first().json;\nconst x = $('Extract text').first().json;\nreturn [{ json: { id: t.id, titel: t.title, seiten: x.pages_processed } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2576,
+        0
+      ],
+      "id": "hk000000-0000-4000-8000-000000000009",
+      "name": "Ergebnis"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Extract ID": {
+      "main": [
+        [
+          {
+            "node": "Download",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download": {
+      "main": [
+        [
+          {
+            "node": "Build OCR request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build OCR request": {
+      "main": [
+        [
+          {
+            "node": "Mistral OCR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral OCR": {
+      "main": [
+        [
+          {
+            "node": "Extract text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract text": {
+      "main": [
+        [
+          {
+            "node": "Prepare title",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare title": {
+      "main": [
+        [
+          {
+            "node": "Mistral title",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral title": {
+      "main": [
+        [
+          {
+            "node": "Extract new title",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract new title": {
+      "main": [
+        [
+          {
+            "node": "PATCH content + title",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PATCH content + title": {
+      "main": [
+        [
+          {
+            "node": "Ergebnis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aufruf": {
+      "main": [
+        [
+          {
+            "node": "Extract ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Berlin"
+  },
+  "id": "pwHandschrKern01",
+  "tags": [
+    {
+      "updatedAt": "2026-05-09T07:14:32.932Z",
+      "createdAt": "2026-05-09T07:14:32.932Z",
+      "id": "Qr4w77Oluq8Hi4TJ",
+      "name": "paperless"
+    }
+  ]
+}
