@@ -120,7 +120,7 @@ services:
     #
     # Selbst bauen statt laden: APP_BAUEN=ja in instanz.conf nimmt
     # compose.build.yml dazu (Quelltext aus PAPER_WERK_APP_CONTEXT).
-    image: ${PAPER_WERK_APP_IMAGE:-ghcr.io/paper-werk/paper-werk-app}:${PAPER_WERK_APP_VERSION:-0.1.15}
+    image: ${PAPER_WERK_APP_IMAGE:-ghcr.io/paper-werk/paper-werk-app}:${PAPER_WERK_APP_VERSION:-0.2.0}
     restart: unless-stopped
     depends_on:
       paper-werk-db:
