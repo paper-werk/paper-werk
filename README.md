@@ -5,6 +5,12 @@ Aufträge, Rechnungen und Mahnungen, Leistungserfassung und Controlling, mit
 E-Rechnung nach EN 16931 (Factur-X, XRechnung). Die Anwendung selbst liegt in
 [paper-werk-app](https://github.com/paper-werk/paper-werk-app).
 
+Das Video zeigt in rund 1:40 Minuten den Weg vom Angebot bis zur bezahlten
+Rechnung, mit Vorführdaten:
+
+<!-- PLATZHALTER: durch die Adresse des hochgeladenen Videos ersetzen -->
+VIDEO-URL
+
 Dieses Repo installiert und betreibt Paper-Werk. Es startet die Anwendung
 zusammen mit den Diensten, an die sie angebunden ist:
 
