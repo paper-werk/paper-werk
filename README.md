@@ -8,8 +8,9 @@ E-Rechnung nach EN 16931 (Factur-X, XRechnung). Die Anwendung selbst liegt in
 Das Video zeigt in rund 1:40 Minuten den Weg vom Angebot bis zur bezahlten
 Rechnung, mit Vorführdaten:
 
-<!-- PLATZHALTER: durch die Adresse des hochgeladenen Videos ersetzen -->
-VIDEO-URL
+
+https://github.com/user-attachments/assets/10f5a2a4-6c86-4e36-b083-2a85bd9b3790
+
 
 Dieses Repo installiert und betreibt Paper-Werk. Es startet die Anwendung
 zusammen mit den Diensten, an die sie angebunden ist:
