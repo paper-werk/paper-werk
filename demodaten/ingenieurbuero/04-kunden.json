@@ -3,7 +3,7 @@
     "_kommentar": "Öffentlicher Auftraggeber: Die Käuferreferenz ist hier die Leitweg-ID (BT-10), ohne die eine E-Rechnung abgewiesen wird. Für ein Ingenieurbüro der Regelfall - Kommunen und Landratsämter sind die Hauptkundschaft.",
     "nummer": "K-2001", "name": "Stadt Musterstadt",
     "strasse": "Rathausplatz 1", "plz": "84032", "ort": "Musterstadt",
-    "email": "poststelle@musterstadt.example", "telefon": "0871 900-0",
+    "email": "poststelle@musterstadt.example", "telefon": "0871 0900-0",
     "zahlungsziel_tage": 30, "kaeuferreferenz": "991-12345-67",
     "zustellweg": "xrechnung",
     "leute": [
@@ -11,18 +11,18 @@
         "_kommentar": "Der Hauptansprechpartner wandert beim Anlegen eines Belegs als Zeile 'z. Hd.' ins Empfängerfeld, und seine Adresse hat beim Versand Vorrang vor der Poststelle.",
         "anrede": "frau", "vorname": "Anna", "nachname": "Bergmaier",
         "funktion": "Tiefbauamt, Sachgebiet Kanal", "ist_standard": true,
-        "email": "a.bergmaier@musterstadt.example", "telefon": "0871 900-412"
+        "email": "a.bergmaier@musterstadt.example", "telefon": "0871 0900-412"
       }
     ]
   },
   {
     "nummer": "K-2002", "name": "Kreisbau Entwicklungs GmbH",
-    "strasse": "Gewerbering 12", "plz": "84028", "ort": "Landkreis",
+    "strasse": "Gewerbering 12", "plz": "84032", "ort": "Musterstadt",
     "email": "buchhaltung@kreisbau.example",
     "zahlungsziel_tage": 21, "skonto_prozent": "2.00", "skonto_tage": 10
   },
   {
-    "_kommentar": "Der Fall, wegen dem es mehrere Adressen gibt: Das Fachamt sitzt in Musterstadt, die Rechnungsprüfung in Landshut.",
+    "_kommentar": "Der Fall, wegen dem es mehrere Adressen gibt: Fachamt und Rechnungsprüfung sitzen an verschiedenen Anschriften.",
     "_kommentar_flach": "Hier steht bewusst KEINE Straße auf oberster Ebene. Sie würde als Standardanschrift angelegt und stünde dann neben den beiden darunter - drei Adressen für einen Betrieb, der zwei hat.",
     "nummer": "K-2003", "name": "Landratsamt Musterstadt",
     "email": "poststelle@lra-musterstadt.example",
@@ -32,12 +32,12 @@
       {
         "verwendung": "rechnung", "bezeichnung": "Rechnungsprüfung",
         "zusatz": "Zentrale Rechnungsprüfung",
-        "strasse": "Am Alten Viehmarkt 3", "plz": "84028", "ort": "Landshut",
+        "strasse": "Bahnhofstraße 3", "plz": "84032", "ort": "Musterstadt",
         "ist_standard": true
       },
       {
         "verwendung": "post", "bezeichnung": "Fachamt Wasserwirtschaft",
-        "strasse": "Veitsbucher Straße 2", "plz": "84032", "ort": "Musterstadt"
+        "strasse": "Schulstraße 2", "plz": "84032", "ort": "Musterstadt"
       }
     ],
     "leute": [
@@ -46,7 +46,7 @@
         "nachname": "Ostermeier", "funktion": "Wasserwirtschaft",
         "ist_standard": true,
         "email": "m.ostermeier@lra-musterstadt.example",
-        "telefon": "0871 408-2215"
+        "telefon": "0871 0408-2215"
       },
       {
         "anrede": "frau", "vorname": "Sabine", "nachname": "Wenzl",
@@ -57,21 +57,21 @@
   },
   {
     "nummer": "K-2004", "name": "Huber Bau GmbH & Co. KG",
-    "strasse": "Industriestraße 45", "plz": "84030", "ort": "Ergolding",
-    "email": "info@huber-bau.example", "telefon": "0871 77 44 0",
+    "strasse": "Industriestraße 45", "plz": "84032", "ort": "Musterstadt",
+    "email": "info@huber-bau.example", "telefon": "0871 0774-0",
     "zahlungsziel_tage": 14,
     "_kommentar_steuerfall": "Bewusst OHNE Steuerfall § 13b, obwohl Huber Bau ein Bauunternehmen ist. Planungs- und Überwachungsleistungen eines Ingenieurbüros sind in der Regel keine Bauleistungen im Sinne von § 13b UStG. Seit es den Steuerfall gibt, verlangt er 0 % an allen Positionen; die Rechnungen an Huber Bau in 06-vorgeschichte.json rechnen aber mit 19 %, samt Skonto in 12-zahlungen.json.",
     "leute": [
       {
         "anrede": "herr", "vorname": "Josef", "nachname": "Huber",
         "funktion": "Geschäftsführung", "ist_standard": true,
-        "email": "j.huber@huber-bau.example", "telefon": "0171 2233445"
+        "email": "j.huber@huber-bau.example", "telefon": "0171 0233445"
       }
     ]
   },
   {
     "nummer": "K-2005", "name": "Wohnbau Isartal eG",
-    "strasse": "Ludwigsplatz 9", "plz": "84034", "ort": "Landshut",
+    "strasse": "Marktplatz 9", "plz": "84032", "ort": "Musterstadt",
     "email": "verwaltung@wohnbau-isartal.example",
     "zahlungsziel_tage": 21
   },
