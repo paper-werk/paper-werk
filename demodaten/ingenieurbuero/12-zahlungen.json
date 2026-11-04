@@ -32,7 +32,7 @@
     "kunde": "Wohnbau Isartal eG",
     "vor_tagen": 250,
     "zuordnungen": [
-      { "rechnung": "Schlussrechnung {jahr}-105 - Beweissicherung Nachbarbebauung Ludwigsplatz" }
+      { "rechnung": "Schlussrechnung {jahr}-105 - Beweissicherung Nachbarbebauung Marktplatz" }
     ]
   },
   {
@@ -165,7 +165,7 @@
     "kunde": "Huber Bau GmbH & Co. KG",
     "vor_tagen": 9,
     "zuordnungen": [
-      { "rechnung": "Schlussrechnung {jahr}-123 - Baugrundberatung Hallenanbau Ergolding" }
+      { "rechnung": "Schlussrechnung {jahr}-123 - Baugrundberatung Hallenanbau Gewerbering" }
     ]
   },
   {

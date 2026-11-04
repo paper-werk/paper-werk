@@ -163,7 +163,7 @@
   {
     "nummer": "{jahr}-105",
     "jahr_vor_tagen": 274,
-    "bezeichnung": "Beweissicherung Nachbarbebauung Ludwigsplatz",
+    "bezeichnung": "Beweissicherung Nachbarbebauung Marktplatz",
     "kunde": "Wohnbau Isartal eG",
     "abgeschlossen": true,
     "auftrag": {
@@ -195,7 +195,7 @@
     "rechnungen": [
       {
         "vor_tagen": 274,
-        "betreff": "Schlussrechnung {nummer} - Beweissicherung Nachbarbebauung Ludwigsplatz",
+        "betreff": "Schlussrechnung {nummer} - Beweissicherung Nachbarbebauung Marktplatz",
         "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
         "positionen_aus_auftrag": true,
         "leistung_von_tagen": 81,
@@ -883,7 +883,7 @@
   {
     "nummer": "{jahr}-123",
     "jahr_vor_tagen": 20,
-    "bezeichnung": "Baugrundberatung Hallenanbau Ergolding",
+    "bezeichnung": "Baugrundberatung Hallenanbau Gewerbering",
     "kunde": "Huber Bau GmbH & Co. KG",
     "abgeschlossen": true,
     "auftrag": {
@@ -915,7 +915,7 @@
     "rechnungen": [
       {
         "vor_tagen": 20,
-        "betreff": "Schlussrechnung {nummer} - Baugrundberatung Hallenanbau Ergolding",
+        "betreff": "Schlussrechnung {nummer} - Baugrundberatung Hallenanbau Gewerbering",
         "kopftext": "für die von uns erbrachten Leistungen berechnen wir Ihnen wie folgt:",
         "positionen_aus_auftrag": true,
         "leistung_von_tagen": 61,
