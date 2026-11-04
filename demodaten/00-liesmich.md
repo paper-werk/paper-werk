@@ -64,16 +64,16 @@ Wer mehr braucht, hängt zwei Listen an:
   "adressen": [
     { "verwendung": "rechnung", "bezeichnung": "Rechnungsprüfung",
       "zusatz": "Zentrale Rechnungsprüfung",
-      "strasse": "Am Alten Viehmarkt 3", "plz": "84028", "ort": "Landshut",
+      "strasse": "Bahnhofstraße 3", "plz": "84032", "ort": "Musterstadt",
       "ist_standard": true },
-    { "verwendung": "post", "strasse": "Veitsbucher Straße 2",
+    { "verwendung": "post", "strasse": "Schulstraße 2",
       "plz": "84032", "ort": "Musterstadt" }
   ],
   "leute": [
     { "anrede": "herr", "titel": "Dr.", "vorname": "Michael",
       "nachname": "Ostermeier", "funktion": "Wasserwirtschaft",
       "ist_standard": true, "email": "m.ostermeier@lra.example",
-      "telefon": "0871 408-2215" }
+      "telefon": "0871 0408-2215" }
   ]
 }
 ```
