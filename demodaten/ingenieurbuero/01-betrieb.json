@@ -4,6 +4,7 @@
   "strasse": "Am Gewerbepark 5",
   "plz": "84032",
   "ort": "Musterstadt",
+  "absenderzeile": "Ingenieurbüro Muster GmbH - Am Gewerbepark 5 - 84032 Musterstadt",
   "telefon": "0871 0123-0",
   "email": "info@example.invalid",
   "steuernummer": "143/123/45678",
