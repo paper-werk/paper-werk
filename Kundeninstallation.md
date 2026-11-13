@@ -612,6 +612,14 @@ PAPER_WERK_CERT_PATH=/pfad/zum/ordner   # nur bei datei
 `.env.app` und `.env.paperless` bleiben, wie sie sind: Alle Adressen, die App
 und Paperless kennen müssen, leitet `compose.https.yml` aus dem Namen ab.
 
+Für Einstellungen gilt deshalb diese Aufteilung: Was sich je Installation
+unterscheidet (Passwörter, Namen, Firmendaten, Anmeldung über Microsoft),
+steht in den `.env`-Dateien. Was aus dem HTTPS-Betrieb zwingend folgt
+(Hostnamen, CSRF-Herkunft, sichere Cookies, Proxy-Header, Protokoll der
+Rückleitadresse), setzt `compose.https.yml`. Diese Werte haben Vorrang vor
+den gleichnamigen Einträgen in `.env.app` und `.env.paperless`; die
+Vorlagen markieren die betroffenen Variablen.
+
 In `einstellungen/setup.conf` muss `PAPERLESS_CONTAINER` stehen. Ohne ihn kann das Setup Paperless im HTTPS-Betrieb nicht
 erreichen; es warnt dann und bricht ab.
 
