@@ -55,6 +55,32 @@ solange `PAPERLESS_DISABLE_REGULAR_LOGIN` nicht gesetzt ist; `/admin/` von
 Paperless ist in jedem Fall erreichbar. Geprüft wurde das mit einer
 Discovery-Adresse auf einen nicht existierenden Host.
 
+## Schutz der Anmeldung in paper-werk-app
+
+Die App sperrt die Anmeldung mit Passwort und drosselt die Schnittstelle.
+Die Werte stehen in `.env.app`; die Vorgaben passen für den Betrieb.
+
+| Variable | Vorgabe | Wirkung |
+|---|---|---|
+| `DJANGO_ANMELDUNG_VERSUCHE` | 5 | Fehlversuche je Benutzername und IP-Adresse bis zur Sperre |
+| `DJANGO_ANMELDUNG_SPERRMINUTEN` | 15 | Dauer der Sperre |
+| `DJANGO_API_RATE` | 600/min | Anfragen je Konto an die Schnittstelle |
+| `DJANGO_API_FEHLVERSUCHE` | 10/min | ungültige API-Schlüssel je IP-Adresse bis zur Sperre |
+| `DJANGO_HINTER_PROXY` | False | `X-Forwarded-Proto` und `X-Forwarded-For` auswerten |
+
+- **`DJANGO_HINTER_PROXY`** setzt `compose.https.yml` auf `True`. Ohne den
+  Wert sieht die App hinter Caddy jede Anfrage als HTTP von der Adresse des
+  Proxys: Speichern scheitert an der CSRF-Prüfung, und die Anmeldesperre
+  zählt alle Besucher zusammen. Ohne Proxy darf der Wert nicht gesetzt
+  sein, weil der Client die beiden Header sonst selbst setzen kann.
+- **Sperre aufheben.** Ein Administrator löscht den Eintrag unter
+  Verwaltung > Anmeldesperren. Hat sich der einzige Administrator
+  ausgesperrt:
+  `./paper-werk compose exec paper-werk-app uv run --no-dev python manage.py axes_reset_username <name>`.
+- **Externe Quellen.** Die Content-Security-Policy erlaubt Skripte,
+  Stylesheets, Schriften und Bilder nur vom eigenen Server. Eine Anpassung,
+  die etwas von außen lädt, muss die Quelle in `SECURE_CSP` ergänzen.
+
 ## Betrieb mit TOTP
 
 - **Uhrzeit.** Weicht die Serveruhr ab, gilt kein Code mehr. NTP prüfen.

@@ -58,6 +58,9 @@ services:
       DJANGO_ALLOWED_HOSTS: paper-werk-app,${PAPER_WERK_HOSTNAME}
       DJANGO_CSRF_TRUSTED_ORIGINS: https://${PAPER_WERK_HOSTNAME}:8000
       DJANGO_COOKIE_SECURE: "True"
+      # Caddy steht davor: X-Forwarded-Proto und X-Forwarded-For gelten
+      # (SECURE_PROXY_SSL_HEADER, Anmeldesperre, API-Drosselung).
+      DJANGO_HINTER_PROXY: "True"
       # Die Rückleitadresse für Microsoft wird mit https gebaut.
       SSO_HTTP_PROTOKOLL: https
       # Wohin der Verweis "Archiv" in der Rechnungsliste zeigt.
