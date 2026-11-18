@@ -49,3 +49,23 @@ def test_snapshot_zeit_aus_kopia():
     assert snapshot_zeit("2026-10-17T21:00:03.556012603Z") == snapshot_zeit("2026-10-17T23:00:03+02:00")
     assert snapshot_zeit("2026-10-17T21:00:03Z") - snapshot_zeit("2026-10-17T20:00:03Z") == 3600
     assert snapshot_zeit("kaputt") is None
+
+
+def _images(datei: str):
+    """Images einer Compose-Datei, ``${VAR:-vorgabe}`` durch die Vorgabe ersetzt."""
+    text = (WURZEL / "compose" / datei).read_text(encoding="utf-8")
+    roh = re.findall(r"(?m)^    image: (\S+)", text)
+    return [re.sub(r"\$\{[A-Z0-9_]+:-([^}]*)\}", r"\1", bild) for bild in roh]
+
+
+def test_jedes_image_hat_eine_feste_version():
+    """Ohne Tag oder mit ``latest`` zöge jedes ``pull`` auch eine neue
+    Hauptversion. Ausnahme ist n8n mit ``stable`` (siehe Kommentar in der
+    Vorlage). compose.build.yml ist ausgenommen: Das selbst gebaute Image kommt
+    aus keiner Registry."""
+    bilder = _images("docker-compose.yml") + _images("compose.https.yml")
+    assert len(bilder) >= 10
+    for bild in bilder:
+        name, _, tag = bild.rpartition(":")
+        assert name and "/" not in tag, bild
+        assert tag not in ("", "latest"), bild

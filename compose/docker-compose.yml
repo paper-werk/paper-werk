@@ -44,7 +44,11 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
 
   paperless:
-    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    # Festgelegt auf die Minor-Version, weil Paperless beim Start die
+    # Datenbank migriert und ein Rückweg nur über die Sicherung geht;
+    # Patch-Versionen kommen mit jedem pull. Anheben in dieser Datei,
+    # festhalten je Installation mit PAPER_WERK_PAPERLESS_VERSION in .env.
+    image: ghcr.io/paperless-ngx/paperless-ngx:${PAPER_WERK_PAPERLESS_VERSION:-3.4}
     restart: unless-stopped
     depends_on:
       - paperless-db
@@ -179,7 +183,11 @@ services:
       - caddy-config:/config
 
   n8n:
-    image: docker.n8n.io/n8nio/n8n:latest
+    # stable statt einer Version, weil n8n wöchentlich Minor-Versionen mit
+    # Sicherheitskorrekturen herausgibt und keine Minor-Tags anbietet. stable
+    # folgt auch einer neuen Hauptversion. Festhalten je Installation mit
+    # PAPER_WERK_N8N_VERSION in .env.
+    image: docker.n8n.io/n8nio/n8n:${PAPER_WERK_N8N_VERSION:-stable}
     restart: unless-stopped
     environment:
       - N8N_SECURE_COOKIE=false
@@ -187,29 +195,32 @@ services:
       - N8N_REINSTALL_MISSING_PACKAGES=true
       - N8N_DEFAULT_LOCALE=de-DE
       - GENERIC_TIMEZONE=Europe/Berlin
-      - WEBHOOK_URL=http://n8n:5678/webhook
-      - N8N_SERVER_URL=http://n8n:5678
+      - N8N_WEBHOOK_URL=http://n8n:5678/webhook
     ports:
       - 5678:5678
     volumes:
       - n8ndata:/home/node/.n8n
 
   kopia:
-    image: kopia/kopia:latest
+    # Minor-Version wie bei Paperless; festhalten mit PAPER_WERK_KOPIA_VERSION.
+    image: kopia/kopia:${PAPER_WERK_KOPIA_VERSION:-0.23}
     hostname: ${KOPIA_HOSTNAME:-paper-werk-kopia}
     restart: unless-stopped
     ports:
       - 51515:51515
     env_file:
       - .env.kopia
+    environment:
+      # Über die Umgebung statt als Argument, damit das Passwort nicht in der
+      # Prozessliste des Hosts steht. In docker inspect bleibt es sichtbar.
+      KOPIA_SERVER_USERNAME: ${KOPIA_SERVER_USERNAME}
+      KOPIA_SERVER_PASSWORD: ${KOPIA_SERVER_PASSWORD}
     command:
       - server
       - start
       - --disable-csrf-token-checks
       - --insecure
       - --address=0.0.0.0:51515
-      - --server-username=${KOPIA_SERVER_USERNAME}
-      - --server-password=${KOPIA_SERVER_PASSWORD}
     volumes:
       - kopia-config:/app/config
       - kopia-cache:/app/cache

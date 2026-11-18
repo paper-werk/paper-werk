@@ -99,7 +99,10 @@ Im Web-UI: Repository → Select Storage Type → **S3-Compatible Storage**:
 
 Prefix leer lassen, dann das Repository-Passwort vergeben
 (`KOPIA_PASSWORD` in `.env.kopia`). Ohne dieses Passwort sind die Daten im
-Bucket nicht lesbar.
+Bucket nicht lesbar. Das Passwort zusätzlich außerhalb des Servers aufbewahren,
+etwa in einem Passwortmanager: `.env.kopia` liegt nur auf dem Server und im
+Repository selbst, nach einem Ausfall des Servers also an keiner lesbaren
+Stelle.
 
 Auf der Kommandozeile:
 
@@ -279,12 +282,14 @@ sonst setzt Kopia Vorgaben und lädt den Cache neu.
 
    ```bash
    ./paper-werk compose stop kopia
+   # <kopia-image>: dasselbe Image wie im Stack, etwa kopia/kopia:0.23
+   # (docker inspect -f '{{.Config.Image}}' <kopia-container>)
    docker run --rm --hostname <kopia-hostname> -e KOPIA_PASSWORD \
      -v <projekt>_kopia-config:/app/config -v <projekt>_kopia-cache:/app/cache \
-     kopia/kopia:latest repository disconnect
+     <kopia-image> repository disconnect
    docker run --rm --hostname <kopia-hostname> -e KOPIA_PASSWORD \
      -v <projekt>_kopia-config:/app/config -v <projekt>_kopia-cache:/app/cache \
-     kopia/kopia:latest repository connect s3 \
+     <kopia-image> repository connect s3 \
        --bucket=<bucket> --endpoint=<endpoint> \
        --access-key=<key-id> --secret-access-key=<key> \
        --cache-directory=/app/cache --description=<bisherige-description>
