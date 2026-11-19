@@ -61,7 +61,6 @@ from faktura.models import (
     Katalogposition,
     Kontaktweg,
     Kontakt,
-    Leistungsart,
     Projekt,
     Rechnungsart,
     Textbaustein,
@@ -69,23 +68,11 @@ from faktura.models import (
     Zahlung,
     Zahlungszuordnung,
 )
+from faktura.models import einheit as einheit_tabelle
 from faktura.models.steuersatz import vorgabe as steuersatz_vorgabe
 
 #: Wohin einspielen.sh das gebündelte Bestandsverzeichnis gelegt hat.
 BUENDEL = '/tmp/demodaten.json'
-
-#: Woran eine Einheit ihre Erfassungsart erkennen lässt.
-#
-# Nur ein Rückfall: Steht die Leistung im Katalog, gilt dessen Art. Frei
-# getextete Positionen stehen dort nicht, und ohne Art zeigte die
-# Erfassungsmaske ein Mengenfeld statt zweier Uhrzeiten.
-ART_JE_EINHEIT = {
-    'std': Leistungsart.ZEIT,
-    'h': Leistungsart.ZEIT,
-    'psch': Leistungsart.PAUSCHALE,
-    'pauschal': Leistungsart.PAUSCHALE,
-}
-
 
 def abbruch(text):
     """Beendet den Lauf mit einer Meldung.
@@ -206,11 +193,10 @@ class Lader:
                 nummer=e.get('nummer', ''),
                 bezeichnung=e['bezeichnung'],
                 langtext=e.get('langtext', ''),
-                einheit=e.get('einheit', 'Stk'),
+                einheit=self.einheit(e.get('einheit', 'Stk')),
                 einzelpreis=Decimal(e['preis']),
                 steuersatz=e.get('steuersatz', steuersatz_vorgabe()),
                 kontierbar=e.get('kontierbar', True),
-                art=e.get('art', Leistungsart.MENGE),
             )
             self.katalog[position.bezeichnung] = position
 
@@ -627,7 +613,7 @@ class Lader:
                 beleg=beleg, bezeichnung=p['leistung'],
                 menge=Decimal(p['menge']), einheit=position.einheit,
                 einzelpreis=position.einzelpreis,
-                steuersatz=position.steuersatz, art=position.art,
+                steuersatz=position.steuersatz,
                 auftragsposition=position,
             )
         beleg = self.festschreiben(beleg, self.tage_zurueck(angaben))
@@ -677,8 +663,9 @@ class Lader:
         )
         for p in positionen:
             aus_katalog = self.katalog.get(p['leistung'])
-            einheit = p.get(
-                'einheit', aus_katalog.einheit if aus_katalog else 'Stk')
+            einheit = (self.einheit(p['einheit']) if 'einheit' in p
+                       else aus_katalog.einheit if aus_katalog
+                       else einheit_tabelle.STUECK)
             faktura_services.position_hinzufuegen(
                 beleg=beleg, bezeichnung=p['leistung'],
                 langtext=aus_katalog.langtext if aus_katalog else '',
@@ -687,7 +674,6 @@ class Lader:
                     p['preis'] if 'preis' in p else aus_katalog.einzelpreis),
                 steuersatz=(aus_katalog.steuersatz if aus_katalog
                             else steuersatz_vorgabe()),
-                art=self.art(p['leistung'], einheit),
                 auftragsposition=p.get('auftragsposition'),
             )
         return self.festschreiben(beleg, tage)
@@ -729,7 +715,7 @@ class Lader:
                 beleg=beleg, bezeichnung=position.bezeichnung,
                 menge=position.menge, einheit=position.einheit,
                 einzelpreis=position.einzelpreis,
-                steuersatz=position.steuersatz, art=position.art,
+                steuersatz=position.steuersatz,
                 auftragsposition=position,
             )
 
@@ -765,12 +751,12 @@ class Lader:
         beleg.nachtrag_zu = auftrag
         beleg.save()
         for p in angaben['positionen']:
-            einheit = p.get('einheit', self.einheit_aus_katalog(p['leistung']))
+            einheit = (self.einheit(p['einheit']) if 'einheit' in p
+                       else self.einheit_aus_katalog(p['leistung']))
             faktura_services.position_hinzufuegen(
                 beleg=beleg, bezeichnung=p['leistung'],
                 menge=Decimal(p['menge']), einheit=einheit,
                 einzelpreis=Decimal(p['preis']), steuersatz=steuersatz_vorgabe(),
-                art=self.art(p['leistung'], einheit),
             )
         return self.festschreiben(beleg, tage)
 
@@ -808,7 +794,7 @@ class Lader:
                                               f['leistung'])
                         if 'leistung' in f else None),
                     bezeichnung=f['bezeichnung'],
-                    einheit=f.get('einheit', 'Stk'),
+                    einheit=self.einheit(f.get('einheit', 'Stk')),
                     menge=Decimal(f['menge']),
                     einkaufspreis=Decimal(f['einkaufspreis']),
                     # Was der Betrieb selbst trägt: eine Nachanalyse nach
@@ -971,7 +957,18 @@ class Lader:
 
     def einheit_aus_katalog(self, bezeichnung):
         aus_katalog = self.katalog.get(bezeichnung)
-        return aus_katalog.einheit if aus_katalog else 'Stk'
+        return aus_katalog.einheit if aus_katalog else einheit_tabelle.STUECK
+
+    @staticmethod
+    def einheit(text):
+        """UN/ECE-Code zur Einheit der Datei ("Std", "pausch" oder ein
+        Code); Abbruch bei einer unbekannten."""
+        code = einheit_tabelle.code_zum_text(text)
+        if not code:
+            abbruch(f'Einheit "{text}" ist unbekannt. Erlaubt sind die '
+                    f'Anzeigetexte der Einheiten, gängige Schreibweisen wie '
+                    f'"Std" und UN/ECE-Codes.')
+        return code
 
     def person(self, anmeldename):
         if anmeldename not in self.leute:
@@ -1001,13 +998,6 @@ class Lader:
         if auftrag is None:
             return None
         return auftrag.positionen.filter(bezeichnung=bezeichnung).first()
-
-    def art(self, bezeichnung, einheit):
-        aus_katalog = self.katalog.get(bezeichnung)
-        if aus_katalog:
-            return aus_katalog.art
-        return ART_JE_EINHEIT.get(
-            (einheit or '').strip().lower(), Leistungsart.MENGE)
 
     # -- Datumsangaben, immer relativ zu heute -------------------------------
 
