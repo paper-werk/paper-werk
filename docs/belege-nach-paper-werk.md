@@ -8,7 +8,7 @@ dort **kein zweites PDF** bekommt.
 ```
 Dokument kommt in Paperless an (Scan, Mail, Upload)
    │
-   ├─ Tag "rechnung-erkennen" ruft  rechnung-parsen
+   ├─ manueller Start „Rechnungsfelder erkennen" ruft  rechnung-parsen
    │     → fragt zuerst paper-werk: steckt eine E-Rechnung (XML) im PDF?
    │         ja:   Felder aus dem XML, Tag "E-Rechnung", kein Mistral
    │         nein: Mistral liest Nettobetrag, Gesamtbetrag, Rechnungsnummer,
@@ -82,18 +82,17 @@ gibt keinen Tag `E-Rechnung`.
 
 Füllt an einer Rechnung die Felder für den Übertrag: erst aus einer
 E-Rechnung (siehe oben), sonst per Mistral aus dem OCR-Volltext. Trigger:
-Tag `rechnung-erkennen`, Ablauf „Rechnungsfelder erkennen" →
-`POST /webhook/rechnung-parsen` mit `{"doc_url": "{doc_url}"}`. Die
+Ablauf „Rechnungsfelder erkennen", manuell gestartet →
+`POST /webhook/rechnung-parsen` mit `{"doc_url": "{{doc_url}}"}`. Die
 Rechnungsfelder stehen als Vorgabe im Workflow; ein `felder`-Objekt wie bei
 `felder-erkennen-mistral` geht auch.
 
-**Gebaut wie `handschrift-ocr-titel-mistral`:** Der Workflow prüft am
-Dokument selbst, ob er zuständig ist, setzt `wird bearbeitet`, schreibt die
-Felder und räumt am Ende `rechnung-erkennen` und `wird bearbeitet` in
-einem Aufruf weg (bei einer E-Rechnung kommt ihr Tag dazu). Paperless räumt
-nichts selbst weg. So löst das Zurückschreiben der Felder den Ablauf nicht
-erneut aus. Bricht ein Lauf ab, bleibt `wird bearbeitet` stehen: Fehler
-beheben, den Tag entfernen, `rechnung-erkennen` neu setzen.
+**Gebaut wie `handschrift-ocr-titel-mistral`:** Trägt das Dokument schon
+`wird bearbeitet`, endet der Lauf ohne Meldung. Sonst setzt der Workflow
+`wird bearbeitet`, schreibt die Felder und entfernt den Tag am Ende wieder
+(bei einer E-Rechnung kommt ihr Tag dazu). Bricht ein Lauf ab, bleibt
+`wird bearbeitet` stehen: Fehler beheben, den Tag entfernen, den Ablauf
+manuell neu starten.
 
 ### felder-erkennen-mistral
 
@@ -206,7 +205,7 @@ Gruppe vergeben, nicht am Benutzer: Der nächste Workflow braucht dieselben.
 
 | Auslöser | ruft |
 | --- | --- |
-| Tag `rechnung-erkennen` gesetzt | `rechnung-parsen` |
+| manueller Start „Rechnungsfelder erkennen" | `rechnung-parsen` |
 | Tag `Paper-Werk senden` gesetzt | `paper-werk-eingangsrechnung` |
 
 Beide stehen fertig im Starterpaket (`workflows.json`, Abläufe

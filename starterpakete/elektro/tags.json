@@ -1,6 +1,6 @@
 [
   {
-    "_kommentar": "ERGÄNZUNG zum Basispaket, keine Kopie; siehe die Begründung in document_types.json dieses Ordners. Besonders wichtig hier: Die Trigger-Tags des Basispakets (angebot-offen, buchungsrelevant, duo-senden, mistral-ocr, vertrag, titel-verbessern, entities-extrahieren) sind an n8n-Workflows gekoppelt und stehen deshalb NUR dort. Ein zweites Mal aufgeführt wären sie beim nächsten Workflow-Umbau die veraltete der beiden Listen.",
+    "_kommentar": "ERGÄNZUNG zum Basispaket, keine Kopie; siehe die Begründung in document_types.json dieses Ordners. Besonders wichtig hier: Die Tags des Basispakets, an denen n8n-Workflows hängen (angebot-offen, buchungsrelevant, Steuer-senden, handschrift-scannen) sind an n8n-Workflows gekoppelt und stehen deshalb NUR dort. Ein zweites Mal aufgeführt wären sie beim nächsten Workflow-Umbau die veraltete der beiden Listen.",
     "name": "Baustelle",
     "color": "#e07a5f"
   },

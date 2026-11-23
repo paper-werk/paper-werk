@@ -58,29 +58,8 @@
     "color": "#f77f00"
   },
   {
-    "_kommentar": "KOMMANDO für handschrift-ocr-titel-mistral. Kommandos sind Verben und sagen dem Nutzer, was passiert. --- ACHTUNG, DIESER NAME IST ZUGLEICH EIN ORDNERNAME: PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS=true vergibt Tags nach dem Unterordner im consume-Verzeichnis. Der Scanner schreibt Handschrift-Scans nach consume/handschrift-scannen/, und daraus entsteht dieser Tag. Wer ihn umbenennt, muss den Ordner mitbenennen und umgekehrt, sonst legt Paperless beim nächsten Scan still einen zweiten Tag an, und der Ablauf feuert nicht mehr. --- Wird vom n8n-Workflow entfernt, nicht von Paperless, zusammen mit 'wird bearbeitet' in einem einzigen Aufruf, damit der Zustand danach keinen von beiden trägt und der Auslöser nicht erneut greift.",
+    "_kommentar": "Tag für handschrift-ocr-titel-mistral. --- ACHTUNG, DIESER NAME IST ZUGLEICH EIN ORDNERNAME: PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS=true vergibt Tags nach dem Unterordner im consume-Verzeichnis. Der Scanner schreibt Handschrift-Scans nach consume/handschrift-scannen/, und daraus entsteht dieser Tag. Wer ihn umbenennt, muss den Ordner mitbenennen und umgekehrt, sonst legt Paperless beim nächsten Scan still einen zweiten Tag an, und der Ablauf feuert nicht mehr. Von Hand gesetzt löst der Tag nichts aus; für vorhandene Dokumente den Ablauf 'Handschrift-OCR + Titel (Mistral)' manuell starten. --- Wird vom n8n-Workflow entfernt, nicht von Paperless, zusammen mit 'wird bearbeitet' in einem einzigen Aufruf.",
     "name": "handschrift-scannen",
     "color": "#9d4edd"
-  },
-  {
-    "_kommentar": "KOMMANDO für vertragsdaten-erkennen-mistral. Der Name sagt, was passiert. Auslöser ist ausschließlich 'Dokument geändert' mit diesem Tag: bewusst tag-gegatet und NICHT an den Dokumenttyp 'Vertrag' gehängt, denn jeder Lauf schickt OCR-Text in die Mistral-Cloud (Kosten + DSGVO); das soll eine bewusste Handlung bleiben.",
-    "name": "vertrag-erkennen",
-    "color": "#457b9d"
-  },
-  {
-    "_kommentar": "KOMMANDO für titel-erzeugen-mistral. Bewusst tag-gegatet statt für jedes Dokument (Mistral-Cloud-Kosten + DSGVO). --- AUSNAHME: Dokumente, die direkt im consume-Wurzelverzeichnis landen und 'scan*' heißen, kommen vom Scanner und tragen einen nichtssagenden Namen wie scan_00378.pdf. Für die löst der Ablauf 'Titel erzeugen (Mistral)' auch ohne diesen Tag aus; er wird dort nie gesetzt, und die Entfernungs-Aktion läuft ins Leere. Der Tag bleibt für den Fall 'ein Mensch will einen besseren Titel'.",
-    "name": "titel-verbessern",
-    "color": "#e9c46a"
-  },
-  {
-    "name": "entities-extrahieren",
-    "color": "#e9c46a"
-  },
-  {
-    "_kommentar": "Setzen, damit Mistral Betraege, Nummer, Datum und Projektnummer aus der Rechnung liest. Verschwindet von allein, sobald die Erkennung durch ist.",
-    "name": "rechnung-erkennen",
-    "color": "#c98a2b",
-    "is_inbox_tag": false,
-    "matching_algorithm": 0
   }
 ]

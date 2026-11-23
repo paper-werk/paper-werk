@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## ✏️ Titel-Verbesserung (Mistral)\n\n**Zweck:** Erzeugt aus OCR-Volltext + altem Titel einen prägnanten neuen Dokumenttitel (1 bis 5 Wörter) per Mistral und schreibt ihn zurück nach Paperless.\n\n**Trigger:** Paperless-Workflow → `POST /webhook/create-title-mistral` mit Body `{\"doc_url\": \"{doc_url}\"}` (alternativ `doc_id`).\n\n**Prompt/Regeln:** im Node „Prepare Input\" (Systemprompt); dort auch Modell (`mistral-small-latest`) und Volltext-Kürzung (6000 Zeichen) anpassen.\n\n**Fehlerverhalten:** Fehlende Dokument-ID oder unbrauchbare Mistral-Antwort ⇒ Abbruch mit klarer Meldung. Mistral-Aufruf hat 60 s Timeout.\n\n⚠️ OCR-Text geht an die Mistral-Cloud (DSGVO/AVV beachten).",
+        "content": "## ✏️ Titel-Verbesserung (Mistral)\n\n**Zweck:** Erzeugt aus OCR-Volltext + altem Titel einen prägnanten neuen Dokumenttitel (1 bis 5 Wörter) per Mistral und schreibt ihn zurück nach Paperless.\n\n**Trigger:** Paperless-Ablauf „Titel erzeugen (Mistral)\", manuell gestartet oder beim Scanner-Auswurf `scan*` → `POST /webhook/titel-erzeugen-mistral` mit Body `{\"doc_url\": \"{{doc_url}}\"}` (alternativ `doc_id`).\n\n**Prompt/Regeln:** im Node „Prepare Input\" (Systemprompt); dort auch Modell (`mistral-small-latest`) und Volltext-Kürzung (6000 Zeichen) anpassen.\n\n**Fehlerverhalten:** Fehlende Dokument-ID oder unbrauchbare Mistral-Antwort ⇒ Abbruch mit klarer Meldung. Mistral-Aufruf hat 60 s Timeout.\n\n⚠️ OCR-Text geht an die Mistral-Cloud (DSGVO/AVV beachten).",
         "height": 480,
         "width": 640
       },

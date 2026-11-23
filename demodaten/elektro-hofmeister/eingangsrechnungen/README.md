@@ -12,14 +12,15 @@ eingebettetem XML), zwei gewöhnliche PDF. Jede zeigt eine andere Wendung.
 | `zellner-2026-117.pdf` | PDF | **Kein XML.** Mistral liest den Text, auch „Ihr Projekt 2026-028". Braucht den Korrespondenten „Gerüstbau Zellner". |
 | `wittmann-881502.pdf` | PDF | **Ohne Projekt.** Lagermaterial. Die Rechnung kommt unkontiert an, 235,40 € stehen in paper-werk als offener Rest. |
 
-Alle fünf laufen von `rechnung-erkennen` bis „Paper-Werk gesendet“ durch,
+Alle fünf laufen von „Rechnungsfelder erkennen“ bis „Paper-Werk gesendet“ durch,
 mit dem Ergebnis aus der Tabelle.
 
 ## Ablauf in der Vorführung
 
 1. PDF in Paperless ablegen (Consume-Ordner oder Hochladen).
-2. Tag `rechnung-erkennen` setzen. Nach einigen Sekunden stehen die Felder
-   da; bei den E-Rechnungen zusätzlich der Tag `E-Rechnung`.
+2. Dokument markieren und in der Massenbearbeitung den Ablauf
+   „Rechnungsfelder erkennen (Mistral)“ starten. Nach einigen Sekunden
+   stehen die Felder da; bei den E-Rechnungen zusätzlich der Tag `E-Rechnung`.
 3. Gegenprüfen, fehlende Projektnummer oder Korrespondenten ergänzen.
 4. Tag `Paper-Werk senden` setzen. In paper-werk liegt die Eingangsrechnung mit
    Link zurück ins Archiv.
