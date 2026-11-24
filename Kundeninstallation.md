@@ -391,7 +391,7 @@ siehe [setup/README.md](setup/README.md#wie-die-inhalte-gepflegt-werden).
 „Header Auth paperless" in `einstellungen/n8n/credentials.json` (für die Workflows).
 Wer eine `credentials.json` von einer anderen Installation übernimmt, schleppt
 deren Token mit, und der passt nicht zur frischen Datenbank. Der Fehler ist
-still: Paperless feuert den Webhook und entfernt den Kommando-Tag, n8n
+still: Paperless feuert den Webhook, n8n
 scheitert mit `Authorization failed`, und am Dokument sieht man nur, dass
 nichts passiert ist. `apply.sh` warnt, wenn die beiden Werte
 auseinanderlaufen.
@@ -437,6 +437,16 @@ Spielt alle vier Module ein (paper-werk-app, Paperless-Starterpaket,
 n8n-Workflows, Kopia-Backup). Kann gefahrlos mehrfach laufen (idempotent) -
 legt nichts doppelt an und setzt insbesondere kein Passwort zurück.
 
+**Vorhandene Arbeitsabläufe in Paperless vorher löschen.** Das Modul
+paperless überspringt jeden Ablauf, dessen Name es in Paperless schon gibt,
+und aktualisiert ihn nicht. Stehen in Paperless noch Abläufe aus einem
+früheren Starterpaket, diese unter *Einstellungen → Arbeitsabläufe* löschen
+und `setup.sh` danach laufen lassen. Erst danach die Tags
+`titel-verbessern`, `entities-extrahieren`, `vertrag-erkennen` und
+`rechnung-erkennen` löschen, falls vorhanden. In umgekehrter Reihenfolge
+entfernt Paperless den Tag aus dem Filter des Auslösers, und der Ablauf
+feuert bei jeder Dokumentänderung.
+
 ---
 
 ## 6. Verifizieren
@@ -480,6 +490,9 @@ legt nichts doppelt an und setzt insbesondere kein Passwort zurück.
   beim ersten Lauf ist irreführend: Vor jedem „angelegt“ steht „… gibt es
   dort nicht; das Feld bleibt leer.“ Das ist nur der Blick ins Archiv vor
   dem Anlegen, kein Fehler. Maßgeblich ist „9 Einträge angelegt.“
+  Wer Abläufe wie „Titel erzeugen (Mistral)“ in der Massenbearbeitung manuell
+  starten soll, braucht in Paperless das Recht *Arbeitsabläufe: Anzeigen*
+  (`documents.view_workflow`).
 - **n8n** (`http://localhost:5678`): importierte Workflows sind sichtbar. Aktiv
   sind nur die vier Webhook-Workflows ohne Mailversand. Alles, was Mail
   verschickt, bleibt bewusst deaktiviert, bis Empfängeradressen und

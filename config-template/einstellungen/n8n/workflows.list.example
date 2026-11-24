@@ -59,8 +59,8 @@ n8n/sub-sevdesk-versand.json;true
 
 # ── Sofort aktiv: Webhook-Workflows ohne Mailversand ─────────────────────────
 # Diese vier tun von sich aus nichts. Sie warten auf den Aufruf des zugehörigen
-# Paperless-Arbeitsablaufs, und der hängt an einem Tag, den ein Mensch bewusst
-# setzt. Aktiv ausliefern ist hier das bessere Verhalten: ein INAKTIVER
+# Paperless-Arbeitsablaufs, den ein Mensch bewusst startet (manuell oder über
+# den Scanner-Unterordner). Aktiv ausliefern ist hier das bessere Verhalten: ein INAKTIVER
 # Webhook-Workflow beantwortet den Aufruf aus Paperless mit 404, und das steht
 # dann nur im Paperless-Log. Aktiv, aber mit noch fehlendem Mistral-API-Key,
 # schlägt der Lauf sichtbar in der n8n-Ausführungsliste fehl: derselbe Fehler,
@@ -120,6 +120,6 @@ n8n/steuer-beleg-monatslauf.json;false
 n8n/paper-werk-eingangsrechnung.json;true
 # rechnung-parsen füllt vorher die Felder dafür: erst E-Rechnung (paper-werk
 # liest das XML), sonst Mistral. Ausgelöst vom Paperless-Ablauf
-# "Rechnungsfelder erkennen" (Tag rechnung-erkennen). Dieselben
+# "Rechnungsfelder erkennen" (manuell gestartet). Dieselben
 # Voraussetzungen wie oben, dazu die Credential "Header Auth Mistral".
 n8n/rechnung-parsen.json;true

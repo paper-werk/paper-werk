@@ -353,14 +353,15 @@ Webhook → Einstellungen holen → Konfiguration → Auftrag lesen → [Wächte
                                                                      ↓
    [Wächter 2] ← Zuständigkeit prüfen ← Dokument laden ← Tags laden
         ↓
-   pending setzen → Arbeit (sub-…) → Kommando + pending in EINEM Aufruf weg
+   pending setzen → Arbeit (sub-…) → Tags in EINEM Aufruf weg
 ```
 
 **Wächter 1: keine Dokument-ID im Aufruf.** Ein Consumption-Auslöser ruft ohne
 `doc_url` auf, weil das Dokument zu dem Zeitpunkt noch nicht existiert
 (Paperless setzt den Platzhalter dann auf einen leeren String).
 
-**Wächter 2: Kommando-Tag hängt nicht dran, oder es läuft schon etwas.**
+**Wächter 2: es läuft schon etwas, oder bei Abläufen mit Kommando-Tag hängt
+der Tag nicht dran.**
 
 Beide steigen **still** aus: HTTP 200, Ergebnis `{"status": "übersprungen",
 "grund": "…"}`, kein Fehler, keine Mail. Der Grund steht im Ergebnis, damit
@@ -380,8 +381,9 @@ dann den pending-Tag und steigt aus.
 überlappende Läufe sähen beide „noch nicht erledigt". Bei den Versand-Workflows
 wäre das ein doppelt verschickter Beleg.
 
-Am Ende verschwinden Kommando- und pending-Tag in **einem** `bulk_edit`. Der
-Zustand danach trägt keinen von beiden, der Auslöser greift also nicht erneut.
+Am Ende verschwinden pending-Tag und, soweit vorhanden, Kommando-Tag in
+**einem** `bulk_edit`. Der Zustand danach trägt keinen von beiden, ein
+Tag-Auslöser greift also nicht erneut.
 
 Der Paperless-Auslöser bekommt zusätzlich `filter_has_not_tags: ["wird
 bearbeitet"]`. **Der Filter ist eine Optimierung**; er verhindert den
@@ -393,13 +395,13 @@ bekommt einen Leerlauf, keine Schleife.
 | Art | Beispiel | Ergebnis-Tag? |
 | --- | --- | --- |
 | Versand | `Steuer-gesendet`, `sevdesk-gesendet` | **ja**: Ein zweiter Versand muss für immer ausgeschlossen sein |
-| Erkennung | Titel, OCR, Custom Fields | **nein**: Wiederholen ist erwünscht; wem der Titel nicht gefällt, der setzt den Tag erneut |
+| Erkennung | Titel, OCR, Custom Fields | **nein**: Wiederholen ist erwünscht; wem der Titel nicht gefällt, der startet den Ablauf erneut |
 
 ### Der Fehlerfall
 
 `wird bearbeitet` bleibt absichtlich hängen. Würde der Workflow ihn beim
-Abbruch entfernen, wäre das wieder eine Dokumentänderung, und weil der
-Kommando-Tag noch dranhängt, entstünde eine Endlos-Wiederholung. Das
+Abbruch entfernen, wäre das wieder eine Dokumentänderung, und bei einem
+Ablauf mit Kommando-Tag entstünde eine Endlos-Wiederholung. Das
 Dokument steht also sichtbar auf „wird bearbeitet", `fehler-melden` schickt
 eine Mail, und `paperless-health-check` meldet, was länger als zwei Stunden so
 steht. **Nicht automatisch aufräumen**, weil das eine unbegrenzte
@@ -563,6 +565,40 @@ vermisst, ist der teurere Fehler. Der Monatsbericht sagt zusätzlich
 ausdrücklich, wenn mehr als 250 anlagen; ein zweiter manueller Lauf holt den
 Rest nach, weil er nur nimmt, was `Steuer-gesendet` noch nicht trägt.
 
+## Konvention: manueller Auslöser
+
+Abläufe, die ein Mensch für ein vorhandenes Dokument startet, haben einen
+Auslöser Typ 5 („manuell", ab Paperless-ngx 3.5) und keinen Kommando-Tag:
+„Titel erzeugen“, „Handschrift-OCR + Titel“, „Felder erkennen“,
+„Rechnungsfelder erkennen“ und „Vertragsdaten erkennen“. Gestartet wird in der
+Dokumentliste über die Massenbearbeitung für die markierten Dokumente.
+
+Verhalten laut Quelltext (`bulk_edit.run_workflow`,
+`tasks.run_workflows_for_documents`):
+
+- Jedes markierte Dokument durchläuft den Ablauf einzeln und bekommt einen
+  eigenen Webhook-Aufruf.
+- Die Filter des Typ-5-Auslösers gelten. `filter_has_not_tags: ["wird
+  bearbeitet"]` hält Dokumente aus laufenden Verarbeitungen heraus. Über die API
+  lässt sich die Filterung mit `filter_documents: false` abschalten.
+- Starten lassen sich nur aktive Abläufe mit Typ-5-Auslöser. Der Benutzer
+  braucht das Recht `documents.view_workflow`.
+- Der Lauf selbst sendet kein `document_updated`. Das PATCH, mit dem n8n das
+  Ergebnis zurückschreibt, sendet es (`DocumentViewSet.update`, ohne
+  Bedingung). Weil an diesen Abläufen kein Typ-3-Auslöser hängt, löst das
+  nichts aus.
+
+Kommando-Tags bleiben dort, wo der Tag einen Zustand trägt: `Steuer-senden`
+und `Paper-Werk senden` bleiben bei einem Fehlschlag am Dokument stehen und
+bilden die Liste der offenen Fälle, `Paper-Werk senden` dokumentiert außerdem
+die Freigabe nach dem Gegenprüfen. `handschrift-scannen` entsteht aus dem
+Scanner-Unterordner (Abschnitt „Tags als Auslöser“).
+
+Verworfen: Kommando-Tags für die Erkennungs-Abläufe. Ein Typ-3-Auslöser auf
+einen Tag braucht einen Beteiligten, der den Tag wieder entfernt, sonst löst
+jedes Zurückschreiben aus n8n den nächsten Mistral-Lauf aus. Diese Absprache
+entfällt mit dem manuellen Auslöser.
+
 ## Konvention: Tags als Auslöser
 
 Paperless kennt keinen Auslöser „*in dem Moment*, in dem Tag X drangehängt
@@ -577,7 +613,7 @@ tut.
 
 | Klasse | Form | Beispiele | Lebensdauer |
 | --- | --- | --- | --- |
-| **Kommando** | Verb, imperativ | `titel-verbessern`, `vertrag-erkennen`, `Steuer-senden` | wird verbraucht |
+| **Kommando** | Verb, imperativ | `Steuer-senden`, `Paper-Werk senden`, `handschrift-scannen` | wird verbraucht |
 | **Ergebnis** | Partizip | `Steuer-gesendet`, `sevdesk-gesendet`, `fehler-titel` | bleibt |
 | **Sache** | Substantiv | `Steuer`, `Privat`, `Wichtig` | bleibt, gehört dem Menschen |
 
@@ -696,25 +732,23 @@ Ein Worker darf sich nie darauf verlassen, dass sein Auslöser-Tag noch dran ist
 
 ### Ausnahme: Quittung erst nach Erfolg
 
-Manchmal darf nicht sofort quittiert werden. `handschrift-ocr-titel-mistral`
-ersetzt den OCR-Text; scheitert Mistral, steht noch der Tesseract-Text im
-Dokument und der Auftrag muss erhalten bleiben. Dann gehört das Ack ans
-Ergebnis, und zwar in einen zweiten Workflow. Das
-Paar heißt `<name>` (Protokoll, hält Webhook-Pfad und ID) und `<name>-kern`
-(reine Funktion):
+Manchmal darf nicht sofort quittiert werden. `steuer-beleg-sofort` verschickt
+einen Beleg; scheitert der Versand, muss der Auftrag erhalten bleiben. Dann
+gehört das Ack ans Ergebnis, und zwar in die Auftragsannahme, die die Arbeit an
+einen Sub-Workflow abgibt:
 
 ```text
-handschrift-ocr-titel-mistral           Auftragsannahme
-  Webhook -> Auftrag lesen -> Arbeit ausführen -> Quittieren: Tag entfernen
+steuer-beleg-sofort                     Auftragsannahme
+  Webhook -> Lage prüfen -> Versand ausführen -> Quittieren: Tags entfernen
                                     |
                                     v
-handschrift-ocr-titel-mistral-kern      reine Funktion
-  doc_url -> neuer OCR-Text + neuer Titel        kennt keine Tags
+sub-duo-versand / sub-stb-versand       Versand
+  Dokument-IDs -> Mail, Tag Steuer-gesendet      kennt keine Kommando-Tags
 ```
 
 Für einen Workflow namens „Auftragsannahme" ist Quittieren keine Magie, sondern
 die Aufgabe. Der Einwand trifft die Vermischung, nicht die Sache. Umgesetzt ist
-das bei `handschrift-ocr-titel-mistral` und `steuer-beleg-sofort`.
+das bei `steuer-beleg-sofort` und `paper-werk-eingangsrechnung`.
 
 Beim Steuerversand zeigt sich die Aufteilung besonders klar: `Steuer-senden` ist
 das Kommando und wird außen entfernt, `Steuer-gesendet` ist ein **Ergebnis** und
@@ -742,7 +776,8 @@ Vier Dinge, die dabei zählen:
   `{ body: {...} }`, ein Execute-Workflow-Trigger das Item selbst. `wh.body ?? wh`
   deckt beides ab und hält den Kern für Handtests im Editor brauchbar.
 - **Ein Fehlerzweig ist nicht nötig.** Bricht der Kern ab, bricht der Aufrufer
-  mit ab, das Kommando-Tag bleibt am Dokument hängen und `fehler-melden`
+  mit ab, das Kommando-Tag (bei manuellen Abläufen `wird bearbeitet`)
+  bleibt am Dokument hängen und `fehler-melden`
   schickt eine Mail. Damit sind **die noch getaggten Dokumente die Liste der
   offenen Fälle**. Ein eigenes `fehler-*`-Tag braucht es nur dort, wo das
   Kommando-Tag schon vorher entfernt wurde.
