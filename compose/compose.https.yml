@@ -76,5 +76,10 @@ services:
     environment:
       # Setzt zugleich ALLOWED_HOSTS und CSRF_TRUSTED_ORIGINS von Paperless.
       PAPERLESS_URL: https://${PAPER_WERK_HOSTNAME}:8005
+      # Ab Paperless 3.5 gilt ohne diese Angabe nur der Host aus PAPERLESS_URL;
+      # App und n8n sprechen Paperless im Compose-Netz als paperless:8000 an
+      # und bekämen 400 (DisallowedHost). Überschreibt einen Eintrag in
+      # .env.paperless.
+      PAPERLESS_ALLOWED_HOSTS: ${PAPER_WERK_HOSTNAME},paperless
       PAPERLESS_PROXY_SSL_HEADER: '["HTTP_X_FORWARDED_PROTO", "https"]'
       PAPERLESS_ACCOUNT_DEFAULT_HTTP_PROTOCOL: https
